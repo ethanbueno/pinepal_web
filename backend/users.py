@@ -1,121 +1,51 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from security import hash_password, verify_password
+from security import hash_password
 
 from database import get_connection
 from permissions import admin_required
 
+# Accounts for the web dashboard's Users page (admin only).
+# Users are { id, full_name, username, email, role, created_at }; errors are { "error": "message" }.
 users = Blueprint(
     "users",
     __name__
 )
 
-@users.route("/api/users", methods=["POST"])
-@admin_required
-def create_users():
+ROLES = ("admin", "officer", "farmer")
+COLUMNS = "id, name, username, email, role, created_at"
 
-    data = request.get_json(silent=True) or {}
 
-    name = data.get("name")
-    email = data.get("email")
-    password = data.get("password")
-    role = data.get("role", "user")
+def user_json(row):
+    return {
+        "id": row["id"],
+        "full_name": row["name"],
+        "username": row["username"],
+        "email": row["email"],
+        "role": row["role"],
+        "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+    }
 
-    if not name or not email or not password:
-        return jsonify({
-            "message": "All fields are required"
-        }), 400
 
-    if role not in ("user", "admin"):
-        return jsonify({
-            "message": "Invalid role"
-        }), 400
+def find_user(cursor, id):
+    cursor.execute(f"SELECT {COLUMNS} FROM users WHERE id = %s", (id,))
+    return cursor.fetchone()
 
-    connection = get_connection()
-    cursor = connection.cursor()
 
-    sql = """
-        SELECT id
-        FROM users
-        WHERE email = %s
-    """
+def read_form(data, creating):
+    """Validate the Add/Edit user form. Returns (fields, error)."""
+    full_name = (data.get("full_name") or "").strip()
+    username = (data.get("username") or "").strip()
+    role = data.get("role") or "officer"
+    password = data.get("password") or ""
 
-    cursor.execute(sql, (email,))
-    existing_user = cursor.fetchone()
+    if not full_name or not username or (creating and not password):
+        return None, "Full name, username and password are required" if creating else "Full name and username are required"
+    if role not in ROLES:
+        return None, "Invalid role"
+    return {"full_name": full_name, "username": username, "role": role, "password": password}, None
 
-    if existing_user:
-        cursor.close()
-        connection.close()
-
-        return jsonify({
-            "message": "Email already exists"
-        }), 409
-
-    hashed_password = hash_password(
-        password
-    )
-
-    sql = """
-        INSERT INTO users
-        (name, email, password_hash, role)
-        VALUES (%s, %s, %s, %s)
-    """
-    cursor.execute(
-        sql,
-        (
-            name,
-            email,
-            hashed_password,
-            role
-        )
-    )
-
-    connection.commit()
-    user_id = cursor.lastrowid
-
-    cursor.close()
-    connection.close()
-
-    return jsonify({
-        "message": "User created successfully",
-        "id": user_id
-    }), 201
-
-@users.route("/api/me", methods=["GET"])
-@jwt_required()
-def get_me():
-
-    user_id = get_jwt_identity()
-
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    sql = """
-        SELECT
-            id,
-            name,
-            email,
-            role,
-            created_at
-        FROM users
-        WHERE id = %s
-    """
-    cursor.execute(
-        sql,
-        (user_id,)
-    )
-
-    user = cursor.fetchone()
-    cursor.close()
-    connection.close()
-
-    if not user:
-        return jsonify({
-            "message": "User not found"
-        }), 404
-
-    return jsonify(user), 200
 
 @users.route("/api/users", methods=["GET"])
 @admin_required
@@ -123,143 +53,109 @@ def get_all_users():
 
     connection = get_connection()
     cursor = connection.cursor()
-
-    sql = """
-        SELECT
-            id,
-            name,
-            email,
-            role
-        FROM users
-        ORDER BY id DESC
-    """
-
-    cursor.execute(sql)
-    users = cursor.fetchall()
-
+    cursor.execute(f"SELECT {COLUMNS} FROM users ORDER BY created_at DESC, id DESC")
+    rows = cursor.fetchall()
     cursor.close()
     connection.close()
 
-    return jsonify(users), 200
+    return jsonify([user_json(r) for r in rows]), 200
 
-@users.route("/api/users/<int:id>", methods=["GET"])
+
+@users.route("/api/users", methods=["POST"])
 @admin_required
-def get_users(id):
+def create_user():
+
+    form, error = read_form(request.get_json(silent=True) or {}, creating=True)
+    if error:
+        return jsonify({"error": error}), 400
 
     connection = get_connection()
     cursor = connection.cursor()
 
-    sql = """
-        SELECT
-            id,
-            name,
-            email
-        FROM users
-        WHERE id = %s
-    """
-    cursor.execute(
-        sql,
-        (id,)
-    )
+    cursor.execute("SELECT id FROM users WHERE username = %s", (form["username"],))
+    if cursor.fetchone():
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Username is already taken"}), 409
 
-    user = cursor.fetchone()
+    cursor.execute(
+        "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, %s)",
+        (form["full_name"], form["username"], hash_password(form["password"]), form["role"]),
+    )
+    connection.commit()
+    user = find_user(cursor, cursor.lastrowid)
+    cursor.close()
+    connection.close()
+
+    return jsonify(user_json(user)), 201
+
+
+@users.route("/api/users/<int:id>", methods=["GET"])
+@admin_required
+def get_user(id):
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    user = find_user(cursor, id)
     cursor.close()
     connection.close()
 
     if not user:
-        return jsonify({
-            "message": "User not found"
-        }), 404
+        return jsonify({"error": "User not found"}), 404
 
-    return jsonify(user), 200
+    return jsonify(user_json(user)), 200
+
 
 @users.route("/api/users/<int:id>", methods=["PUT"])
 @admin_required
 def update_user(id):
 
-    data = request.get_json(silent=True) or {}
+    form, error = read_form(request.get_json(silent=True) or {}, creating=False)
+    if error:
+        return jsonify({"error": error}), 400
 
-    name = data.get("name")
-    email = data.get("email")
-
-    if not name or not email:
-        return jsonify({
-            "message": "Name and email are required"
-        }), 400
+    # an admin can't remove their own admin role and lock themselves out
+    if str(id) == get_jwt_identity() and form["role"] != "admin":
+        return jsonify({"error": "You can't change your own role"}), 400
 
     connection = get_connection()
     cursor = connection.cursor()
 
-    sql = """
-        SELECT id
-        FROM users
-        WHERE id = %s
-    """
-    cursor.execute(
-        sql,
-        (id,)
-    )
-
-    user = cursor.fetchone()
-
-    if not user:
-
+    if not find_user(cursor, id):
         cursor.close()
         connection.close()
+        return jsonify({"error": "User not found"}), 404
 
-        return jsonify({
-            "message": "User not found"
-        }), 404
-
-    sql = """
-        SELECT id
-        FROM users
-        WHERE email = %s AND id != %s
-    """
-    cursor.execute(
-        sql,
-        (
-            email,
-            id
-        )
-    )
-
+    cursor.execute("SELECT id FROM users WHERE username = %s AND id != %s", (form["username"], id))
     if cursor.fetchone():
-
         cursor.close()
         connection.close()
+        return jsonify({"error": "Username is already taken"}), 409
 
-        return jsonify({
-            "message": "Email already exists"
-        }), 409
-
-    sql = """
-        UPDATE users
-        SET
-            name = %s,
-            email = %s
-        WHERE id = %s
-    """
     cursor.execute(
-        sql,
-        (
-            name,
-            email,
-            id
-        )
+        "UPDATE users SET name = %s, username = %s, role = %s WHERE id = %s",
+        (form["full_name"], form["username"], form["role"], id),
     )
-
+    # the password only changes when a new one is typed
+    if form["password"]:
+        cursor.execute(
+            "UPDATE users SET password_hash = %s WHERE id = %s",
+            (hash_password(form["password"]), id),
+        )
     connection.commit()
+    user = find_user(cursor, id)
     cursor.close()
     connection.close()
 
-    return jsonify({
-        "message": "User updated successfully"
-    }), 200
+    return jsonify(user_json(user)), 200
+
 
 @users.route("/api/users/<int:id>", methods=["DELETE"])
 @admin_required
 def delete_user(id):
+
+    if str(id) == get_jwt_identity():
+        return jsonify({"error": "You can't delete your own account"}), 400
 
     connection = get_connection()
     cursor = connection.cursor()
@@ -271,12 +167,7 @@ def delete_user(id):
         (id, id)
     )
     cursor.execute("DELETE FROM scans WHERE user_id = %s", (id,))
-
-    cursor.execute(
-        "DELETE FROM users WHERE id = %s",
-        (id,)
-    )
-
+    cursor.execute("DELETE FROM users WHERE id = %s", (id,))
 
     connection.commit()
     affected_rows = cursor.rowcount
@@ -284,10 +175,22 @@ def delete_user(id):
     connection.close()
 
     if affected_rows == 0:
-        return jsonify({
-            "message": "User not found"
-        }), 404
+        return jsonify({"error": "User not found"}), 404
 
-    return jsonify({
-        "message": "User deleted successfully"
-    }), 200
+    return "", 204
+
+
+@users.route("/api/me", methods=["GET"])
+@jwt_required()
+def get_me():
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    user = find_user(cursor, get_jwt_identity())
+    cursor.close()
+    connection.close()
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify(user_json(user)), 200

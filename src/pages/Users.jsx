@@ -7,7 +7,7 @@ import Modal from "../components/Modal"
 import ConfirmModal from "../components/ConfirmModal"
 import ErrorAlert from "../components/ErrorAlert"
 import SelectField from "../components/SelectField"
-import { getRoleLabel } from "../utils/roles"
+import { ROLES, getRoleLabel } from "../utils/roles"
 import { formatDate } from "../utils/format"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -15,12 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-// web accounts are admin or officer (farmers are managed on the Farmers page)
-const WEB_ROLES = [
-  { value: "admin", label: "Admin" },
-  { value: "officer", label: "Agricultural Officer" },
-]
-
+// every account in the users table (admin, officer and farmer) is listed and editable here
 const emptyForm = { full_name: "", username: "", role: "officer", password: "" }
 
 function Users() {
@@ -178,7 +173,7 @@ function Users() {
             </div>
             <div>
               <Label className="mb-1.5">Role</Label>
-              <SelectField value={form.role} onChange={(v) => handleChange("role", v)} options={WEB_ROLES} />
+              <SelectField value={form.role} onChange={(v) => handleChange("role", v)} options={ROLES} />
             </div>
             <div>
               <Label className="mb-1.5">{editingId ? "New password (optional)" : "Password"}</Label>

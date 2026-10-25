@@ -10,6 +10,7 @@ import os
 
 import pymysql
 from dotenv import load_dotenv
+from database import connect
 
 load_dotenv()
 
@@ -20,10 +21,7 @@ def column_exists(cursor, name):
 
 
 def main():
-    connection = pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
+    connection = connect(
         database=os.getenv("DB_NAME"),
         autocommit=True,
         cursorclass=pymysql.cursors.DictCursor,

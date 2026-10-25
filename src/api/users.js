@@ -1,39 +1,11 @@
-import { mockUsers } from "../mock/users";
+import api from "./axios";
 
-// MOCK VERSION. Changes only last until the page is refreshed.
+// Real version: accounts come from the users table through the Flask API (admin only).
 
-const users = [...mockUsers];
+export const getUsers = () => api.get("/api/users").then((res) => res.data);
 
-const wait = (data) =>
-  new Promise((resolve) => setTimeout(() => resolve(data), 300));
+export const createUser = (data) => api.post("/api/users", data).then((res) => res.data);
 
-export const getUsers = () => wait(users.map((u) => ({ ...u })));
+export const updateUser = (id, data) => api.put("/api/users/" + id, data).then((res) => res.data);
 
-export function createUser(data) {
-  if (users.some((u) => u.username === data.username)) {
-    return Promise.reject({ response: { status: 409, data: { error: "Username is already taken" } } });
-  }
-  const newUser = {
-    id: Date.now(),
-    full_name: data.full_name,
-    username: data.username,
-    role: data.role,
-    created_at: new Date().toISOString().slice(0, 19),
-  };
-  users.push(newUser);
-  return wait({ ...newUser });
-}
-
-export function updateUser(id, data) {
-  const found = users.find((u) => u.id === id);
-  found.full_name = data.full_name;
-  found.username = data.username;
-  found.role = data.role;
-  return wait({ ...found });
-}
-
-export function deleteUser(id) {
-  const index = users.findIndex((u) => u.id === id);
-  users.splice(index, 1);
-  return wait(null);
-}
+export const deleteUser = (id) => api.delete("/api/users/" + id).then(() => null);

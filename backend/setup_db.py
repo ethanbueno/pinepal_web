@@ -4,8 +4,8 @@ Run once:  python setup_db.py
 """
 import os
 
-import pymysql
 from dotenv import load_dotenv
+from database import connect
 from security import hash_password
 
 load_dotenv()
@@ -44,10 +44,7 @@ DISEASES = [
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    connection = pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
+    connection = connect(
         autocommit=True,
     )
     cursor = connection.cursor()

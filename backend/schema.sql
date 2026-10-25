@@ -50,3 +50,28 @@ CREATE TABLE IF NOT EXISTS admin_reviews (
   CONSTRAINT fk_review_admin FOREIGN KEY (reviewer_id) REFERENCES users (id),
   CONSTRAINT fk_review_scan FOREIGN KEY (scan_id) REFERENCES scans (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Scans synced from the mobile app (plus ones added on the web, image_source 'Web').
+-- The dashboard, map and analytics all read from this table.
+CREATE TABLE IF NOT EXISTS mobile_scans (
+  scan_uuid varchar(36) NOT NULL,
+  farmer_id varchar(50) NOT NULL,
+  farm_name varchar(150) DEFAULT NULL,
+  municipality varchar(100) DEFAULT NULL,
+  latitude decimal(10,7) NOT NULL,
+  longitude decimal(10,7) NOT NULL,
+  scanned_at datetime NOT NULL,
+  predicted_label varchar(50) NOT NULL,
+  confidence decimal(6,4) NOT NULL,
+  second_label varchar(50) DEFAULT NULL,
+  second_confidence decimal(6,4) DEFAULT NULL,
+  image_source varchar(20) NOT NULL,
+  image_path varchar(255) NOT NULL DEFAULT '',
+  synced_at datetime DEFAULT NULL,
+  verified_label varchar(50) DEFAULT NULL,
+  verified_by varchar(100) DEFAULT NULL,
+  notes text DEFAULT NULL,
+  verified_at datetime DEFAULT NULL,
+  PRIMARY KEY (scan_uuid),
+  KEY idx_mobile_scans_scanned_at (scanned_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

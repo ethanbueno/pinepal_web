@@ -1,59 +1,88 @@
-"""Copy the mobile app's scans from db_bueno.scans into pinepal_db.mobile_scans.
+"""Copy the scans from your local XAMPP MySQL into the Aiven database's mobile_scans table.
 
-Run:  python import_mobile_scans.py
+Run (with XAMPP's MySQL started):  python import_mobile_scans.py
 
-- Creates pinepal_db.mobile_scans with the same structure as db_bueno.scans.
-- Safe to re-run: existing rows are skipped (scan_uuid is the primary key).
-- Only reads from db_bueno; never changes it or pinepal_db's other tables.
+- Reads from local MySQL using the settings in backend/.env.xampp:
+    db_bueno.scans            (the mobile app's scans)
+    pinepal_db.mobile_scans   (the copy the dashboard used, incl. web scans and verifications)
+- Writes into mobile_scans on the database in backend/.env (Aiven).
+- Safe to re-run: scans already on Aiven are skipped (scan_uuid is the primary key).
+- Never changes the local databases.
 """
 import os
 
 import pymysql
-from dotenv import load_dotenv
+from dotenv import dotenv_values
+from database import connect
 
-load_dotenv()
+HERE = os.path.dirname(os.path.abspath(__file__))
+LOCAL = dotenv_values(os.path.join(HERE, ".env.xampp"))
+LOCAL_DB = LOCAL.get("DB_NAME") or "pinepal_db"
+MOBILE_DB = "db_bueno"
 
-SOURCE_DB = "db_bueno"
-TARGET_DB = os.getenv("DB_NAME", "pinepal_db")
+COLS = [
+    "scan_uuid", "farmer_id", "farm_name", "municipality", "latitude", "longitude", "scanned_at",
+    "predicted_label", "confidence", "second_label", "second_confidence", "image_source",
+    "image_path", "synced_at", "verified_label", "verified_by", "notes", "verified_at",
+]
 
-# the columns the mobile app's table has (the web copy also has verified_at)
-COLS = (
-    "scan_uuid, farmer_id, farm_name, municipality, latitude, longitude, scanned_at, "
-    "predicted_label, confidence, second_label, second_confidence, image_source, "
-    "image_path, synced_at, verified_label, verified_by, notes"
-)
+
+def read_local(cursor, table):
+    """All scans in a local table, or [] when the table doesn't exist."""
+    db, name = table.split(".")
+    cursor.execute(
+        "SELECT COLUMN_NAME AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
+        (db, name),
+    )
+    available = {r["c"] for r in cursor.fetchall()}
+    if not available:
+        print(f"  {table}: not found, skipped")
+        return []
+    # db_bueno.scans has no verified_at; fill it with NULL
+    select = ", ".join(c if c in available else f"NULL AS {c}" for c in COLS)
+    cursor.execute(f"SELECT {select} FROM {table}")
+    rows = cursor.fetchall()
+    print(f"  {table}: {len(rows)} scans")
+    return rows
 
 
 def main():
-    connection = pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        autocommit=False,
-    )
-    cursor = connection.cursor()
+    try:
+        local = connect(
+            host=LOCAL.get("DB_HOST") or "localhost",
+            port=int(LOCAL.get("DB_PORT") or 3306),
+            user=LOCAL.get("DB_USER") or "root",
+            password=LOCAL.get("DB_PASSWORD") or "",
+            ssl=None,
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+    except pymysql.err.OperationalError as e:
+        print(f"Could not connect to local MySQL ({e.args[1]}). Start MySQL in XAMPP and run again.")
+        return
 
-    cursor.execute(f"CREATE TABLE IF NOT EXISTS `{TARGET_DB}`.mobile_scans LIKE `{SOURCE_DB}`.scans")
-    # The web app also saves scans (image_source "Web") and records when a scan was verified.
-    cursor.execute(f"SHOW COLUMNS FROM `{TARGET_DB}`.mobile_scans LIKE 'verified_at'")
-    if not cursor.fetchone():
-        cursor.execute(f"ALTER TABLE `{TARGET_DB}`.mobile_scans ADD COLUMN verified_at datetime DEFAULT NULL")
-    cursor.execute(
-        f"ALTER TABLE `{TARGET_DB}`.mobile_scans "
-        "MODIFY image_source enum('Camera','Gallery','Web') NOT NULL"
+    print("Reading local scans:")
+    cursor = local.cursor()
+    # pinepal_db.mobile_scans first: its copies carry the web verifications
+    rows = read_local(cursor, f"{LOCAL_DB}.mobile_scans") + read_local(cursor, f"{MOBILE_DB}.scans")
+    local.close()
+
+    if not rows:
+        print("Nothing to copy.")
+        return
+
+    aiven = connect(database=os.getenv("DB_NAME"))
+    cursor = aiven.cursor()
+    cursor.executemany(
+        f"INSERT IGNORE INTO mobile_scans ({', '.join(COLS)}) VALUES ({', '.join(['%s'] * len(COLS))})",
+        [tuple(r[c] for c in COLS) for r in rows],
     )
-    cursor.execute(f"INSERT IGNORE INTO `{TARGET_DB}`.mobile_scans ({COLS}) SELECT {COLS} FROM `{SOURCE_DB}`.scans")
     inserted = cursor.rowcount
-    connection.commit()
+    aiven.commit()
+    cursor.execute("SELECT COUNT(*) FROM mobile_scans")
+    total = cursor.fetchone()[0]
+    aiven.close()
 
-    cursor.execute(f"SELECT COUNT(*) FROM `{SOURCE_DB}`.scans")
-    source_total = cursor.fetchone()[0]
-    cursor.execute(f"SELECT COUNT(*) FROM `{TARGET_DB}`.mobile_scans")
-    target_total = cursor.fetchone()[0]
-    connection.close()
-
-    print(f"Inserted {inserted} new scans.")
-    print(f"{SOURCE_DB}.scans: {source_total} rows -> {TARGET_DB}.mobile_scans: {target_total} rows")
+    print(f"Copied {inserted} new scans to {os.getenv('DB_HOST')}. mobile_scans now has {total} rows.")
 
 
 if __name__ == "__main__":
