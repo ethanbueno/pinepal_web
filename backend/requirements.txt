@@ -1,0 +1,11 @@
+Flask
+flask-cors
+Flask-JWT-Extended
+PyMySQL
+python-dotenv
+Werkzeug
+bcrypt
+
+numpy
+Pillow
+ai-edge-litert

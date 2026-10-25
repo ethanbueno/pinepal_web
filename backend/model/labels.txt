@@ -1,0 +1,6 @@
+Crown_Rot
+Fruit_Fasciation
+Fruit_Rot
+Mealybug_Wilt
+Multiple_Crown
+No_Disease

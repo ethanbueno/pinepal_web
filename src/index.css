@@ -1,0 +1,158 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Geist Variable", sans-serif;
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #faf9f5;
+  --foreground: #141413;
+  --card: #ffffff;
+  --card-foreground: #141413;
+  --popover: #ffffff;
+  --popover-foreground: #141413;
+  --primary: #f0b323;
+  --primary-foreground: #14110a;
+  --secondary: #f0eee6;
+  --secondary-foreground: #141413;
+  --muted: #f0eee6;
+  --muted-foreground: #6b6a64;
+  --accent: #f0eee6;
+  --accent-foreground: #141413;
+  --destructive: #b53333;
+  --border: #e3e0d5;
+  --input: #e3e0d5;
+  --ring: #d99a0b;
+  --chart-1: #f0b323;
+  --chart-2: #2f7d4f;
+  --chart-3: #6b6a64;
+  --chart-4: #b53333;
+  --chart-5: #141413;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #141413;
+  --sidebar-primary: #f0b323;
+  --sidebar-primary-foreground: #14110a;
+  --sidebar-accent: #f0eee6;
+  --sidebar-accent-foreground: #141413;
+  --sidebar-border: #e3e0d5;
+  --sidebar-ring: #d99a0b;
+}
+
+.dark {
+  --background: #0d1117;
+  --foreground: #e6edf3;
+  --card: #161b22;
+  --card-foreground: #e6edf3;
+  --popover: #21262d;
+  --popover-foreground: #e6edf3;
+  --primary: #f2c14e;
+  --primary-foreground: #14110a;
+  --secondary: #21262d;
+  --secondary-foreground: #e6edf3;
+  --muted: #21262d;
+  --muted-foreground: #8b949e;
+  --accent: #30363d;
+  --accent-foreground: #e6edf3;
+  --destructive: #f85149;
+  --border: #30363d;
+  --input: #30363d;
+  --ring: #f2c14e;
+  --chart-1: #f2c14e;
+  --chart-2: #3fb950;
+  --chart-3: #8b949e;
+  --chart-4: #f85149;
+  --chart-5: #e6edf3;
+  --sidebar: #161b22;
+  --sidebar-foreground: #e6edf3;
+  --sidebar-primary: #f2c14e;
+  --sidebar-primary-foreground: #14110a;
+  --sidebar-accent: #21262d;
+  --sidebar-accent-foreground: #e6edf3;
+  --sidebar-border: #30363d;
+  --sidebar-ring: #f2c14e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Maps show only Echague: the area outside is painted with the page color */
+.leaflet-container {
+  background: var(--background);
+  cursor: grab;
+  /* keep Leaflet's internal z-indexes inside the map so dropdowns and dialogs stay on top */
+  isolation: isolate;
+  z-index: 0;
+}
+
+.province-mask {
+  fill: var(--background);
+  fill-opacity: 1;
+}
+
+.town-mask {
+  fill: var(--background);
+  fill-opacity: 0.85;
+}
+
+.leaflet-dragging .leaflet-container,
+.leaflet-container.leaflet-dragging {
+  cursor: grabbing;
+}
+
+.leaflet-container .leaflet-interactive {
+  cursor: pointer;
+}
