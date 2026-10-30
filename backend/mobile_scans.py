@@ -4,6 +4,7 @@ Every route is for staff (admin / officer). Errors are { "error": "message" }.
 """
 import csv
 import io
+import re
 import uuid
 from datetime import datetime
 
@@ -18,6 +19,9 @@ LABELS = ["No_Disease", "Crown_Rot", "Mealybug_Wilt", "Fruit_Rot", "Multiple_Cro
 LOW_CONFIDENCE = 0.6  # same as LOW_CONFIDENCE in src/utils/diseases.js
 FINAL = "COALESCE(verified_label, predicted_label)"
 
+# Photos uploaded by the mobile app are saved as <scan_uuid>.jpg / .png
+UPLOADED_PHOTO = re.compile(r"[0-9a-f-]{36}\.(jpg|png)")
+
 EXPORT_COLUMNS = [
     "scan_uuid", "scanned_at", "farmer_name", "farm_name", "municipality",
     "latitude", "longitude", "predicted_label", "confidence",
@@ -30,11 +34,16 @@ def serialize(row):
     for key in ("scanned_at", "synced_at", "verified_at"):
         scan[key] = scan[key].isoformat() if scan.get(key) else None
     for key in ("latitude", "longitude", "confidence", "second_confidence"):
-        scan[key] = float(scan[key])
+        # second_confidence is empty when the phone sent no second guess
+        if scan.get(key) is not None:
+            scan[key] = float(scan[key])
     # The mobile data has no farmer names, so show the farmer ID.
     scan["farmer_name"] = scan["farmer_id"]
-    # The photos live on the phones; only a path is stored.
+    # Scans synced after the mobile update have their photo on the server. Older rows hold
+    # a path on the phone, which the server does not have, so those stay without an image.
     scan["image_url"] = ""
+    if UPLOADED_PHOTO.fullmatch(scan.get("image_path") or ""):
+        scan["image_url"] = f"{request.host_url.rstrip('/')}/uploads/{scan['image_path']}"
     return scan
 
 
@@ -272,57 +281,60 @@ def delete_scan(scan_uuid):
 @staff_required
 def stats():
     where, params = build_filters({"from": request.args.get("from"), "to": request.args.get("to")})
-    latest = query(
-        f"SELECT DATE_FORMAT(MAX(scanned_at), '%%Y-%%m') AS month FROM mobile_scans {where}",
-        params,
-        one=True,
-    )["month"]
 
-    totals = query(
+    # Every number on the dashboard comes from ONE grouped query, added up here in Python,
+    # plus one query for the recent scans. Each query to a hosted database is a round trip
+    # over the internet, so two queries on one connection load much faster than seven.
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(
         f"""
-        SELECT COUNT(*) AS total,
-               COALESCE(SUM({FINAL} <> 'No_Disease'), 0) AS diseased,
-               COALESCE(SUM(verified_label IS NULL AND confidence < %s), 0) AS needs_review,
-               COALESCE(SUM(DATE_FORMAT(scanned_at, '%%Y-%%m') = %s), 0) AS this_month
+        SELECT DATE_FORMAT(scanned_at, '%%Y-%%m') AS month,
+               municipality,
+               {FINAL} AS label,
+               (verified_label IS NULL AND confidence < %s) AS needs_review,
+               COUNT(*) AS n
         FROM mobile_scans {where}
+        GROUP BY month, municipality, label, needs_review
         """,
-        [LOW_CONFIDENCE, latest] + params,
-        one=True,
+        [LOW_CONFIDENCE] + params,
     )
-    total = int(totals["total"])
+    groups = cursor.fetchall()
+    cursor.execute(f"SELECT * FROM mobile_scans {where} ORDER BY scanned_at DESC LIMIT 8", params)
+    recent = cursor.fetchall()
+    cursor.close()
+    connection.close()
 
-    counts = {r["label"]: r["n"] for r in query(
-        f"SELECT {FINAL} AS label, COUNT(*) AS n FROM mobile_scans {where} GROUP BY label", params)}
-    by_disease = [{"label": label, "count": int(counts.get(label, 0))} for label in LABELS]
+    total = sum(int(g["n"]) for g in groups)
+    diseased = sum(int(g["n"]) for g in groups if g["label"] != "No_Disease")
+    needs_review = sum(int(g["n"]) for g in groups if g["needs_review"])
+    latest = max((g["month"] for g in groups), default=None)  # YYYY-MM of the newest scan in range
+    this_month = sum(int(g["n"]) for g in groups if g["month"] == latest)
 
+    counts = {}
     months = {}
-    for r in query(
-        f"SELECT DATE_FORMAT(scanned_at, '%%Y-%%m') AS month, {FINAL} AS label, COUNT(*) AS n "
-        f"FROM mobile_scans {where} GROUP BY month, label ORDER BY month",
-        params,
-    ):
-        row = months.setdefault(r["month"], {"month": r["month"], **{label: 0 for label in LABELS}})
-        row[r["label"]] = int(r["n"])
-
-    by_municipality = [
-        {"municipality": r["municipality"], "diseased": int(r["diseased"]), "total": int(r["total"])}
-        for r in query(
-            f"SELECT municipality, SUM({FINAL} <> 'No_Disease') AS diseased, COUNT(*) AS total "
-            f"FROM mobile_scans {where} GROUP BY municipality ORDER BY diseased DESC, total DESC",
-            params,
-        )
-    ]
-
-    recent = query(f"SELECT * FROM mobile_scans {where} ORDER BY scanned_at DESC LIMIT 8", params)
+    municipalities = {}
+    for g in groups:
+        n = int(g["n"])
+        counts[g["label"]] = counts.get(g["label"], 0) + n
+        row = months.setdefault(g["month"], {"month": g["month"], **{label: 0 for label in LABELS}})
+        row[g["label"]] += n
+        m = municipalities.setdefault(g["municipality"], {"municipality": g["municipality"], "diseased": 0, "total": 0})
+        m["total"] += n
+        if g["label"] != "No_Disease":
+            m["diseased"] += n
 
     return jsonify({
         "total_scans": total,
-        "scans_this_month": int(totals["this_month"]),
-        "latest_month": latest,  # YYYY-MM of the newest scan in the range (None when empty)
-        "diseased_pct": (int(totals["diseased"]) / total) if total else 0,
-        "needs_review": int(totals["needs_review"]),
-        "by_disease": by_disease,
-        "by_month": list(months.values()),
-        "by_municipality": by_municipality,
+        "scans_this_month": this_month,
+        "latest_month": latest,
+        "diseased_pct": (diseased / total) if total else 0,
+        "needs_review": needs_review,
+        "by_disease": [{"label": label, "count": counts.get(label, 0)} for label in LABELS],
+        "by_month": [months[month] for month in sorted(months)],
+        "by_municipality": sorted(
+            municipalities.values(),
+            key=lambda m: (-m["diseased"], -m["total"], m["municipality"] or ""),
+        ),
         "recent": [serialize(r) for r in recent],
     }), 200

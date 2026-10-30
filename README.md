@@ -38,6 +38,7 @@ Other backend scripts:
 | `python reset_admin_password.py` | sets the `admin` login's password to `ADMIN_PASSWORD` |
 | `python seed_sample_scans.py` | adds 60 example scans (`--remove` deletes only those) |
 | `python import_mobile_scans.py` | copies scans from a local XAMPP MySQL into Aiven (see below) |
+| `python migrate_farmers.py` | creates the `farmers` table and fills it from the scans (run after the scans are in). A farmer's login username is their farmer ID, e.g. `F004`. Names start as "Farmer F004"; edit them on the Farmers page. |
 
 ### 2. Web dashboard
 

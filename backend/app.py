@@ -9,6 +9,8 @@ from scans import scans
 from web_auth import web_auth
 from diagnose import diagnose
 from mobile_scans import mobile_scans
+from mobile_sync import mobile_sync
+from farmers import farmers
 
 load_dotenv()
 
@@ -28,6 +30,8 @@ app.register_blueprint(scans)
 app.register_blueprint(web_auth)
 app.register_blueprint(diagnose)
 app.register_blueprint(mobile_scans)
+app.register_blueprint(mobile_sync)
+app.register_blueprint(farmers)
 
 # Home
 @app.route("/")

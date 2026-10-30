@@ -72,6 +72,9 @@ CREATE TABLE IF NOT EXISTS mobile_scans (
   verified_by varchar(100) DEFAULT NULL,
   notes text DEFAULT NULL,
   verified_at datetime DEFAULT NULL,
+  -- the farmer's own answer from the mobile app, kept apart from the officer's verified_label
+  farmer_feedback varchar(10) DEFAULT NULL,
+  farmer_label varchar(50) DEFAULT NULL,
   PRIMARY KEY (scan_uuid),
   KEY idx_mobile_scans_scanned_at (scanned_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
