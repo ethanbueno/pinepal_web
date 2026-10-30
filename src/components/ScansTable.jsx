@@ -7,9 +7,18 @@ import { LOW_CONFIDENCE } from "../utils/diseases"
 import { formatDate, formatPercent } from "../utils/format"
 
 // used by Scans, Dashboard (recent) and Farmer Detail
-function ScansTable({ scans, showFarmer = true }) {
+// bare = just the table, for a page that wraps it in its own card (the Dashboard)
+function ScansTable({ scans, showFarmer = true, bare = false }) {
   const navigate = useNavigate()
   const location = useLocation()
+
+  if (scans.length === 0 && bare) {
+    return (
+      <p className="px-6 py-4 text-center text-muted-foreground">
+        No scans yet. Scans synced from the mobile app will appear here.
+      </p>
+    )
+  }
 
   if (scans.length === 0) {
     return (
@@ -21,8 +30,11 @@ function ScansTable({ scans, showFarmer = true }) {
     )
   }
 
+  const Wrapper = bare ? "div" : Card
+  const wrapperProps = bare ? {} : { className: "py-0" }
+
   return (
-    <Card className="py-0">
+    <Wrapper {...wrapperProps}>
       <Table>
         <TableHeader>
           <TableRow>
@@ -60,7 +72,7 @@ function ScansTable({ scans, showFarmer = true }) {
           ))}
         </TableBody>
       </Table>
-    </Card>
+    </Wrapper>
   )
 }
 

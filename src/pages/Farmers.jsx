@@ -39,6 +39,7 @@ function Farmers() {
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [hasAccount, setHasAccount] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
 
@@ -69,6 +70,7 @@ function Farmers() {
 
   const openAdd = () => {
     setEditingId(null)
+    setHasAccount(false)
     setForm(emptyForm)
     setShowForm(true)
   }
@@ -79,12 +81,13 @@ function Farmers() {
       full_name: farmer.full_name,
       farm_name: farmer.farm_name,
       municipality: farmer.municipality,
-      farm_size_ha: farmer.farm_size_ha,
+      farm_size_ha: farmer.farm_size_ha ?? "",
       farm_latitude: farmer.farm_latitude,
       farm_longitude: farmer.farm_longitude,
-      username: farmer.username,
+      username: farmer.farmer_id,
       password: "",
     })
+    setHasAccount(farmer.has_account)
     setShowForm(true)
   }
 
@@ -103,7 +106,7 @@ function Farmers() {
       reload()
     } catch (err) {
       console.error(err)
-      notify("Could not save the farmer.", "error")
+      notify(err.response?.data?.error || "Could not save the farmer.", "error")
     } finally {
       setSaving(false)
     }
@@ -233,14 +236,22 @@ function Farmers() {
             </div>
             <div>
               <Label className="mb-1.5">Farm size (ha)</Label>
-              <Input type="number" step="0.1" min="0" value={form.farm_size_ha} onChange={(e) => handleChange("farm_size_ha", e.target.value)} required />
+              <Input type="number" step="0.1" min="0" value={form.farm_size_ha} onChange={(e) => handleChange("farm_size_ha", e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1.5">Username</Label>
-              <Input value={form.username} onChange={(e) => handleChange("username", e.target.value)} required />
+              <Label className="mb-1.5">Username (this is the farmer ID)</Label>
+              <Input
+                value={form.username}
+                onChange={(e) => handleChange("username", e.target.value)}
+                disabled={Boolean(editingId)}
+                minLength={3}
+                required
+              />
             </div>
             <div>
-              <Label className="mb-1.5">{editingId ? "New password (optional)" : "Password"}</Label>
+              <Label className="mb-1.5">
+                {!editingId ? "Password" : hasAccount ? "New password (optional)" : "Password (creates their login)"}
+              </Label>
               <Input
                 type="password"
                 value={form.password}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useLocation } from "react-router-dom"
 import { getScans } from "../api/scans"
 import FilterBar from "../components/FilterBar"
 import { emptyFilters } from "../utils/filters"
@@ -9,7 +10,9 @@ import ErrorAlert from "../components/ErrorAlert"
 const PER_PAGE = 20
 
 function Scans() {
-  const [filters, setFilters] = useState(emptyFilters)
+  // other pages can open this one with filters already set (the Dashboard's "Needs Review" card)
+  const location = useLocation()
+  const [filters, setFilters] = useState(() => ({ ...emptyFilters, ...(location.state?.filters || {}) }))
   const [page, setPage] = useState(1)
   const [data, setData] = useState({ items: [], total: 0 })
   const [loading, setLoading] = useState(true)

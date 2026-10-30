@@ -1,80 +1,24 @@
-import { mockFarmers } from "../mock/farmers";
-import { countScans } from "./scans";
-import { DISEASES } from "../utils/diseases";
+import api from "./axios";
 
-// MOCK VERSION. Changes only last until the page is refreshed.
+// Real version: farmers come from the farmers table through the Flask API.
+// A farmer's login username is their farmer ID, which is also what the mobile app's scans carry.
 
-const farmers = [...mockFarmers];
+// list; filters: search, municipality, status ("active" | "inactive")
+export const getFarmers = ({ search = "", municipality = "", status = "" } = {}) =>
+  api.get("/api/farmers", { params: { search, municipality, status } }).then((res) => res.data);
 
-const wait = (data) =>
-  new Promise((resolve) => setTimeout(() => resolve(data), 300));
+// the farm that belongs to the logged in farmer account, or null when none is linked
+export const getMyFarmer = () => api.get("/api/farmers/me").then((res) => res.data);
 
-// the scan count now comes from the Flask API
-const withTotal = async (farmer) => ({
-  ...farmer,
-  total_scans: await countScans({ farmer_id: farmer.farmer_id }),
-});
+// one farmer, with scans_by_disease
+export const getFarmer = (id) => api.get("/api/farmers/" + encodeURIComponent(id)).then((res) => res.data);
 
-export function getFarmers({ search = "", municipality = "", status = "" } = {}) {
-  const result = farmers.filter((f) => {
-    if (municipality && f.municipality !== municipality) return false;
-    if (status === "active" && !f.is_active) return false;
-    if (status === "inactive" && f.is_active) return false;
-    if (search) {
-      const text = (f.full_name + " " + f.farm_name).toLowerCase();
-      if (!text.includes(search.toLowerCase())) return false;
-    }
-    return true;
-  });
-  return wait(result).then((list) => Promise.all(list.map(withTotal)));
-}
+// data: farm fields + username + password (creates the farmer's login)
+export const createFarmer = (data) => api.post("/api/farmers", data).then((res) => res.data);
 
-// MOCK: finds the farm that belongs to the logged in farmer account by name.
-// Real version: the backend knows which farmer the account is (GET /api/farmers/me).
-export function getMyFarmer(user) {
-  const found = farmers.find((f) => f.full_name === user.full_name);
-  return wait(found ? withTotal(found) : null);
-}
+// an optional password creates or resets the farmer's login
+export const updateFarmer = (id, data) =>
+  api.put("/api/farmers/" + encodeURIComponent(id), data).then((res) => res.data);
 
-export function getFarmer(id) {
-  const found = farmers.find((f) => f.farmer_id === id);
-  if (!found) {
-    return Promise.reject({ response: { status: 404, data: { error: "Farmer not found" } } });
-  }
-
-  return Promise.all([
-    withTotal(found),
-    ...DISEASES.map((d) => countScans({ farmer_id: id, diseases: [d.label] })),
-  ]).then(([farmer, ...counts]) =>
-    wait({
-      ...farmer,
-      scans_by_disease: DISEASES.map((d, i) => ({ label: d.label, count: counts[i] })),
-    }),
-  );
-}
-
-export function createFarmer(data) {
-  const newFarmer = {
-    ...data,
-    farmer_id: "F" + String(farmers.length + 1).padStart(3, "0"),
-    is_active: true,
-    registered_at: new Date().toISOString().slice(0, 19),
-  };
-  delete newFarmer.password; // the real backend hashes it
-  farmers.push(newFarmer);
-  return wait(withTotal(newFarmer));
-}
-
-export function updateFarmer(id, data) {
-  const found = farmers.find((f) => f.farmer_id === id);
-  const changes = { ...data };
-  delete changes.password;
-  Object.assign(found, changes);
-  return wait(withTotal(found));
-}
-
-export function setFarmerStatus(id, isActive) {
-  const found = farmers.find((f) => f.farmer_id === id);
-  found.is_active = isActive;
-  return wait(withTotal(found));
-}
+export const setFarmerStatus = (id, isActive) =>
+  api.patch("/api/farmers/" + encodeURIComponent(id) + "/status", { is_active: isActive }).then((res) => res.data);

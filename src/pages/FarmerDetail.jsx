@@ -79,8 +79,8 @@ function FarmerDetail() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <Info label="Farm">{farmer.farm_name}</Info>
               <Info label="Municipality">{farmer.municipality}</Info>
-              <Info label="Farm size">{farmer.farm_size_ha} ha</Info>
-              <Info label="Username">@{farmer.username}</Info>
+              <Info label="Farm size">{farmer.farm_size_ha ? `${farmer.farm_size_ha} ha` : "-"}</Info>
+              <Info label="Username">{farmer.username ? `@${farmer.username}` : "No login yet"}</Info>
               <Info label="Registered">{formatDate(farmer.registered_at)}</Info>
               <Info label="Status">
                 <Badge variant={farmer.is_active ? "default" : "secondary"}>

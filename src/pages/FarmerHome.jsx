@@ -80,7 +80,7 @@ function FarmerHome() {
     <div>
       <h1 className="text-2xl font-medium">Welcome, {user.full_name}</h1>
       <p className="text-muted-foreground mb-5">
-        {farmer.farm_name} · {farmer.municipality} · {farmer.farm_size_ha} ha
+        {farmer.farm_name} · {farmer.municipality}{farmer.farm_size_ha ? ` · ${farmer.farm_size_ha} ha` : ""}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-3 mb-6">

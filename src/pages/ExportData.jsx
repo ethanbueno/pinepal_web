@@ -5,7 +5,7 @@ import { downloadExport } from "../api/exportData"
 import { useToast } from "../components/toastcontext"
 import ErrorAlert from "../components/ErrorAlert"
 import SelectField, { toOptions } from "../components/SelectField"
-import { DISEASES, MUNICIPALITIES } from "../utils/diseases"
+import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -14,7 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-const emptyFilters = { disease: "", municipality: "", from: "", to: "", verifiedOnly: false }
+// the municipality starts at (and stays on) the temporary lock, like the Disease Map
+const emptyFilters = { disease: "", municipality: LOCKED_MUNICIPALITY, from: "", to: "", verifiedOnly: false }
 const diseaseOptions = DISEASES.map((d) => ({ value: d.label, label: d.name }))
 
 function ExportData() {
@@ -73,7 +74,10 @@ function ExportData() {
   return (
     <div>
       <h1 className="text-2xl font-medium">Export</h1>
-      <p className="text-muted-foreground mb-4">Download scan records as a spreadsheet.</p>
+      <p className="text-muted-foreground mb-4">
+        Download scan records as a spreadsheet.
+        {LOCKED_MUNICIPALITY && ` Temporarily locked to ${LOCKED_MUNICIPALITY}.`}
+      </p>
 
       <Card>
         <CardHeader>
@@ -94,10 +98,11 @@ function ExportData() {
             <div className="flex flex-col gap-1.5">
               <Label>Municipality</Label>
               <SelectField
-                allLabel="All municipalities"
+                allLabel={LOCKED_MUNICIPALITY ? undefined : "All municipalities"}
                 value={filters.municipality}
                 onChange={(v) => update("municipality", v)}
-                options={toOptions(MUNICIPALITIES)}
+                options={toOptions(LOCKED_MUNICIPALITY ? [LOCKED_MUNICIPALITY] : MUNICIPALITIES)}
+                disabled={Boolean(LOCKED_MUNICIPALITY)}
               />
             </div>
             <div className="flex flex-col gap-1.5">
