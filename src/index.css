@@ -156,3 +156,17 @@
 .leaflet-container .leaflet-interactive {
   cursor: pointer;
 }
+
+/* Scan line sweeping over the phone preview on the login page */
+@keyframes login-scan {
+  0%, 100% { top: 14%; }
+  50% { top: 84%; }
+}
+.login-scan-line {
+  top: 14%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .login-scan-line {
+    animation: login-scan 2.8s ease-in-out infinite;
+  }
+}
