@@ -1,13 +1,13 @@
 import { useAuth } from "../context/AuthContext"
 import Dashboard from "./Dashboard"
-import FarmerHome from "./FarmerHome"
+import FarmerWelcome from "./FarmerWelcome"
 
 // "/" shows a different home page for each role
 function Home() {
   const { user } = useAuth()
 
   if (user.role === "farmer") {
-    return <FarmerHome />
+    return <FarmerWelcome />
   }
   return <Dashboard />
 }

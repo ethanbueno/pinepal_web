@@ -3,6 +3,7 @@ import Layout from "./components/Layout"
 import ProtectedRoute from "./components/ProtectedRoute"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import FarmerHome from "./pages/FarmerHome"
 import Home from "./pages/Home"
 import MyScans from "./pages/MyScans"
 import Guides from "./pages/Guides"
@@ -37,11 +38,12 @@ function App() {
           </ProtectedRoute>
         }
       >
-        {/* every role: Home shows the dashboard for staff and "My Farm" for farmers */}
+        {/* every role: Home shows the dashboard for staff and the welcome page for farmers */}
         <Route path="/" element={<Home />} />
         <Route path="/scans/:uuid" element={<ScanDetail />} />
 
         {/* farmers only */}
+        <Route path="/my-farm" element={<ProtectedRoute roles={["farmer"]}><FarmerHome /></ProtectedRoute>} />
         <Route path="/my-scans" element={<ProtectedRoute roles={["farmer"]}><MyScans /></ProtectedRoute>} />
         <Route path="/guides" element={<ProtectedRoute roles={["farmer"]}><Guides /></ProtectedRoute>} />
 

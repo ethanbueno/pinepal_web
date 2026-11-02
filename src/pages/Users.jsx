@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { PlusIcon } from "lucide-react"
 import { getUsers, createUser, updateUser, deleteUser } from "../api/users"
 import { useAuth } from "../context/AuthContext"
@@ -9,18 +10,32 @@ import ErrorAlert from "../components/ErrorAlert"
 import SelectField from "../components/SelectField"
 import { ROLES, getRoleLabel } from "../utils/roles"
 import { formatDate } from "../utils/format"
+import Farmers from "./Farmers"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-// every account in the users table (admin, officer and farmer) is listed and editable here
+// Accounts sorted into tabs by role. Admins and officers are plain accounts edited here;
+// the Farmers tab is the full farmers list, since a farmer also has a farm to manage.
+const TABS = [
+  { value: "admins", role: "admin", label: "Admins" },
+  { value: "officers", role: "officer", label: "Officers" },
+  { value: "farmers", role: "farmer", label: "Farmers" },
+]
+
+// farmers are added from the Farmers tab, together with their farm
+const ACCOUNT_ROLES = ROLES.filter((r) => r.value !== "farmer")
+
 const emptyForm = { full_name: "", username: "", role: "officer", password: "" }
 
 function Users() {
   const { user: currentUser } = useAuth()
   const notify = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = TABS.find((t) => t.value === searchParams.get("tab")) || TABS[0]
 
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -56,12 +71,15 @@ function Users() {
     }
   }, [reloadCount])
 
+  const tabUsers = users.filter((u) => u.role === tab.role)
+  const countOf = (role) => users.filter((u) => u.role === role).length
+
   const reload = () => setReloadCount(reloadCount + 1)
   const handleChange = (name, value) => setForm({ ...form, [name]: value })
 
   const openAdd = () => {
     setEditingId(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm, role: tab.role })
     setFormError("")
     setShowForm(true)
   }
@@ -114,51 +132,79 @@ function Users() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-medium">Users</h1>
-        <Button onClick={openAdd}>
-          <PlusIcon />
-          Add user
-        </Button>
       </div>
 
-      {error && <ErrorAlert>{error}</ErrorAlert>}
-
-      <Card className="py-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className=" text-center text-muted-foreground">No users yet.</TableCell>
-              </TableRow>
-            )}
-            {users.map((u) => (
-              <TableRow key={u.id} className=" hover:bg-muted">
-                <TableCell>{u.full_name}</TableCell>
-                <TableCell>@{u.username}</TableCell>
-                <TableCell>{getRoleLabel(u.role)}</TableCell>
-                <TableCell>{formatDate(u.created_at)}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(u)}>Edit</Button>
-                    {/* an admin can't delete their own account */}
-                    {u.id !== currentUser.id && (
-                      <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(u)}>Delete</Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={tab.value} onValueChange={(value) => setSearchParams({ tab: value })}>
+          <TabsList>
+            {TABS.map((t) => (
+              <TabsTrigger key={t.value} value={t.value} className="px-3">
+                {t.label}
+                {/* farmer counts come from the farmers list in that tab, not from accounts */}
+                {t.role !== "farmer" && (
+                  <span className="ml-1.5 rounded-full bg-background px-1.5 text-xs tabular-nums text-muted-foreground">
+                    {countOf(t.role)}
+                  </span>
+                )}
+              </TabsTrigger>
             ))}
-          </TableBody>
-        </Table>
-      </Card>
+          </TabsList>
+        </Tabs>
+        {tab.role !== "farmer" && (
+          <Button onClick={openAdd}>
+            <PlusIcon />
+            Add {tab.role === "admin" ? "admin" : "officer"}
+          </Button>
+        )}
+      </div>
+
+      {tab.role === "farmer" ? (
+        <Farmers embedded />
+      ) : (
+        <>
+          {error && <ErrorAlert>{error}</ErrorAlert>}
+
+          <Card className="py-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tabUsers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className=" text-center text-muted-foreground">
+                      No {tab.label.toLowerCase()} yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {tabUsers.map((u) => (
+                  <TableRow key={u.id} className=" hover:bg-muted">
+                    <TableCell>{u.full_name}</TableCell>
+                    <TableCell>@{u.username}</TableCell>
+                    <TableCell>{getRoleLabel(u.role)}</TableCell>
+                    <TableCell>{formatDate(u.created_at)}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => openEdit(u)}>Edit</Button>
+                        {/* an admin can't delete their own account */}
+                        {u.id !== currentUser.id && (
+                          <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(u)}>Delete</Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </>
+      )}
 
       <Modal open={showForm} title={editingId ? "Edit user" : "Add user"} onClose={() => setShowForm(false)}>
         <form onSubmit={handleSave}>
@@ -173,7 +219,7 @@ function Users() {
             </div>
             <div>
               <Label className="mb-1.5">Role</Label>
-              <SelectField value={form.role} onChange={(v) => handleChange("role", v)} options={ROLES} />
+              <SelectField value={form.role} onChange={(v) => handleChange("role", v)} options={ACCOUNT_ROLES} />
             </div>
             <div>
               <Label className="mb-1.5">{editingId ? "New password (optional)" : "Password"}</Label>

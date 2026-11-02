@@ -4,6 +4,7 @@ import {
   ChevronsUpDownIcon,
   DownloadIcon,
   FileTextIcon,
+  HouseIcon,
   ImagesIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -45,14 +46,16 @@ const staffLinks = [
   { to: "/map", label: "Disease Map", icon: MapIcon },
   { to: "/scans", label: "Scans", icon: ScanSearchIcon },
   { to: "/diagnose", label: "Diagnose", icon: StethoscopeIcon },
-  { to: "/farmers", label: "Farmers", icon: UsersIcon },
+  // admins manage farmers from the Farmers tab on the Users page instead
+  { to: "/farmers", label: "Farmers", icon: UsersIcon, notForAdmin: true },
   { to: "/protocols", label: "Protocols", icon: FileTextIcon },
   { to: "/export", label: "Export", icon: DownloadIcon },
-  { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true },
+  { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true, alsoActiveOn: "/farmers" },
 ]
 
 const farmerLinks = [
-  { to: "/", label: "My Farm", icon: SproutIcon, end: true },
+  { to: "/", label: "Home", icon: HouseIcon, end: true },
+  { to: "/my-farm", label: "My Farm", icon: SproutIcon },
   { to: "/my-scans", label: "My Scans", icon: ImagesIcon },
   { to: "/guides", label: "Guides", icon: BookOpenIcon },
 ]
@@ -69,11 +72,14 @@ function AppSidebar({ user, onLogout }) {
   const { pathname } = useLocation()
   const { dark, toggleTheme } = useTheme()
 
-  // farmers get their own short menu, officers don't see admin-only links
+  // farmers get their own short menu, officers don't see admin-only links,
+  // admins don't see links that live under another page for them
   const links =
     user.role === "farmer"
       ? farmerLinks
-      : staffLinks.filter((link) => !link.adminOnly || user.role === "admin")
+      : staffLinks.filter((link) =>
+          user.role === "admin" ? !link.notForAdmin : !link.adminOnly
+        )
 
   return (
     <Sidebar collapsible="icon">
@@ -96,12 +102,15 @@ function AppSidebar({ user, onLogout }) {
           <SidebarGroupLabel className="mb-1">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
-              {links.map(({ to, label, icon: Icon, end }) => (
+              {links.map(({ to, label, icon: Icon, end, alsoActiveOn }) => (
                 <SidebarMenuItem key={to}>
                   <SidebarMenuButton
                     tooltip={label}
                     className="h-9 px-3"
-                    isActive={!!matchPath({ path: to, end: !!end }, pathname)}
+                    isActive={
+                      !!matchPath({ path: to, end: !!end }, pathname) ||
+                      (!!alsoActiveOn && !!matchPath({ path: alsoActiveOn, end: false }, pathname))
+                    }
                     render={<NavLink to={to} end={end} />}
                   >
                     <Icon />

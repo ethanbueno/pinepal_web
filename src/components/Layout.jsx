@@ -39,7 +39,8 @@ function Layout() {
       <AppSidebar user={user} onLogout={handleLogout} />
       <SidebarInset>
         <SidebarTab />
-        <div className="min-w-0 p-4 pl-8 md:p-6 md:pl-10">
+        {/* same padding on both sides; the left one also has to clear the sidebar tab (20px) */}
+        <div className="min-w-0 px-7 py-5 md:px-10 md:py-6">
           <Outlet />
         </div>
       </SidebarInset>

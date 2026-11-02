@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 import { getFarmer } from "../api/farmers"
 import { getScans } from "../api/scans"
 import ScansTable from "../components/ScansTable"
@@ -21,6 +22,9 @@ function Info({ label, children }) {
 
 function FarmerDetail() {
   const { id } = useParams()
+  const { user } = useAuth()
+  // admins reach farmers from the Farmers tab on the Users page
+  const backTo = user.role === "admin" ? "/users?tab=farmers" : "/farmers"
   const [farmer, setFarmer] = useState(null)
   const [scans, setScans] = useState([])
   const [loading, setLoading] = useState(true)
@@ -54,7 +58,7 @@ function FarmerDetail() {
     return (
       <div>
         <ErrorAlert>{error}</ErrorAlert>
-        <Link to="/farmers" className="font-semibold underline underline-offset-4">Back to farmers</Link>
+        <Link to={backTo} className="font-semibold underline underline-offset-4">Back to farmers</Link>
       </div>
     )
   }
@@ -70,7 +74,7 @@ function FarmerDetail() {
 
   return (
     <div>
-      <Link to="/farmers" className="font-semibold underline underline-offset-4 text-sm">← Back to farmers</Link>
+      <Link to={backTo} className="font-semibold underline underline-offset-4 text-sm">← Back to farmers</Link>
       <h1 className="text-2xl font-medium mb-4">{farmer.full_name}</h1>
 
       <div className="grid gap-4 lg:grid-cols-2 mb-4">

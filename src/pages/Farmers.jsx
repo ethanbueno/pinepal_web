@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Navigate, useNavigate } from "react-router-dom"
 import { PlusIcon } from "lucide-react"
 import { getFarmers, createFarmer, updateFarmer, setFarmerStatus } from "../api/farmers"
+import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
 import Modal from "../components/Modal"
 import MiniMap from "../components/MiniMap"
@@ -26,7 +27,9 @@ const emptyForm = {
   password: "",
 }
 
-function Farmers() {
+// embedded = shown inside the Farmers tab of the Users page (admins), so no page title
+function Farmers({ embedded = false }) {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const notify = useToast()
 
@@ -124,10 +127,15 @@ function Farmers() {
     }
   }
 
+  // admins have no Farmers page of their own any more, it is a tab under Users
+  if (user.role === "admin" && !embedded) {
+    return <Navigate to="/users?tab=farmers" replace />
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-medium">Farmers</h1>
+      <div className={`flex items-center mb-4 ${embedded ? "justify-end" : "justify-between"}`}>
+        {!embedded && <h1 className="text-2xl font-medium">Farmers</h1>}
         <Button onClick={openAdd}>
           <PlusIcon />
           Add farmer
