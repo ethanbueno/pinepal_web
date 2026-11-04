@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 from database import get_connection
+from farmers import add_farmer, claim_phone_farmer
 from security import hash_password, verify_password
 
 # Login for the web dashboard (matches the API contract in CLAUDEweb.md).
@@ -9,6 +10,19 @@ from security import hash_password, verify_password
 web_auth = Blueprint("web_auth", __name__)
 
 ROLES = ("admin", "officer", "farmer")
+DEACTIVATED = "This account is deactivated. Contact your agricultural officer."
+
+
+def is_deactivated(cursor, user):
+    """True for a farmer whose farm was deactivated on the Farmers page.
+
+    Farmers are deactivated instead of deleted, so their scans stay in the system.
+    """
+    if user["role"] != "farmer":
+        return False
+    cursor.execute("SELECT is_active FROM farmers WHERE user_id = %s", (user["id"],))
+    farm = cursor.fetchone()
+    return bool(farm) and not farm["is_active"]
 
 
 def user_json(row):
@@ -37,11 +51,14 @@ def login():
         (username, username),
     )
     user = cursor.fetchone()
+    blocked = bool(user) and is_deactivated(cursor, user)
     cursor.close()
     connection.close()
 
     if not user or not verify_password(password, user["password_hash"]):
         return jsonify({"error": "Invalid username or password"}), 401
+    if blocked:
+        return jsonify({"error": DEACTIVATED}), 403
 
     token = create_access_token(identity=str(user["id"]))
     return jsonify({"access_token": token, "user": user_json(user)}), 200
@@ -75,14 +92,24 @@ def register():
         connection.close()
         return jsonify({"error": "Username is already taken"}), 409
 
-    cursor.execute(
-        "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, %s)",
-        (full_name, username, hash_password(password), role),
-    )
-    connection.commit()
-    user_id = cursor.lastrowid
-    cursor.close()
-    connection.close()
+    # Every farmer account gets its farmers row in the same step. Signing up on a phone that
+    # already has its own farmer ID (device_token) keeps that ID and its scans. Otherwise
+    # the account gets the next farmer ID with blank farm details, which the first sync fills in.
+    try:
+        cursor.execute(
+            "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, %s)",
+            (full_name, username, hash_password(password), role),
+        )
+        user_id = cursor.lastrowid
+        if not claim_phone_farmer(cursor, user_id, full_name, data.get("device_token")):
+            add_farmer(cursor, user_id, full_name)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
 
     return jsonify({
         "id": user_id,

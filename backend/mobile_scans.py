@@ -1,6 +1,7 @@
 """Scan routes for the web dashboard, backed by the mobile app's scans (mobile_scans table).
 
-Every route is for staff (admin / officer). Errors are { "error": "message" }.
+Every route is for staff (admin / officer), except that a farmer can list, count and open
+their own scans. Errors are { "error": "message" }.
 """
 import csv
 import io
@@ -9,9 +10,12 @@ import uuid
 from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, request
+from flask_jwt_extended import get_jwt_identity
 
 from database import get_connection
-from permissions import role_required, staff_required
+from permissions import farmer_scope, role_required, staff_required
+
+ANY_ROLE = ("admin", "officer", "farmer")
 
 mobile_scans = Blueprint("mobile_scans", __name__)
 
@@ -47,6 +51,15 @@ def serialize(row):
     return scan
 
 
+def visible_filters():
+    """The query string's filters, limited to the farmer's own scans when a farmer asks."""
+    args = request.args.copy()
+    own = farmer_scope(get_jwt_identity())
+    if own is not None:
+        args["farmer_id"] = own
+    return build_filters(args)
+
+
 def build_filters(args):
     """Turn the query string into a WHERE clause (same filters as src/api/scans.js)."""
     where, params = [], []
@@ -66,7 +79,8 @@ def build_filters(args):
         where.append("municipality = %s")
         params.append(args["municipality"])
 
-    if args.get("farmer_id"):
+    # present but empty still filters: a farmer without a farm sees no scans, not all of them
+    if "farmer_id" in args:
         where.append("farmer_id = %s")
         params.append(args["farmer_id"])
 
@@ -110,11 +124,11 @@ def not_found():
 
 
 @mobile_scans.route("/api/scans", methods=["GET"])
-@staff_required
+@role_required(*ANY_ROLE)
 def list_scans():
     page = max(request.args.get("page", 1, type=int), 1)
     per_page = min(max(request.args.get("per_page", 20, type=int), 1), 200)
-    where, params = build_filters(request.args)
+    where, params = visible_filters()
 
     total = query(f"SELECT COUNT(*) AS n FROM mobile_scans {where}", params, one=True)["n"]
     rows = query(
@@ -130,9 +144,9 @@ def list_scans():
 
 
 @mobile_scans.route("/api/scans/count", methods=["GET"])
-@staff_required
+@role_required(*ANY_ROLE)
 def count_scans():
-    where, params = build_filters(request.args)
+    where, params = visible_filters()
     total = query(f"SELECT COUNT(*) AS n FROM mobile_scans {where}", params, one=True)["n"]
     return jsonify(total), 200
 
@@ -184,10 +198,12 @@ def export_scans():
 
 
 @mobile_scans.route("/api/scans/<scan_uuid>", methods=["GET"])
-@staff_required
+@role_required(*ANY_ROLE)
 def get_scan(scan_uuid):
     row = query("SELECT * FROM mobile_scans WHERE scan_uuid = %s", (scan_uuid,), one=True)
-    if not row:
+    own = farmer_scope(get_jwt_identity())
+    # another farmer's scan looks the same as a missing one
+    if not row or (own is not None and row["farmer_id"] != own):
         return not_found()
     return jsonify(serialize(row)), 200
 
@@ -212,6 +228,12 @@ def create_scan():
 
     connection = get_connection()
     cursor = connection.cursor()
+    cursor.execute("SELECT 1 FROM farmers WHERE farmer_id = %s", (data["farmer_id"],))
+    if not cursor.fetchone():
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Unknown farmer"}), 400
+
     cursor.execute(
         """
         INSERT INTO mobile_scans

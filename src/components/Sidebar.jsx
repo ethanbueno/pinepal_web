@@ -56,6 +56,7 @@ const staffLinks = [
 const farmerLinks = [
   { to: "/", label: "Home", icon: HouseIcon, end: true },
   { to: "/my-farm", label: "My Farm", icon: SproutIcon },
+  { to: "/diagnose", label: "Scan", icon: StethoscopeIcon },
   { to: "/my-scans", label: "My Scans", icon: ImagesIcon },
   { to: "/guides", label: "Guides", icon: BookOpenIcon },
 ]

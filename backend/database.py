@@ -18,6 +18,11 @@ def connect(**options):
         port=int(os.getenv("DB_PORT", "3306")),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
+        # Without these a connection the network silently dropped waits forever,
+        # and the phone gives up first ("The server took too long to answer").
+        connect_timeout=10,
+        read_timeout=30,
+        write_timeout=30,
     )
 
     ca = os.getenv("DB_SSL_CA")
@@ -36,7 +41,7 @@ def connect(**options):
 # connection.close(); close() now hands the connection back to the pool.
 # ---------------------------------------------------------------------------
 MAX_IDLE = 6        # connections kept open and waiting
-STALE_AFTER = 30    # seconds idle before a connection is checked with a ping
+STALE_AFTER = 30    # seconds idle before a connection is replaced with a new one
 
 _idle = []          # [(connection, time it was returned)]
 _lock = threading.Lock()
@@ -76,6 +81,13 @@ class PooledConnection:
             pass
 
 
+def _close_quietly(connection):
+    try:
+        connection.close()
+    except Exception:
+        pass
+
+
 def get_connection():
     while True:
         with _lock:
@@ -84,14 +96,11 @@ def get_connection():
             break
         connection, returned_at = item
         if time.monotonic() - returned_at > STALE_AFTER:
-            try:
-                connection.ping(reconnect=False)  # the server may have dropped it while idle
-            except Exception:
-                try:
-                    connection.close()
-                except Exception:
-                    pass
-                continue
+            # The network to the hosted database may have dropped it while idle, and
+            # checking with a ping can hang on a dropped one. A new connection only
+            # takes about half a second, so close it and move on.
+            _close_quietly(connection)
+            continue
         return PooledConnection(connection)
 
     return PooledConnection(connect(

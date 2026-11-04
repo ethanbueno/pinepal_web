@@ -63,9 +63,13 @@ function FarmerDetail() {
     )
   }
 
-  // the farm itself plus a dot for each scan
+  // the farm itself plus a dot for each scan. A farmer who signed up has no farm pin
+  // until their first sync.
+  const hasPin = farmer.farm_latitude != null
   const points = [
-    { id: "farm", lat: farmer.farm_latitude, lng: farmer.farm_longitude, color: "#141413", text: farmer.farm_name },
+    ...(hasPin
+      ? [{ id: "farm", lat: farmer.farm_latitude, lng: farmer.farm_longitude, color: "#141413", text: farmer.farm_name }]
+      : []),
     ...scans.map((s) => {
       const disease = getDisease(s.verified_label || s.predicted_label)
       return { id: s.scan_uuid, lat: s.latitude, lng: s.longitude, color: disease.color, text: disease.name }
@@ -109,7 +113,12 @@ function FarmerDetail() {
           </CardContent>
         </Card>
 
-        <MiniMap height={300} center={[farmer.farm_latitude, farmer.farm_longitude]} zoom={12} points={points} />
+        <MiniMap
+          height={300}
+          center={hasPin ? [farmer.farm_latitude, farmer.farm_longitude] : undefined}
+          zoom={hasPin ? 12 : undefined}
+          points={points}
+        />
       </div>
 
       <h2 className="font-semibold mb-3">Scans</h2>

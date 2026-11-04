@@ -41,3 +41,17 @@ export const deleteScan = (uuid) => api.delete("/api/scans/" + uuid).then(() => 
 
 // used by the Diagnose page ("Save as scan")
 export const createScan = (data) => api.post("/api/scans", data).then((res) => res.data);
+
+// A farmer saving from the Diagnose page: the same upload the mobile app uses, so the
+// photo is kept and the scan lands in the farmer's own history.
+// scan: scan_uuid, farm_name, municipality, latitude, longitude, scanned_at,
+//       predicted_label, confidence, second_label, second_confidence, notes
+export function uploadMyScan(file, scan) {
+  const form = new FormData();
+  Object.entries(scan).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) form.append(key, value);
+  });
+  form.append("image_source", "Web");
+  form.append("image", file);
+  return api.post("/api/mobile/scans", form).then((res) => res.data);
+}

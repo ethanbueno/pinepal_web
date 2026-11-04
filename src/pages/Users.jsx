@@ -122,7 +122,7 @@ function Users() {
       reload()
     } catch (err) {
       console.error(err)
-      notify("Could not delete the user.", "error")
+      notify(err.response?.data?.error || "Could not delete the user.", "error")
     }
   }
 

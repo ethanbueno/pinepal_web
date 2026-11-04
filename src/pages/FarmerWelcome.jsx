@@ -267,10 +267,17 @@ function FarmerWelcome() {
             <div className="flex-1">
               <h3 className="text-lg font-semibold">Ready to scan?</h3>
               <p className="mt-1 text-sm opacity-75">
-                New scans are taken with the PinePal mobile app. Log in there with this same account and your
-                results show up here automatically.
+                Upload a photo here, or use the PinePal mobile app in the field. Log in there with this same
+                account and your results show up here automatically.
               </p>
             </div>
+            <Link
+              to="/diagnose"
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+            >
+              Scan a photo
+              <ArrowRightIcon className="size-4" />
+            </Link>
           </div>
         </Reveal>
       </section>

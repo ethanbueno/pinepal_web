@@ -47,8 +47,10 @@ function App() {
         <Route path="/my-scans" element={<ProtectedRoute roles={["farmer"]}><MyScans /></ProtectedRoute>} />
         <Route path="/guides" element={<ProtectedRoute roles={["farmer"]}><Guides /></ProtectedRoute>} />
 
+        {/* staff save scans for any farmer, farmers save to their own history */}
+        <Route path="/diagnose" element={<ProtectedRoute roles={[...STAFF, "farmer"]}><Diagnose /></ProtectedRoute>} />
+
         {/* admins and officers */}
-        <Route path="/diagnose" element={staffOnly(<Diagnose />)} />
         <Route path="/map" element={staffOnly(<DiseaseMap />)} />
         <Route path="/scans" element={staffOnly(<Scans />)} />
         <Route path="/protocols" element={staffOnly(<Protocols />)} />

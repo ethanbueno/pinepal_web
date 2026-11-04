@@ -2,22 +2,30 @@
 
 GET   /api/farmers               list (filters: search, municipality, status), staff only
 GET   /api/farmers/me            the farm of the signed-in farmer account (null if none)
-GET   /api/farmers/<id>          one farmer with scans per disease, staff only
+GET   /api/farmers/<id>          one farmer with scans per disease, staff or that farmer
 POST  /api/farmers               add a farmer and their login account, staff only
 PUT   /api/farmers/<id>          edit a farmer (an optional password creates / resets the login)
 PATCH /api/farmers/<id>/status   activate or deactivate
+POST  /api/farmers/<id>/sync     "Sync now": connect a farmer with no account to an existing
+                                 login (merging into its farmer ID) or to a new account
 
-A farmer's login username is their farmer ID. That is also what the mobile sync stores in
-mobile_scans.farmer_id, so the scans and the farmer line up without any extra link.
+A farmer account is linked to its farmers row by farmers.user_id (one row per account). The
+mobile sync finds the row through it and stores scans under that row's farmer_id. Farmers that
+came from the scan data have no account until staff set a password for them here.
+The farmer ID (F001, F002, ...) is given once and never changes, and it is not the username.
+Linking or renaming the account only changes full_name.
+A phone used without an account gets its own row (POST /api/mobile/device). Signing up or
+logging in on that phone connects the row to the account, or merges it into the account's own
+row (see claim_phone_farmer).
 Errors are { "error": "message" }.
 """
 import re
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import decode_token, get_jwt_identity, jwt_required
 
 from database import get_connection
-from permissions import staff_required
+from permissions import farmer_scope, role_required, staff_required
 from security import hash_password
 
 farmers = Blueprint("farmers", __name__)
@@ -31,11 +39,88 @@ LAT_RANGE = (16.3, 17.7)
 LNG_RANGE = (121.2, 122.7)
 
 SELECT = """
-    SELECT f.*,
-           (SELECT COUNT(*) FROM mobile_scans s WHERE s.farmer_id = f.farmer_id) AS total_scans,
-           EXISTS(SELECT 1 FROM users u WHERE u.username = f.farmer_id AND u.role = 'farmer') AS has_account
+    SELECT f.*, u.username,
+           (SELECT COUNT(*) FROM mobile_scans s WHERE s.farmer_id = f.farmer_id) AS total_scans
     FROM farmers f
+    LEFT JOIN users u ON u.id = f.user_id
 """
+
+
+def add_farmer(cursor, user_id, full_name, **farm):
+    """Add a farmers row under the next farmer ID (F001, F002, ...) and return that ID.
+
+    The farmer ID is given once and never changes. Linking or renaming the account only
+    changes full_name. FOR UPDATE reads the newest ID and holds it, so two sign ups at the
+    same moment can't get the same one. Without a name (a phone with no account yet) the
+    row is called "Farmer F070".
+    """
+    cursor.execute(
+        "SELECT MAX(CAST(SUBSTRING(farmer_id, 2) AS UNSIGNED)) AS last FROM farmers "
+        "WHERE farmer_id REGEXP '^F[0-9]+$' FOR UPDATE"
+    )
+    farmer_id = f"F{(cursor.fetchone()['last'] or 0) + 1:03d}"
+    columns = {"farmer_id": farmer_id, "user_id": user_id, "full_name": full_name or f"Farmer {farmer_id}", **farm}
+    cursor.execute(
+        f"INSERT INTO farmers ({', '.join(columns)}) VALUES ({', '.join(['%s'] * len(columns))})",
+        tuple(columns.values()),
+    )
+    return farmer_id
+
+
+def phone_farmer_id(device_token):
+    """The farmer ID inside a phone's token (from POST /api/mobile/device), or None."""
+    if not device_token:
+        return None
+    try:
+        claims = decode_token(device_token)
+    except Exception:  # broken, expired or signed with another key
+        return None
+    if not claims.get("device"):
+        return None
+    return claims["sub"].removeprefix("device:")
+
+
+def join_account(cursor, farmer_id, user_id, full_name):
+    """Connect a farmers row with no account to the farmer account user_id.
+    Returns the account's farmer ID, or None when the row is missing or already has an account.
+
+    - The account has no farmers row yet: this row becomes it (same farmer ID, full_name
+      from the account, the rest unchanged).
+    - The account already has one (F069) and this row is another (F070): F070's scans move
+      to F069 and F070 is deleted, so an account never has two farmer IDs.
+    Used by the phone (sign up / log in) and by "Sync now" on the Farmers page.
+    """
+    cursor.execute("SELECT farmer_id FROM farmers WHERE farmer_id = %s AND user_id IS NULL FOR UPDATE", (farmer_id,))
+    if not cursor.fetchone():
+        return None
+    cursor.execute("SELECT farmer_id FROM farmers WHERE user_id = %s", (user_id,))
+    own = cursor.fetchone()
+
+    if not own:
+        cursor.execute(
+            "UPDATE farmers SET user_id = %s, full_name = %s WHERE farmer_id = %s",
+            (user_id, full_name, farmer_id),
+        )
+        return farmer_id
+
+    cursor.execute("UPDATE mobile_scans SET farmer_id = %s WHERE farmer_id = %s", (own["farmer_id"], farmer_id))
+    cursor.execute("DELETE FROM farmers WHERE farmer_id = %s", (farmer_id,))
+    return own["farmer_id"]
+
+
+def claim_phone_farmer(cursor, user_id, full_name, device_token):
+    """Connect the phone's own farmer row (if any) to the account. Returns the account's farmer ID."""
+    phone_id = phone_farmer_id(device_token)
+    joined = join_account(cursor, phone_id, user_id, full_name) if phone_id else None
+    if joined:
+        return joined
+    cursor.execute("SELECT farmer_id FROM farmers WHERE user_id = %s", (user_id,))
+    own = cursor.fetchone()
+    return own["farmer_id"] if own else None
+
+
+def number(value):
+    return float(value) if value is not None else None
 
 
 def serialize(row):
@@ -44,11 +129,12 @@ def serialize(row):
         "full_name": row["full_name"],
         "farm_name": row["farm_name"],
         "municipality": row["municipality"],
-        "farm_latitude": float(row["farm_latitude"]),
-        "farm_longitude": float(row["farm_longitude"]),
-        "farm_size_ha": float(row["farm_size_ha"]) if row["farm_size_ha"] is not None else None,
-        "username": row["farmer_id"] if row["has_account"] else None,
-        "has_account": bool(row["has_account"]),
+        # empty until the farmer's first sync, for a farmer who signed up themselves
+        "farm_latitude": number(row["farm_latitude"]),
+        "farm_longitude": number(row["farm_longitude"]),
+        "farm_size_ha": number(row["farm_size_ha"]),
+        "username": row["username"],
+        "has_account": row["user_id"] is not None,
         "is_active": bool(row["is_active"]),
         "registered_at": row["registered_at"].isoformat(),
         "total_scans": int(row["total_scans"]),
@@ -131,17 +217,21 @@ def list_farmers():
 def my_farmer():
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT username, role FROM users WHERE id = %s", (get_jwt_identity(),))
-    user = cursor.fetchone()
-    row = fetch_one(cursor, user["username"]) if user and user["role"] == "farmer" else None
+    cursor.execute(SELECT + " WHERE f.user_id = %s", (get_jwt_identity(),))
+    row = cursor.fetchone()
     cursor.close()
     connection.close()
     return jsonify(serialize(row) if row else None), 200
 
 
 @farmers.route("/api/farmers/<farmer_id>", methods=["GET"])
-@staff_required
+@role_required("admin", "officer", "farmer")
 def get_farmer(farmer_id):
+    # a farmer can open only their own farm (the My Farm page)
+    own = farmer_scope(get_jwt_identity())
+    if own is not None and own != farmer_id:
+        return error("Farmer not found", 404)
+
     connection = get_connection()
     cursor = connection.cursor()
     row = fetch_one(cursor, farmer_id)
@@ -184,25 +274,23 @@ def create_farmer():
     cursor = connection.cursor()
     try:
         cursor.execute("SELECT 1 FROM users WHERE username = %s", (username,))
-        taken = cursor.fetchone()
-        cursor.execute("SELECT 1 FROM farmers WHERE farmer_id = %s", (username,))
-        taken = taken or cursor.fetchone()
-        if taken:
+        if cursor.fetchone():
             return error("That username is already taken", 409)
 
-        # the username is the farmer ID, so scans from the phone find this farmer
+        # the login and its farmers row are made together and linked by user_id;
+        # the farmer gets the next farmer ID, separate from the username
         cursor.execute(
             "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, 'farmer')",
             (fields["full_name"], username, hash_password(password)),
         )
-        cursor.execute(
-            "INSERT INTO farmers (farmer_id, full_name, farm_name, municipality, farm_latitude, farm_longitude, farm_size_ha) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (username, fields["full_name"], fields["farm_name"], fields["municipality"],
-             fields["farm_latitude"], fields["farm_longitude"], fields["farm_size_ha"]),
+        farmer_id = add_farmer(
+            cursor, cursor.lastrowid, fields["full_name"],
+            farm_name=fields["farm_name"], municipality=fields["municipality"],
+            farm_latitude=fields["farm_latitude"], farm_longitude=fields["farm_longitude"],
+            farm_size_ha=fields["farm_size_ha"],
         )
         connection.commit()
-        row = fetch_one(cursor, username)
+        row = fetch_one(cursor, farmer_id)
     except Exception:
         connection.rollback()
         raise
@@ -224,11 +312,13 @@ def update_farmer(farmer_id):
     password = data.get("password") or ""
     if password and len(password) < MIN_PASSWORD:
         return error(f"Password must be at least {MIN_PASSWORD} characters", 400)
+    username = (data.get("username") or "").strip()
 
     connection = get_connection()
     cursor = connection.cursor()
     try:
-        if not fetch_one(cursor, farmer_id):
+        farmer = fetch_one(cursor, farmer_id)
+        if not farmer:
             return error("Farmer not found", 404)
 
         cursor.execute(
@@ -238,26 +328,31 @@ def update_farmer(farmer_id):
              fields["farm_latitude"], fields["farm_longitude"], fields["farm_size_ha"], farmer_id),
         )
 
-        cursor.execute("SELECT id, role FROM users WHERE username = %s", (farmer_id,))
-        account = cursor.fetchone()
-        if account and account["role"] != "farmer":
-            return error("That username belongs to a staff account", 409)
-
-        if account:
+        account_id = farmer["user_id"]
+        if account_id:
             # keep the login's display name in step, and reset the password when one is given
             if password:
                 cursor.execute(
                     "UPDATE users SET name = %s, password_hash = %s WHERE id = %s",
-                    (fields["full_name"], hash_password(password), account["id"]),
+                    (fields["full_name"], hash_password(password), account_id),
                 )
             else:
-                cursor.execute("UPDATE users SET name = %s WHERE id = %s", (fields["full_name"], account["id"]))
+                cursor.execute("UPDATE users SET name = %s WHERE id = %s", (fields["full_name"], account_id))
         elif password:
-            # a farmer who came from the scan data has no login yet; the username is the farmer ID
+            # a farmer who came from the scan data has no login yet: make one and link it
+            # to this row. The farmer ID stays the same, only the username is new.
+            if not USERNAME.fullmatch(username):
+                connection.rollback()
+                return error("Username must be 3 to 50 letters, numbers, dots, dashes or underscores", 400)
+            cursor.execute("SELECT 1 FROM users WHERE username = %s", (username,))
+            if cursor.fetchone():
+                connection.rollback()
+                return error("That username is already taken", 409)
             cursor.execute(
                 "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, 'farmer')",
-                (fields["full_name"], farmer_id, hash_password(password)),
+                (fields["full_name"], username, hash_password(password)),
             )
+            cursor.execute("UPDATE farmers SET user_id = %s WHERE farmer_id = %s", (cursor.lastrowid, farmer_id))
 
         connection.commit()
         row = fetch_one(cursor, farmer_id)
@@ -269,6 +364,74 @@ def update_farmer(farmer_id):
         connection.close()
 
     return jsonify(serialize(row)), 200
+
+
+@farmers.route("/api/farmers/<farmer_id>/sync", methods=["POST"])
+@staff_required
+def sync_farmer(farmer_id):
+    """Sync now, for a farmer with no account: connect the row to a login.
+
+    { "username": ... }                                   an existing farmer account. If it already
+                                                           has a farmer ID, this row's scans move there
+                                                           and this row is deleted.
+    { "full_name": ..., "username": ..., "password": ... } sign up a new account; this row keeps its
+                                                           farmer ID and becomes the account's.
+    Returns the farmer the account ends up with.
+    """
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+    new_account = bool(password)
+
+    if new_account:
+        full_name = (data.get("full_name") or "").strip()
+        if not full_name or len(full_name) > 100:
+            return error("Full name is required", 400)
+        if not USERNAME.fullmatch(username):
+            return error("Username must be 3 to 50 letters, numbers, dots, dashes or underscores", 400)
+        if len(password) < MIN_PASSWORD:
+            return error(f"Password must be at least {MIN_PASSWORD} characters", 400)
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        row = fetch_one(cursor, farmer_id)
+        if not row:
+            return error("Farmer not found", 404)
+        if row["user_id"]:
+            return error("This farmer is already connected to an account", 409)
+
+        if new_account:
+            cursor.execute("SELECT 1 FROM users WHERE username = %s", (username,))
+            if cursor.fetchone():
+                return error("That username is already taken", 409)
+            cursor.execute(
+                "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, 'farmer')",
+                (full_name, username, hash_password(password)),
+            )
+            user_id = cursor.lastrowid
+        else:
+            cursor.execute("SELECT id, name, role FROM users WHERE username = %s", (username,))
+            account = cursor.fetchone()
+            if not account:
+                return error("No account with that username", 404)
+            if account["role"] != "farmer":
+                return error("That account is not a farmer account", 400)
+            user_id, full_name = account["id"], account["name"]
+
+        result = join_account(cursor, farmer_id, user_id, full_name)
+        connection.commit()
+        row = fetch_one(cursor, result)
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+    farmer = serialize(row)
+    farmer["merged_from"] = farmer_id if result != farmer_id else None
+    return jsonify(farmer), 200
 
 
 @farmers.route("/api/farmers/<farmer_id>/status", methods=["PATCH"])

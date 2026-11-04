@@ -80,7 +80,9 @@ function FarmerHome() {
     <div>
       <h1 className="text-2xl font-medium">Welcome, {user.full_name}</h1>
       <p className="text-muted-foreground mb-5">
-        {farmer.farm_name} · {farmer.municipality}{farmer.farm_size_ha ? ` · ${farmer.farm_size_ha} ha` : ""}
+        {farmer.farm_name
+          ? `${farmer.farm_name} · ${farmer.municipality}${farmer.farm_size_ha ? ` · ${farmer.farm_size_ha} ha` : ""}`
+          : "Your farm details are filled in from your first synced scan."}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-3 mb-6">
@@ -115,7 +117,12 @@ function FarmerHome() {
           </CardContent>
         </Card>
 
-        <MiniMap height={300} center={[farmer.farm_latitude, farmer.farm_longitude]} zoom={12} points={points} />
+        <MiniMap
+          height={300}
+          center={farmer.farm_latitude != null ? [farmer.farm_latitude, farmer.farm_longitude] : undefined}
+          zoom={farmer.farm_latitude != null ? 12 : undefined}
+          points={points}
+        />
       </div>
 
       <div className="flex items-center justify-between mb-3">

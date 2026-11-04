@@ -13,8 +13,8 @@ ALLOWED_TYPES = ("image/jpeg", "image/png")
 @diagnose.route("/api/diagnose", methods=["POST"])
 @jwt_required()
 def diagnose_image():
-    # the web scanner is for admins and officers
-    if get_role(get_jwt_identity()) not in ("admin", "officer"):
+    # staff check photos for any farmer, farmers check their own
+    if get_role(get_jwt_identity()) not in ("admin", "officer", "farmer"):
         return jsonify({"error": "Not allowed"}), 403
 
     image = request.files.get("image")

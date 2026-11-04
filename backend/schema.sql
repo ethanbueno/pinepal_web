@@ -51,8 +51,29 @@ CREATE TABLE IF NOT EXISTS admin_reviews (
   CONSTRAINT fk_review_scan FOREIGN KEY (scan_id) REFERENCES scans (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- One row per farmer. user_id is the farmer's login (one row per farmer account), empty for
+-- farmers from the scan data who have no login yet. The farm details start blank at sign up.
+-- Farmers are deactivated (is_active = 0), never deleted, so their scans stay.
+CREATE TABLE IF NOT EXISTS farmers (
+  farmer_id varchar(50) NOT NULL,
+  user_id int(11) DEFAULT NULL,
+  full_name varchar(100) NOT NULL,
+  farm_name varchar(150) NOT NULL DEFAULT '',
+  municipality varchar(100) NOT NULL DEFAULT '',
+  farm_latitude decimal(10,7) DEFAULT NULL,
+  farm_longitude decimal(10,7) DEFAULT NULL,
+  farm_size_ha decimal(6,2) DEFAULT NULL,
+  is_active tinyint(1) NOT NULL DEFAULT 1,
+  registered_at datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (farmer_id),
+  UNIQUE KEY uq_farmers_user (user_id),
+  KEY idx_farmers_municipality (municipality),
+  CONSTRAINT fk_farmers_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- Scans synced from the mobile app (plus ones added on the web, image_source 'Web').
 -- The dashboard, map and analytics all read from this table.
+-- Every scan belongs to a farmer, and a farmer with scans can't be deleted.
 CREATE TABLE IF NOT EXISTS mobile_scans (
   scan_uuid varchar(36) NOT NULL,
   farmer_id varchar(50) NOT NULL,
@@ -76,5 +97,8 @@ CREATE TABLE IF NOT EXISTS mobile_scans (
   farmer_feedback varchar(10) DEFAULT NULL,
   farmer_label varchar(50) DEFAULT NULL,
   PRIMARY KEY (scan_uuid),
-  KEY idx_mobile_scans_scanned_at (scanned_at)
+  KEY idx_mobile_scans_scanned_at (scanned_at),
+  KEY fk_mobile_scans_farmer (farmer_id),
+  CONSTRAINT fk_mobile_scans_farmer FOREIGN KEY (farmer_id) REFERENCES farmers (farmer_id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

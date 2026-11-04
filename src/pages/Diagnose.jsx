@@ -2,8 +2,9 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ImagePlusIcon, XIcon } from "lucide-react"
 import { diagnoseImage } from "../api/diagnose"
-import { getFarmers } from "../api/farmers"
-import { createScan } from "../api/scans"
+import { getFarmers, getMyFarmer } from "../api/farmers"
+import { createScan, uploadMyScan } from "../api/scans"
+import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
 import logo from "../assets/pinepal-logo.png"
 import ProtocolCard from "../components/ProtocolCard"
@@ -23,11 +24,37 @@ const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
 // like the mobile app: 87.3%
 const percent = (value) => formatPercent(value, 1)
 
+// the farm's pin, or null when the farm has no location yet
+const farmPin = (farm) =>
+  farm?.farm_latitude != null ? { lat: farm.farm_latitude, lng: farm.farm_longitude } : null
+
+// local time without a zone, like the mobile app sends: 2026-11-04T09:30:00
+function localTimestamp(date = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0")
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  )
+}
+
+// crypto.randomUUID only exists on https or localhost, so build one by hand otherwise
+function newUuid() {
+  if (crypto.randomUUID) return crypto.randomUUID()
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 0x0f) | 0x40 // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 // Same flow as the mobile app: photo on top, a sheet below it.
 // Choose a photo -> "Analyze Photo" -> disease, confidence and the top 3 guesses.
+// Staff save a scan for any farmer. A farmer saves to their own history, with the photo.
 function Diagnose() {
   const navigate = useNavigate()
   const notify = useToast()
+  const { user } = useAuth()
+  const isFarmer = user.role === "farmer"
 
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState("")
@@ -40,15 +67,26 @@ function Diagnose() {
   const [showSave, setShowSave] = useState(false)
   const [farmers, setFarmers] = useState([])
   const [farmerId, setFarmerId] = useState("")
+  const [myFarm, setMyFarm] = useState(null) // farmers only
   const [location, setLocation] = useState(null) // { lat, lng }
   const [notes, setNotes] = useState("")
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    if (isFarmer) {
+      // the pin starts on the farmer's own farm
+      getMyFarmer()
+        .then((farm) => {
+          setMyFarm(farm)
+          setLocation(farmPin(farm))
+        })
+        .catch((err) => console.error(err))
+      return
+    }
     getFarmers({ status: "active" })
       .then(setFarmers)
       .catch((err) => console.error(err))
-  }, [])
+  }, [isFarmer])
 
   const chooseFile = (chosen) => {
     setError("")
@@ -106,6 +144,31 @@ function Diagnose() {
     const second = result.predictions[1]
 
     setSaving(true)
+    if (isFarmer) {
+      try {
+        const saved = await uploadMyScan(file, {
+          scan_uuid: newUuid(),
+          farm_name: myFarm?.farm_name || null,
+          municipality: myFarm?.municipality || null,
+          latitude: location.lat,
+          longitude: location.lng,
+          scanned_at: localTimestamp(),
+          predicted_label: top.label,
+          confidence: top.confidence,
+          second_label: second?.label,
+          second_confidence: second?.confidence,
+          notes: notes || null,
+        })
+        notify("Scan saved to My Scans.")
+        navigate("/scans/" + saved.scan_uuid)
+      } catch (err) {
+        console.error(err)
+        notify(err.response?.data?.error || "Could not save the scan.", "error")
+        setSaving(false)
+      }
+      return
+    }
+
     try {
       const saved = await createScan({
         farmer_id: farmer.farmer_id,
@@ -138,7 +201,7 @@ function Diagnose() {
     setError("")
     setShowSave(false)
     setFarmerId("")
-    setLocation(null)
+    setLocation(isFarmer ? farmPin(myFarm) : null)
     setNotes("")
   }
 
@@ -269,15 +332,25 @@ function Diagnose() {
                 <CardTitle className="font-semibold">Save as scan</CardTitle>
               </CardHeader>
               <CardContent>
-                <Label className="mb-1.5">Farmer</Label>
-                <div className="mb-3">
-                  <SelectField
-                    value={farmerId}
-                    onChange={handleFarmerChange}
-                    options={farmerOptions}
-                    placeholder={farmers.length === 0 ? "No farmers yet" : "Choose a farmer"}
-                  />
-                </div>
+                {isFarmer ? (
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    {myFarm?.farm_name
+                      ? `Saved to your scans for ${myFarm.farm_name}${myFarm.municipality ? `, ${myFarm.municipality}` : ""}.`
+                      : "Your farm has no details yet. Click the map where your farm is, and it is saved as your farm's location."}
+                  </p>
+                ) : (
+                  <>
+                    <Label className="mb-1.5">Farmer</Label>
+                    <div className="mb-3">
+                      <SelectField
+                        value={farmerId}
+                        onChange={handleFarmerChange}
+                        options={farmerOptions}
+                        placeholder={farmers.length === 0 ? "No farmers yet" : "Choose a farmer"}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <Label className="mb-1.5">Location (click the map to move the pin)</Label>
                 <div className="mb-3">
@@ -300,10 +373,10 @@ function Diagnose() {
                 <Button
                   size="lg"
                   className="w-full h-11"
-                  disabled={!farmerId || saving}
+                  disabled={(isFarmer ? !location : !farmerId) || saving}
                   onClick={handleSave}
                 >
-                  {saving ? "Saving..." : "Save scan"}
+                  {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}
                 </Button>
               </CardContent>
             </Card>

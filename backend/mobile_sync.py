@@ -2,12 +2,18 @@
 
 POST /api/mobile/login   same login as the web, but the token lasts 30 days. The web token
                          is short on purpose; a farmer who scans in the field and syncs days
-                         later should not have to sign in again first.
+                         later should not have to sign in again first. With the phone's
+                         device_token it also connects the phone's farmer ID to the account.
+POST /api/mobile/device  a phone with no account gets its own farmer ID and a device token.
 POST /api/mobile/scans   upload one scan (form data, with the photo as the "image" file).
+                         The web Diagnose page uses it too when a farmer saves a scan.
                          Safe to repeat: sending the same scan_uuid again updates the notes
                          and the farmer's feedback instead of making a duplicate.
 
-Any signed-in user can upload; the scan is stored under their username (farmer_id).
+Scans are synced by a farmer account or by a phone's device token. Each farmer account has
+one farmers row (farmers.user_id), and the scan is stored under that row's farmer_id; a phone
+without an account uses its own row. The first sync fills in the farm details the row is
+still missing. Deactivated farmers can neither sign in nor upload.
 Errors are { "error": "message" }.
 """
 import os
@@ -15,19 +21,21 @@ import uuid as uuidlib
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
 from database import get_connection
+from farmers import add_farmer, claim_phone_farmer
 from mobile_scans import LABELS
 from scans import UPLOAD_DIR
 from security import verify_password
-from web_auth import user_json
+from web_auth import DEACTIVATED, is_deactivated, user_json
 
 mobile_sync = Blueprint("mobile_sync", __name__)
 
 TOKEN_LIFETIME = timedelta(days=30)
+PHONE_TOKEN_LIFETIME = timedelta(days=3650)  # a phone without an account keeps its farmer ID
 FEEDBACK = ("correct", "incorrect")
-IMAGE_SOURCES = ("Camera", "Gallery")
+IMAGE_SOURCES = ("Camera", "Gallery", "Web")  # Web: a farmer saving from the web Diagnose page
 
 # The photo is checked by its first bytes, not by the name or type the phone sends
 IMAGE_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png"}
@@ -53,14 +61,52 @@ def mobile_login():
         (username, username),
     )
     user = cursor.fetchone()
-    cursor.close()
-    connection.close()
-
     if not user or not verify_password(password, user["password_hash"]):
+        cursor.close()
+        connection.close()
         return jsonify({"error": "Invalid username or password"}), 401
 
+    farmer_id = None
+    try:
+        if is_deactivated(cursor, user):
+            return jsonify({"error": DEACTIVATED}), 403
+        if user["role"] == "farmer":
+            # The phone's own farmer ID (from before sign in) joins this account: it becomes
+            # the account's farmer ID, or its scans move into the one the account already has.
+            farmer_id = claim_phone_farmer(cursor, user["id"], user["name"], data.get("device_token"))
+            connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
     token = create_access_token(identity=str(user["id"]), expires_delta=TOKEN_LIFETIME)
-    return jsonify({"access_token": token, "user": user_json(user)}), 200
+    return jsonify({"access_token": token, "user": {**user_json(user), "farmer_id": farmer_id}}), 200
+
+
+@mobile_sync.route("/api/mobile/device", methods=["POST"])
+def register_phone():
+    """A phone used without an account gets its own farmer ID, so its scans can sync before
+    anyone signs in. The token only uploads scans for that farmer ID, and it stops working
+    once the farmer ID is connected to an account."""
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        farmer_id = add_farmer(cursor, None, None)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+    token = create_access_token(
+        identity=f"device:{farmer_id}", expires_delta=PHONE_TOKEN_LIFETIME, additional_claims={"device": True}
+    )
+    return jsonify({"farmer_id": farmer_id, "device_token": token}), 201
 
 
 def read_scan(form):
@@ -140,58 +186,109 @@ def upload_scan():
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT username, role FROM users WHERE id = %s", (get_jwt_identity(),))
-    user = cursor.fetchone()
-    if not user:
+    def refuse(message, status):
         cursor.close()
         connection.close()
-        return jsonify({"error": "Account not found"}), 401
+        return jsonify({"error": message}), status
 
-    # A scan that already exists can only be updated by the same farmer (or staff)
+    if get_jwt().get("device"):
+        # A phone without an account: its own farmer row, as long as no account has it yet.
+        # Once it is connected to an account, the phone signs in and uses that instead.
+        cursor.execute(
+            "SELECT farmer_id, farm_name, municipality, farm_latitude, is_active FROM farmers "
+            "WHERE farmer_id = %s AND user_id IS NULL",
+            (get_jwt_identity().removeprefix("device:"),),
+        )
+        farm = cursor.fetchone()
+        if not farm:
+            return refuse("This phone's farmer ID now belongs to an account. Sign in to sync.", 401)
+        if not farm["is_active"]:
+            return refuse(DEACTIVATED, 403)
+    else:
+        cursor.execute("SELECT id, username, name, role FROM users WHERE id = %s", (get_jwt_identity(),))
+        user = cursor.fetchone()
+        if not user:
+            return refuse("Account not found", 401)
+        if user["role"] != "farmer":
+            return refuse("Only farmer accounts can sync scans", 403)
+
+        # The phone keeps its 30-day token, so check here too, not only at sign-in
+        if is_deactivated(cursor, user):
+            return refuse(DEACTIVATED, 403)
+
+        # the farmer's own farmers row, linked to this account by user_id
+        cursor.execute(
+            "SELECT farmer_id, farm_name, municipality, farm_latitude FROM farmers WHERE user_id = %s",
+            (user["id"],),
+        )
+        farm = cursor.fetchone()
+        if not farm:
+            return refuse("This account is not linked to a farm. Contact your agricultural officer.", 403)
+
+    # A scan that already exists can only be updated by the farmer who took it
     cursor.execute("SELECT farmer_id FROM mobile_scans WHERE scan_uuid = %s", (scan["scan_uuid"],))
     existing = cursor.fetchone()
-    if existing and existing["farmer_id"] != user["username"] and user["role"] == "farmer":
-        cursor.close()
-        connection.close()
-        return jsonify({"error": "This scan belongs to another account"}), 403
+    if existing and existing["farmer_id"] != farm["farmer_id"]:
+        return refuse("This scan belongs to another account", 403)
 
     photo = request.files.get("image")
     image_path = ""
     if photo:
         image_path = save_photo(photo, scan["scan_uuid"])
         if image_path is None:
-            cursor.close()
-            connection.close()
-            return jsonify({"error": "The photo must be a JPG or PNG"}), 415
+            return refuse("The photo must be a JPG or PNG", 415)
+
+    # A farmer who signed up has a blank farm. Fill in what is still blank from this scan:
+    # the farm name and municipality from the phone's settings, the location from the scan.
+    blanks = {}
+    if not farm["farm_name"] and scan["farm_name"]:
+        blanks["farm_name"] = scan["farm_name"]
+    if not farm["municipality"] and scan["municipality"]:
+        blanks["municipality"] = scan["municipality"]
+    if farm["farm_latitude"] is None:
+        blanks["farm_latitude"] = scan["latitude"]
+        blanks["farm_longitude"] = scan["longitude"]
 
     now = datetime.now().replace(microsecond=0)
-    cursor.execute(
-        """
-        INSERT INTO mobile_scans
-        (scan_uuid, farmer_id, farm_name, municipality, latitude, longitude, scanned_at,
-         predicted_label, confidence, second_label, second_confidence,
-         image_source, image_path, synced_at, notes, farmer_feedback, farmer_label)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-          farm_name = VALUES(farm_name),
-          municipality = VALUES(municipality),
-          notes = VALUES(notes),
-          farmer_feedback = VALUES(farmer_feedback),
-          farmer_label = VALUES(farmer_label),
-          image_path = IF(VALUES(image_path) = '', image_path, VALUES(image_path)),
-          synced_at = VALUES(synced_at)
-        """,
-        (
-            scan["scan_uuid"], user["username"], scan["farm_name"], scan["municipality"],
-            scan["latitude"], scan["longitude"], scan["scanned_at"],
-            scan["predicted_label"], scan["confidence"],
-            scan["second_label"], scan["second_confidence"],
-            scan["image_source"], image_path, now, scan["notes"],
-            scan["farmer_feedback"], scan["farmer_label"],
-        ),
-    )
-    connection.commit()
-    cursor.close()
-    connection.close()
+    # Roll back on any error: a half-done save would keep the farmers row locked
+    # and every later save would wait on it.
+    try:
+        if blanks:
+            cursor.execute(
+                "UPDATE farmers SET " + ", ".join(f"{column} = %s" for column in blanks) + " WHERE farmer_id = %s",
+                (*blanks.values(), farm["farmer_id"]),
+            )
+        cursor.execute(
+            """
+            INSERT INTO mobile_scans
+            (scan_uuid, farmer_id, farm_name, municipality, latitude, longitude, scanned_at,
+             predicted_label, confidence, second_label, second_confidence,
+             image_source, image_path, synced_at, notes, farmer_feedback, farmer_label)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+              farm_name = VALUES(farm_name),
+              municipality = VALUES(municipality),
+              notes = VALUES(notes),
+              farmer_feedback = VALUES(farmer_feedback),
+              farmer_label = VALUES(farmer_label),
+              image_path = IF(VALUES(image_path) = '', image_path, VALUES(image_path)),
+              synced_at = VALUES(synced_at)
+            """,
+            (
+                scan["scan_uuid"], farm["farmer_id"], scan["farm_name"], scan["municipality"],
+                scan["latitude"], scan["longitude"], scan["scanned_at"],
+                scan["predicted_label"], scan["confidence"],
+                scan["second_label"], scan["second_confidence"],
+                scan["image_source"], image_path, now, scan["notes"],
+                scan["farmer_feedback"], scan["farmer_label"],
+            ),
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
 
     return jsonify({"scan_uuid": scan["scan_uuid"], "synced_at": now.isoformat()}), 200
