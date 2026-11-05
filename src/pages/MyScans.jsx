@@ -7,7 +7,10 @@ import ScansTable from "../components/ScansTable"
 import Pagination from "../components/Pagination"
 import ErrorAlert from "../components/ErrorAlert"
 import { emptyFilters } from "../utils/filters"
-import { Card, CardContent } from "@/components/ui/card"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
+import EmptyState from "../components/EmptyState"
+import { UnlinkIcon } from "lucide-react"
 
 const PER_PAGE = 20
 
@@ -66,20 +69,20 @@ function MyScans() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium mb-4">My Scans</h1>
+      <PageHeader title="My Scans" description="Your farm's scans, newest first. Click a row to open it." />
 
       <FilterBar filters={filters} onChange={handleFilterChange} showMunicipality={false} />
 
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       {loading ? (
-        <p className="text-muted-foreground">Loading your scans...</p>
+        <LoadingBlocks rows={6} height="h-11" label="Loading your scans" />
       ) : !farmer ? (
-        <Card>
-          <CardContent className="py-2 text-center text-muted-foreground">
-            Your account is not linked to a farm yet. Please ask an agricultural officer.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={UnlinkIcon}
+          title="Not linked to a farm yet"
+          text="Your account is not linked to a farm yet. Please ask an agricultural officer."
+        />
       ) : (
         <>
           <ScansTable scans={data.items} showFarmer={false} />

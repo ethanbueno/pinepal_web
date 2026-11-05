@@ -15,8 +15,8 @@ const verifiedOptions = [
 
 function Field({ label, children, className }) {
   return (
-    <div className={className}>
-      <Label className="mb-1.5">{label}</Label>
+    <div className={"w-full sm:w-auto " + (className || "")}>
+      <Label className="mb-1.5 text-muted-foreground">{label}</Label>
       {children}
     </div>
   )
@@ -42,7 +42,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = true }
 
         <Field label="Disease">
           <SelectField
-            className="w-44"
+            className="w-full sm:w-44"
             allLabel="All diseases"
             value={filters.disease}
             onChange={(v) => update("disease", v)}
@@ -53,7 +53,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = true }
         {showMunicipality && (
           <Field label="Municipality">
             <SelectField
-              className="w-48"
+              className="w-full sm:w-48"
               allLabel="All municipalities"
               value={filters.municipality}
               onChange={(v) => update("municipality", v)}
@@ -74,7 +74,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = true }
           <>
             <Field label="Verified">
               <SelectField
-                className="w-36"
+                className="w-full sm:w-36"
                 allLabel="All"
                 value={filters.verified}
                 onChange={(v) => update("verified", v)}
@@ -82,7 +82,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = true }
               />
             </Field>
 
-            <Label className="pb-2 cursor-pointer">
+            <Label className="cursor-pointer pb-2">
               <Checkbox
                 checked={filters.low_conf}
                 onCheckedChange={(checked) => update("low_conf", checked)}

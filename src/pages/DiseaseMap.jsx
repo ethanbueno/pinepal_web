@@ -6,6 +6,7 @@ import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES, getDisease } from "../ut
 import { viewBounds, viewMaxBounds } from "../utils/mapArea"
 import IsabelaLayer from "../components/IsabelaLayer"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
 import SelectField, { toOptions } from "../components/SelectField"
 import { formatDate, formatPercent, scanImage } from "../utils/format"
 import { Card, CardContent } from "@/components/ui/card"
@@ -56,17 +57,18 @@ function DiseaseMap() {
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 6rem)" }}>
-      <div className="mb-3">
-        <h1 className="text-2xl font-medium">Disease Map</h1>
-        {LOCKED_MUNICIPALITY && (
-          <p className="text-sm text-muted-foreground">Temporarily locked to {LOCKED_MUNICIPALITY}.</p>
-        )}
-      </div>
+      <PageHeader
+        title="Disease Map"
+        description={
+          "Where each scan was taken, colored by diagnosis. Click a dot for details." +
+          (LOCKED_MUNICIPALITY ? ` Temporarily locked to ${LOCKED_MUNICIPALITY}.` : "")
+        }
+      />
 
-      <Card className="mb-3">
+      <Card className="mb-4">
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label>Diseases</Label>
+            <Label className="text-muted-foreground">Diseases</Label>
             <div className="flex flex-wrap gap-2">
               {DISEASES.map((d) => (
                 <Toggle
@@ -77,7 +79,7 @@ function DiseaseMap() {
                   onPressedChange={() => toggleDisease(d.label)}
                   className="gap-2 data-pressed:border-primary data-pressed:bg-primary/10"
                 >
-                  <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span className="size-2.5 rounded-full" style={{ backgroundColor: d.color }} />
                   {d.name}
                 </Toggle>
               ))}
@@ -85,8 +87,8 @@ function DiseaseMap() {
           </div>
 
           <div className="flex flex-wrap gap-4">
-            <div className="flex w-44 flex-col gap-1.5">
-              <Label>Municipality</Label>
+            <div className="flex w-full flex-col gap-1.5 sm:w-44">
+              <Label className="text-muted-foreground">Municipality</Label>
               <SelectField
                 allLabel={LOCKED_MUNICIPALITY ? undefined : "All (Isabela)"}
                 value={municipality}
@@ -95,12 +97,12 @@ function DiseaseMap() {
                 disabled={Boolean(LOCKED_MUNICIPALITY)}
               />
             </div>
-            <div className="flex w-40 flex-col gap-1.5">
-              <Label>From</Label>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
+              <Label className="text-muted-foreground">From</Label>
               <Input type="date" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
             </div>
-            <div className="flex w-40 flex-col gap-1.5">
-              <Label>To</Label>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
+              <Label className="text-muted-foreground">To</Label>
               <Input type="date" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} />
             </div>
           </div>
@@ -111,7 +113,10 @@ function DiseaseMap() {
 
       <Card className="relative isolate z-0 grow min-h-80 py-0">
         {loading && (
-          <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-card/70 text-muted-foreground">
+          <div
+            aria-busy="true"
+            className="absolute inset-0 z-[1000] flex items-center justify-center bg-card/70 text-sm font-medium text-muted-foreground"
+          >
             Loading map...
           </div>
         )}
@@ -138,12 +143,16 @@ function DiseaseMap() {
               >
                 <Popup>
                   <div className="w-44">
-                    <img src={scanImage(scan)} alt="Scan" className="w-full rounded mb-2" />
+                    <img src={scanImage(scan)} alt="Scan" className="mb-2 aspect-square w-full rounded-md object-cover" />
                     <div className="font-semibold">{disease.name}</div>
                     <div className="text-xs">Confidence: {formatPercent(scan.confidence)}</div>
                     <div className="text-xs">{formatDate(scan.scanned_at)}</div>
-                    <div className="text-xs mb-1">{scan.farmer_name}</div>
-                    <Link to={"/scans/" + scan.scan_uuid} state={{ from: "/map" }} className="font-semibold underline underline-offset-4 text-xs">
+                    <div className="mb-1 text-xs">{scan.farmer_name}</div>
+                    <Link
+                      to={"/scans/" + scan.scan_uuid}
+                      state={{ from: "/map" }}
+                      className="text-xs font-semibold underline underline-offset-4"
+                    >
                       View details
                     </Link>
                   </div>
@@ -153,14 +162,14 @@ function DiseaseMap() {
           })}
         </MapContainer>
 
-        <Card size="sm" className="absolute top-4 right-4 z-[1000] shadow">
-          <CardContent className="text-sm">
-            <div className="font-semibold mb-1">Legend</div>
+        <Card size="sm" className="absolute top-3 right-3 z-[1000] shadow-sm">
+          <CardContent className="flex flex-col gap-1 text-sm">
+            <div className="mb-1 font-semibold">Legend</div>
             {DISEASES.map((d) => (
               <div key={d.label} className="flex items-center gap-2">
-                <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
                 <span className="grow">{d.name}</span>
-                <span className="text-muted-foreground">{countOf(d.label)}</span>
+                <span className="pl-2 font-medium tabular-nums">{countOf(d.label)}</span>
               </div>
             ))}
           </CardContent>

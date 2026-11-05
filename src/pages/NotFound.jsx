@@ -1,9 +1,15 @@
+import { Link } from "react-router-dom"
+import { MapPinOffIcon } from "lucide-react"
+import EmptyState from "../components/EmptyState"
+import { buttonVariants } from "@/components/ui/button"
+
 function NotFound() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-2">Page not found</h1>
-      <p className="text-muted-foreground">That page does not exist.</p>
-    </div>
+    <EmptyState icon={MapPinOffIcon} title="Page not found" text="That page does not exist.">
+      <Link to="/" className={buttonVariants({ variant: "outline" })}>
+        Go to the home page
+      </Link>
+    </EmptyState>
   )
 }
 

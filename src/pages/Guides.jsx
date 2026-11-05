@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import { getProtocols } from "../api/protocols"
 import ProtocolCard from "../components/ProtocolCard"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
 
 // read-only remediation guides for farmers
 function Guides() {
@@ -22,19 +24,21 @@ function Guides() {
       })
   }, [])
 
-  if (loading) return <p className="text-muted-foreground">Loading guides...</p>
-  if (error) return <ErrorAlert>{error}</ErrorAlert>
-
   return (
     <div>
-      <h1 className="text-2xl font-medium mb-1">Guides</h1>
-      <p className="text-muted-foreground mb-4">What to look for and what to do for each pineapple condition.</p>
+      <PageHeader title="Guides" description="What to look for and what to do for each pineapple condition." />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {protocols.map((p) => (
-          <ProtocolCard key={p.protocol_id} protocol={p} />
-        ))}
-      </div>
+      {loading ? (
+        <LoadingBlocks rows={4} height="h-48" label="Loading guides" />
+      ) : error ? (
+        <ErrorAlert>{error}</ErrorAlert>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {protocols.map((p) => (
+            <ProtocolCard key={p.protocol_id} protocol={p} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

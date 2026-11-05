@@ -6,6 +6,8 @@ import Modal from "../components/Modal"
 import ConfirmModal from "../components/ConfirmModal"
 import DiseaseBadge from "../components/DiseaseBadge"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
 import SelectField, { toOptions } from "../components/SelectField"
 import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate } from "../utils/format"
@@ -123,17 +125,31 @@ function Protocols() {
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading protocols...</p>
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-medium">Protocols</h1>
+  const header = (
+    <PageHeader
+      title="Protocols"
+      description="Remediation guides for each class. Phones download changes on their next sync."
+      action={
         <Button onClick={openAdd}>
           <PlusIcon />
           Add protocol
         </Button>
+      }
+    />
+  )
+
+  if (loading) {
+    return (
+      <div>
+        {header}
+        <LoadingBlocks rows={6} height="h-11" label="Loading protocols" />
       </div>
+    )
+  }
+
+  return (
+    <div>
+      {header}
 
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
@@ -152,24 +168,33 @@ function Protocols() {
           <TableBody>
             {protocols.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className=" text-center text-muted-foreground">
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
                   No protocols yet. Click "Add protocol" to create the first remediation guide.
                 </TableCell>
               </TableRow>
             )}
             {protocols.map((p) => (
-              <TableRow key={p.protocol_id} className=" hover:bg-muted">
+              <TableRow key={p.protocol_id}>
                 <TableCell>
                   <DiseaseBadge label={p.label} />
                 </TableCell>
                 <TableCell>{p.type}</TableCell>
                 <TableCell>{p.severity}</TableCell>
-                <TableCell>v{p.version}</TableCell>
+                <TableCell className="tabular-nums">v{p.version}</TableCell>
                 <TableCell>{formatDate(p.updated_at)}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(p)}>Delete</Button>
+                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setDeleteTarget(p)}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -180,7 +205,7 @@ function Protocols() {
 
       <Modal open={showForm} title={editingId ? "Edit protocol" : "Add protocol"} onClose={() => setShowForm(false)}>
         <form onSubmit={handleSave}>
-          <div className="grid gap-3 sm:grid-cols-2 mb-3">
+          <div className="mb-4 grid gap-4 sm:grid-cols-2">
             <div>
               <Label className="mb-1.5">Class</Label>
               <SelectField
@@ -214,7 +239,7 @@ function Protocols() {
             ["immediate_action", "Immediate action"],
             ["prevention", "Prevention"],
           ].map(([name, title]) => (
-            <div className="mb-3" key={name}>
+            <div className="mb-4" key={name}>
               <Label className="mb-1.5">{title}</Label>
               <Textarea
                 rows={3}
@@ -225,8 +250,10 @@ function Protocols() {
             </div>
           ))}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2 border-t pt-4">
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </Button>

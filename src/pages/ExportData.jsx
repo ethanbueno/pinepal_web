@@ -4,6 +4,7 @@ import { countScans } from "../api/scans"
 import { downloadExport } from "../api/exportData"
 import { useToast } from "../components/toastcontext"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
 import SelectField, { toOptions } from "../components/SelectField"
 import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
@@ -73,21 +74,23 @@ function ExportData() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium">Export</h1>
-      <p className="text-muted-foreground mb-4">
-        Download scan records as a spreadsheet.
-        {LOCKED_MUNICIPALITY && ` Temporarily locked to ${LOCKED_MUNICIPALITY}.`}
-      </p>
+      <PageHeader
+        title="Export"
+        description={
+          "Download scan records as a spreadsheet." +
+          (LOCKED_MUNICIPALITY ? ` Temporarily locked to ${LOCKED_MUNICIPALITY}.` : "")
+        }
+      />
 
-      <Card>
+      <Card className="max-w-5xl">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle className="font-semibold">Filters</CardTitle>
           <CardDescription>Leave a filter empty to include everything.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="flex flex-col gap-1.5">
-              <Label>Disease</Label>
+              <Label className="text-muted-foreground">Disease</Label>
               <SelectField
                 allLabel="All diseases"
                 value={filters.disease}
@@ -96,7 +99,7 @@ function ExportData() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Municipality</Label>
+              <Label className="text-muted-foreground">Municipality</Label>
               <SelectField
                 allLabel={LOCKED_MUNICIPALITY ? undefined : "All municipalities"}
                 value={filters.municipality}
@@ -106,11 +109,11 @@ function ExportData() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>From</Label>
+              <Label className="text-muted-foreground">From</Label>
               <Input type="date" value={filters.from} onChange={(e) => update("from", e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>To</Label>
+              <Label className="text-muted-foreground">To</Label>
               <Input type="date" value={filters.to} onChange={(e) => update("to", e.target.value)} />
             </div>
           </div>
@@ -126,7 +129,7 @@ function ExportData() {
           <Separator />
 
           <div className="flex flex-col gap-1.5">
-            <Label>Format</Label>
+            <Label className="text-muted-foreground">Format</Label>
             <ToggleGroup
               variant="outline"
               spacing={0}
@@ -140,8 +143,8 @@ function ExportData() {
 
           {error && <ErrorAlert className="">{error}</ErrorAlert>}
         </CardContent>
-        <CardFooter className="justify-between gap-4 border-t">
-          <span className="text-sm text-muted-foreground">
+        <CardFooter className="flex-wrap justify-between gap-4 border-t">
+          <span className="text-sm text-muted-foreground tabular-nums">
             {rowCount === null ? "Counting rows..." : `${rowCount} ${rowCount === 1 ? "row" : "rows"} will be exported`}
           </span>
           <Button disabled={downloading || rowCount === 0} onClick={handleDownload}>
