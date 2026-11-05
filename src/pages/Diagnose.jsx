@@ -343,81 +343,83 @@ function Diagnose() {
                 <Button variant="outline" size="lg" className="mt-4 h-11 w-full" onClick={reset}>
                   Scan another
                 </Button>
+                {!showSave && (
+                  <Button size="lg" className="mt-2 h-11 w-full" onClick={() => setShowSave(true)}>
+                    Save as scan
+                  </Button>
+                )}
               </>
             )}
           </CardContent>
         </Card>
       )}
 
+      {/* the save form opens under the result, in the same column as its button */}
+      {result && !notPineapple && showSave && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-semibold">Save as scan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isFarmer ? (
+              <p className="mb-3 text-sm text-muted-foreground">
+                {myFarm?.farm_name
+                  ? `Saved to your scans for ${myFarm.farm_name}${myFarm.municipality ? `, ${myFarm.municipality}` : ""}.`
+                  : "Your farm has no details yet. Click the map where your farm is, and it is saved as your farm's location."}
+              </p>
+            ) : (
+              <>
+                <Label className="mb-1.5 text-muted-foreground">Farmer</Label>
+                <div className="mb-3">
+                  <SelectField
+                    value={farmerId}
+                    onChange={handleFarmerChange}
+                    options={farmerOptions}
+                    placeholder={farmers.length === 0 ? "No farmers yet" : "Choose a farmer"}
+                  />
+                </div>
+              </>
+      )}
+
+          <Label className="mb-1.5 text-muted-foreground">Location (click the map to move the pin)</Label>
+          <div className="mb-3">
+            <MiniMap
+              height={220}
+              center={location ? [location.lat, location.lng] : undefined}
+              zoom={location ? 12 : undefined}
+              onPick={(lat, lng) => setLocation({ lat, lng })}
+              points={
+                location
+                  ? [{ id: "pin", lat: location.lat, lng: location.lng, color: topDisease.color }]
+                  : []
+              }
+            />
+          </div>
+
+          <Label className="mb-1.5 text-muted-foreground">Notes</Label>
+          <Textarea className="mb-4" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+          <Button
+            size="lg"
+            className="h-11 w-full"
+            disabled={(isFarmer ? !location : !farmerId) || saving}
+            onClick={handleSave}
+          >
+            {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}
+          </Button>
+        </CardContent>
+      </Card>
+      )}
+
       </div>
 
-      {/* right column: the result details, guide and the optional save */}
+      {/* right column: the remediation guide for the result */}
       {result && notPineapple ? (
         <EmptyState icon={ImageOffIcon} title="No diagnosis" text="No diagnosis for this photo. Try another photo of the pineapple." />
       ) : result ? (
         <div className="flex flex-col gap-4">
           {/* the server has no guides yet, so use the same guide as the mobile app */}
           <ProtocolCard protocol={result.protocol ?? startingGuides.find((g) => g.label === top?.label)} />
-
-          {!showSave ? (
-            <Button variant="outline" size="lg" className="h-11 w-full" onClick={() => setShowSave(true)}>
-              Save as scan
-            </Button>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-semibold">Save as scan</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isFarmer ? (
-                  <p className="mb-3 text-sm text-muted-foreground">
-                    {myFarm?.farm_name
-                      ? `Saved to your scans for ${myFarm.farm_name}${myFarm.municipality ? `, ${myFarm.municipality}` : ""}.`
-                      : "Your farm has no details yet. Click the map where your farm is, and it is saved as your farm's location."}
-                  </p>
-                ) : (
-                  <>
-                    <Label className="mb-1.5 text-muted-foreground">Farmer</Label>
-                    <div className="mb-3">
-                      <SelectField
-                        value={farmerId}
-                        onChange={handleFarmerChange}
-                        options={farmerOptions}
-                        placeholder={farmers.length === 0 ? "No farmers yet" : "Choose a farmer"}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <Label className="mb-1.5 text-muted-foreground">Location (click the map to move the pin)</Label>
-                <div className="mb-3">
-                  <MiniMap
-                    height={220}
-                    center={location ? [location.lat, location.lng] : undefined}
-                    zoom={location ? 12 : undefined}
-                    onPick={(lat, lng) => setLocation({ lat, lng })}
-                    points={
-                      location
-                        ? [{ id: "pin", lat: location.lat, lng: location.lng, color: topDisease.color }]
-                        : []
-                    }
-                  />
-                </div>
-
-                <Label className="mb-1.5 text-muted-foreground">Notes</Label>
-                <Textarea className="mb-4" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-
-                <Button
-                  size="lg"
-                  className="h-11 w-full"
-                  disabled={(isFarmer ? !location : !farmerId) || saving}
-                  onClick={handleSave}
-                >
-                  {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
       ) : (
         <EmptyState
