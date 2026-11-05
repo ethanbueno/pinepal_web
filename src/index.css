@@ -126,6 +126,13 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    caret-color: transparent; /* no blinking cursor outside text fields */
+  }
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    caret-color: auto;
   }
   html {
     @apply font-sans;
