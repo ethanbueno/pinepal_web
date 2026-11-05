@@ -1,0 +1,148 @@
+{
+  "No Disease": {
+    "name": "No Disease Detected",
+    "image": "assets/images/diseases/healthy.jpg",
+    "scientific_name": "Ananas comosus",
+    "severity": "None",
+    "pathogen_type": "No pathogen detected",
+    "description": "No disease symptoms were detected on this fruit. Shell colour, eye structure and crown appear normal for the observed maturity stage.",
+    "symptoms": [
+      "Uniform shell colour with firm, evenly spaced fruitlets.",
+      "Crown leaves upright and free of chlorosis or wilting.",
+      "No water-soaked lesions or discharge at the base or eyes."
+    ],
+    "remediation_steps": [
+      "No treatment is required for this fruit.",
+      "Continue the regular field monitoring schedule.",
+      "Record this scan as a baseline for the block."
+    ],
+    "preventive_measures": [
+      "Maintain the standard sanitation programme for tools and crates.",
+      "Keep drainage clear so water does not pool around the plant base.",
+      "Handle fruit carefully at harvest to avoid bruising the shell."
+    ]
+  },
+  "Crown Rot": {
+    "name": "Crown Rot",
+    "image": "assets/images/diseases/crown_rot.jpg",
+    "scientific_name": "Ceratocystis paradoxa (Thielaviopsis paradoxa)",
+    "severity": "High",
+    "pathogen_type": "Fungus",
+    "description": "A fungal rot that enters through wounds at the crown or the cut base of the fruit and planting material. It spreads fastest in warm, wet conditions and can destroy the crown and move into the fruit.",
+    "symptoms": [
+      "Crown leaves turning yellow or brown, starting at the base.",
+      "Soft, water-soaked tissue where the crown joins the fruit.",
+      "Crown leaves that pull out easily, sometimes with a sweet, fermented smell."
+    ],
+    "remediation_steps": [
+      "Separate affected fruit and plants from healthy ones immediately.",
+      "Remove and destroy infected crowns and fruit away from the field and packing area.",
+      "Sanitise knives, crates and tables with a 10% sodium hypochlorite solution before reuse.",
+      "Treat cut surfaces of healthy fruit and planting material with an approved fungicide, following the label rate.",
+      "Consult the local agricultural extension office if the problem keeps spreading."
+    ],
+    "preventive_measures": [
+      "Avoid wounding the crown and fruit during harvest and handling.",
+      "Plant only healthy, dry planting material and treat it before setting it out.",
+      "Improve drainage and avoid working in the block while plants are wet."
+    ]
+  },
+  "Fruit Rot": {
+    "name": "Fruit Rot",
+    "image": "assets/images/diseases/fruit_rot.jpg",
+    "scientific_name": "Various fungi and bacteria",
+    "severity": "High",
+    "pathogen_type": "Fungus or bacterium",
+    "description": "Rotting of the fruit tissue caused by fungi or bacteria that enter through wounds, cracks or insect damage. It is worse in warm, humid conditions and during storage and transport.",
+    "symptoms": [
+      "Soft, water-soaked patches on the shell that darken over time.",
+      "Fruit that leaks juice or has a sour, fermented smell.",
+      "Mould or discoloured tissue spreading from a wound or bruise."
+    ],
+    "remediation_steps": [
+      "Remove rotting fruit from the lot immediately so it does not infect others.",
+      "Discard or bury infected fruit away from the packing area.",
+      "Sanitise crates, tables and knives with a 10% sodium hypochlorite solution before reuse.",
+      "Move the remaining fruit into cool, well-ventilated storage and sell or process it quickly.",
+      "Ask the extension office about approved post-harvest treatments for your area."
+    ],
+    "preventive_measures": [
+      "Harvest in dry hours and avoid dropping or stacking fruit roughly.",
+      "Control the insects that damage the shell.",
+      "Clean and dry packing surfaces between batches."
+    ]
+  },
+  "Fruit Fasciation": {
+    "name": "Fruit Fasciation",
+    "image": "assets/images/diseases/fruit_fasciation.jpg",
+    "scientific_name": "Physiological disorder (not caused by a pathogen)",
+    "severity": "Low",
+    "pathogen_type": "Physiological disorder",
+    "description": "An abnormal growth in which the fruit becomes flattened, ribbed or fused. It is generally not infectious, but affected fruit has poor market quality and the trait can be carried on by planting material taken from affected plants.",
+    "symptoms": [
+      "Fruit that is flattened or ribbed instead of cylindrical.",
+      "Fused or enlarged fruitlets along one side of the fruit.",
+      "Crown or stem that looks widened or flattened."
+    ],
+    "remediation_steps": [
+      "Mark affected plants so they can be found again.",
+      "Do not take suckers, slips or crowns from affected plants for planting.",
+      "Sell affected fruit for processing or local sale where appearance matters less.",
+      "Record the block and how many fruits are affected, and report repeated cases to the extension office."
+    ],
+    "preventive_measures": [
+      "Use planting material only from healthy, normal-looking plants.",
+      "Avoid plant stress from drought, waterlogging or sudden changes in growing conditions.",
+      "Keep records of affected blocks to spot patterns across cycles."
+    ]
+  },
+  "Mealybug Wilt": {
+    "name": "Mealybug Wilt of Pineapple",
+    "image": "assets/images/diseases/mealybug_wilt.jpg",
+    "scientific_name": "Pineapple mealybug wilt-associated virus",
+    "severity": "High",
+    "pathogen_type": "Virus (mealybug transmitted)",
+    "description": "A viral wilt spread by mealybugs that are in turn tended by ants. Affected plants lose vigour and produce small, poor-quality fruit.",
+    "symptoms": [
+      "Leaf tips reddening then turning yellow and curling downward.",
+      "Wilting that starts at the leaf edges and moves inward.",
+      "Mealybug colonies and ant activity at the leaf axils and roots."
+    ],
+    "remediation_steps": [
+      "Inspect the base and leaf axils for mealybug colonies and ant trails.",
+      "Control ants first, since removing them collapses the mealybug population.",
+      "Apply an approved insecticide targeting mealybugs at the label rate.",
+      "Remove and destroy severely wilted plants.",
+      "Re-inspect the block after two weeks to confirm the population has dropped."
+    ],
+    "preventive_measures": [
+      "Treat planting material before setting it out in the field.",
+      "Keep an ongoing ant baiting programme around the block borders.",
+      "Remove crop residue that shelters mealybugs between cycles."
+    ]
+  },
+  "Multiple Crown": {
+    "name": "Multiple Crown",
+    "image": "assets/images/diseases/multiple_crown.jpg",
+    "scientific_name": "Physiological disorder (not caused by a pathogen)",
+    "severity": "Low",
+    "pathogen_type": "Physiological disorder",
+    "description": "A fruit that grows two or more crowns, or a crown that splits into several. It is not infectious, but it lowers the market value of fresh fruit and is often linked to plant stress or growing conditions around flower induction.",
+    "symptoms": [
+      "Two or more crowns growing from the top of one fruit.",
+      "A crown that looks split, crowded or unusually large.",
+      "Otherwise normal-looking fruit shell and flesh."
+    ],
+    "remediation_steps": [
+      "Treat the fruit as a quality problem rather than a disease; it can still be eaten or processed.",
+      "Do not use these crowns as planting material.",
+      "Separate affected fruit from fresh-market grades.",
+      "Record how often it appears in the block and report high rates to the extension office."
+    ],
+    "preventive_measures": [
+      "Use uniform, healthy planting material.",
+      "Avoid excessive nitrogen and plant stress before flower induction.",
+      "Follow the recommended timing and rates for flower-induction treatments."
+    ]
+  }
+}

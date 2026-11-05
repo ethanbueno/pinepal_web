@@ -14,6 +14,7 @@ import PageHeader from "../components/PageHeader"
 import EmptyState from "../components/EmptyState"
 import SelectField from "../components/SelectField"
 import { getDisease } from "../utils/diseases"
+import { startingGuides } from "../utils/guides"
 import { formatPercent } from "../utils/format"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -355,7 +356,8 @@ function Diagnose() {
         <EmptyState icon={ImageOffIcon} title="No diagnosis" text="No diagnosis for this photo. Try another photo of the pineapple." />
       ) : result ? (
         <div className="flex flex-col gap-4">
-          <ProtocolCard protocol={result.protocol} />
+          {/* the server has no guides yet, so use the same guide as the mobile app */}
+          <ProtocolCard protocol={result.protocol ?? startingGuides.find((g) => g.label === top?.label)} />
 
           {!showSave ? (
             <Button variant="outline" size="lg" className="h-11 w-full" onClick={() => setShowSave(true)}>

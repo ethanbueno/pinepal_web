@@ -29,6 +29,7 @@ const emptyForm = {
   severity: "Medium",
   symptoms: "",
   immediate_action: "",
+  about: "",
   prevention: "",
 }
 
@@ -84,6 +85,7 @@ function Protocols() {
       severity: protocol.severity,
       symptoms: protocol.symptoms,
       immediate_action: protocol.immediate_action,
+      about: protocol.about || "",
       prevention: protocol.prevention,
     })
     setShowForm(true)
@@ -235,14 +237,15 @@ function Protocols() {
           </div>
 
           {[
+            ["about", "About"],
             ["symptoms", "Symptoms"],
-            ["immediate_action", "Immediate action"],
+            ["immediate_action", "Immediate action (one step per line)"],
             ["prevention", "Prevention"],
           ].map(([name, title]) => (
             <div className="mb-4" key={name}>
               <Label className="mb-1.5">{title}</Label>
               <Textarea
-                rows={3}
+                rows={name === "immediate_action" ? 5 : 3}
                 value={form[name]}
                 onChange={(e) => handleChange(name, e.target.value)}
                 required
