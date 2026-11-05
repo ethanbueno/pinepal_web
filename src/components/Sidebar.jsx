@@ -107,7 +107,7 @@ function AppSidebar({ user, onLogout }) {
                 <SidebarMenuItem key={to}>
                   <SidebarMenuButton
                     tooltip={label}
-                    className="h-9 px-3"
+                    className="h-9 px-3 data-active:bg-primary/15 data-active:text-primary-text data-active:hover:bg-primary/20 data-active:hover:text-primary-text"
                     isActive={
                       !!matchPath({ path: to, end: !!end }, pathname) ||
                       (!!alsoActiveOn && !!matchPath({ path: alsoActiveOn, end: false }, pathname))
