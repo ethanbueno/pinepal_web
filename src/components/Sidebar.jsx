@@ -48,7 +48,7 @@ const staffLinks = [
   { to: "/diagnose", label: "Diagnose", icon: StethoscopeIcon },
   // admins manage farmers from the Farmers tab on the Users page instead
   { to: "/farmers", label: "Farmers", icon: UsersIcon, notForAdmin: true },
-  { to: "/protocols", label: "Protocols", icon: FileTextIcon },
+  { to: "/protocols", label: "Guide", icon: FileTextIcon },
   { to: "/export", label: "Export", icon: DownloadIcon },
   { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true, alsoActiveOn: "/farmers" },
 ]

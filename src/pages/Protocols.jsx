@@ -58,7 +58,7 @@ function Protocols() {
       .catch((err) => {
         if (ignore) return
         console.error(err)
-        setError("Could not load protocols.")
+        setError("Could not load the guides.")
         setLoading(false)
       })
 
@@ -97,16 +97,16 @@ function Protocols() {
     try {
       if (editingId) {
         await updateProtocol(editingId, form)
-        notify("Protocol updated. Phones will download it on their next sync.")
+        notify("Guide updated. Phones will download it on their next sync.")
       } else {
         await createProtocol(form)
-        notify("Protocol added.")
+        notify("Guide added.")
       }
       setShowForm(false)
       reload()
     } catch (err) {
       console.error(err)
-      notify("Could not save the protocol.", "error")
+      notify("Could not save the guide.", "error")
     } finally {
       setSaving(false)
     }
@@ -117,22 +117,22 @@ function Protocols() {
     setDeleteTarget(null)
     try {
       await deleteProtocol(target.protocol_id)
-      notify("Protocol deleted.")
+      notify("Guide deleted.")
       reload()
     } catch (err) {
       console.error(err)
-      notify("Could not delete the protocol.", "error")
+      notify("Could not delete the guide.", "error")
     }
   }
 
   const header = (
     <PageHeader
-      title="Protocols"
+      title="Guide"
       description="Remediation guides for each class. Phones download changes on their next sync."
       action={
         <Button onClick={openAdd}>
           <PlusIcon />
-          Add protocol
+          Add guide
         </Button>
       }
     />
@@ -142,7 +142,7 @@ function Protocols() {
     return (
       <div>
         {header}
-        <LoadingBlocks rows={6} height="h-11" label="Loading protocols" />
+        <LoadingBlocks rows={6} height="h-11" label="Loading guides" />
       </div>
     )
   }
@@ -169,7 +169,7 @@ function Protocols() {
             {protocols.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                  No protocols yet. Click "Add protocol" to create the first remediation guide.
+                  No guides yet. Click "Add guide" to create the first remediation guide.
                 </TableCell>
               </TableRow>
             )}
@@ -203,7 +203,7 @@ function Protocols() {
         </Table>
       </Card>
 
-      <Modal open={showForm} title={editingId ? "Edit protocol" : "Add protocol"} onClose={() => setShowForm(false)}>
+      <Modal open={showForm} title={editingId ? "Edit guide" : "Add guide"} onClose={() => setShowForm(false)}>
         <form onSubmit={handleSave}>
           <div className="mb-4 grid gap-4 sm:grid-cols-2">
             <div>
@@ -263,7 +263,7 @@ function Protocols() {
 
       <ConfirmModal
         open={deleteTarget !== null}
-        title="Delete protocol?"
+        title="Delete guide?"
         message={`The app will have no remediation guide for ${deleteTarget?.display_name}. This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
