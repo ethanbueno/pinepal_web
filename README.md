@@ -1,6 +1,6 @@
 # PinePal Web
 
-Web dashboard for **PinePal**, a pineapple disease detection system. Farmers scan fruit with the PinePal mobile app, scans sync to a Flask + MySQL backend, and officers monitor cases here: a dashboard, a disease map of Isabela, scans and verification, farmers, and CSV export. Admins and officers can also diagnose a photo on the web with the MobileNetV2 model in `backend/model/`.
+Web dashboard for **PinePal**, a pineapple disease detection system. Farmers scan fruit with the PinePal mobile app, scans sync to a Flask + MySQL backend, and officers monitor cases here: a dashboard, a disease map of Isabela, scans and verification, farmers, and CSV export. Admins and officers can also diagnose a photo on the web with the same MobileNetV3-Large model as the app, in `backend/model/`. It first checks that the photo shows a pineapple, then identifies the condition.
 
 - **Front end:** React, Vite, Tailwind, shadcn/ui, Recharts, Leaflet (`src/`)
 - **Back end:** Flask, MySQL (`backend/`)
@@ -18,13 +18,25 @@ Web dashboard for **PinePal**, a pineapple disease detection system. Farmers sca
 | Export | CSV download with filters | staff |
 | My Farm, My Scans | A farmer's own farm and scans | farmer |
 
-In progress: treatment Protocols and farmer Guides, Excel export, and syncing scans from the mobile app.
+In progress: treatment Protocols and farmer Guides, and Excel export.
+
+## Mobile sync
+
+The PinePal mobile app works offline and uploads its scans to the backend later. The routes are in `backend/mobile_sync.py`:
+
+| Route | What it does |
+| --- | --- |
+| `POST /api/mobile/login` | Same login as the web, but the token lasts 30 days so a farmer can sync days after scanning. With the phone's device token it also links the phone's farmer ID to the account. |
+| `POST /api/mobile/device` | Gives a phone without an account its own farmer ID and device token, so its scans can sync before the farmer signs up. |
+| `POST /api/mobile/scans` | Uploads one scan as form data, with the photo as the `image` file. Sending the same `scan_uuid` again updates the notes and farmer feedback instead of making a duplicate. The web Diagnose page uses it too when a farmer saves a scan. |
+
+Synced scans show up on the Dashboard, Disease Map and Scans pages like any other scan. Deactivated farmers can neither sign in nor upload.
 
 ## Project structure
 
 ```
 src/        React app (pages, components, API calls)
-backend/    Flask API, database scripts and the MobileNetV2 model
+backend/    Flask API, database scripts and the model (backend/model/: pinepal_model.tflite, labels.txt, pinepal_model_config.json)
 ```
 
 ## Setup

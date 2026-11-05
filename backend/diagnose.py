@@ -1,12 +1,11 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from classifier import classify
+from classifier import analyze, thresholds
 from permissions import get_role
 
 diagnose = Blueprint("diagnose", __name__)
 
-LOW_CONFIDENCE = 0.6
 ALLOWED_TYPES = ("image/jpeg", "image/png")
 
 
@@ -25,14 +24,31 @@ def diagnose_image():
         return jsonify({"error": "File must be JPG or PNG"}), 415
 
     try:
-        predictions = classify(image.stream)
+        result = analyze(image.stream)
+        _, disease_threshold = thresholds()
     except Exception as error:  # unreadable or broken image
         print("diagnose failed:", error)
         return jsonify({"error": "Could not read that image"}), 400
 
+    if not result["is_pineapple"]:
+        # Not a pineapple: no diagnosis, and the page must not offer to save it
+        return jsonify({
+            "is_pineapple": False,
+            "pineapple_score": result["pineapple_score"],
+            "predictions": [],
+            "low_confidence": False,
+            "uncertain": False,
+            "protocol": None,
+        }), 200
+
+    predictions = result["predictions"]
+    uncertain = predictions[0]["confidence"] < disease_threshold
     return jsonify({
+        "is_pineapple": True,
+        "pineapple_score": result["pineapple_score"],
         "predictions": predictions,
-        "low_confidence": predictions[0]["confidence"] < LOW_CONFIDENCE,
+        "uncertain": uncertain,
+        "low_confidence": uncertain,  # older name, kept for anything that still reads it
         # remediation guides come from the protocols table (not built yet)
         "protocol": None,
     }), 200

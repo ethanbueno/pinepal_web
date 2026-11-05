@@ -49,6 +49,7 @@ function newUuid() {
 
 // Same flow as the mobile app: photo on top, a sheet below it.
 // Choose a photo -> "Analyze Photo" -> disease, confidence and the top 3 guesses.
+// A photo the model says is not a pineapple gets a retake message and can't be saved.
 // Staff save a scan for any farmer. A farmer saves to their own history, with the photo.
 function Diagnose() {
   const navigate = useNavigate()
@@ -205,7 +206,10 @@ function Diagnose() {
     setNotes("")
   }
 
-  const top = result ? result.predictions[0] : null
+  // is_pineapple is missing only with an older backend, which had no pineapple check
+  const notPineapple = result?.is_pineapple === false
+  const uncertain = result ? (result.uncertain ?? result.low_confidence) : false
+  const top = result?.predictions?.[0] ?? null
   const topDisease = top ? getDisease(top.label) : null
   const farmerOptions = farmers.map((f) => ({ value: f.farmer_id, label: `${f.full_name} - ${f.farm_name}` }))
 
@@ -267,7 +271,29 @@ function Diagnose() {
           </div>
 
           <CardContent className="p-5">
-            {!result ? (
+            {result && notPineapple ? (
+              <>
+                <div className="text-xl font-semibold">This doesn't look like a pineapple</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Pick a photo that clearly shows the pineapple fruit, crown or leaves, in good light. This photo
+                  was not checked for disease and can't be saved as a scan.
+                </p>
+                {/* opens the file picker straight away; the new photo replaces this one */}
+                <label className="mt-4 flex h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary text-sm font-medium text-primary-foreground">
+                  <ImagePlusIcon className="size-4" />
+                  Choose another photo
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    className="hidden"
+                    onChange={(e) => chooseFile(e.target.files[0])}
+                  />
+                </label>
+                <Button variant="outline" size="lg" className="w-full h-11 mt-2" onClick={reset}>
+                  Cancel
+                </Button>
+              </>
+            ) : !result ? (
               <>
                 <div className="text-xl font-semibold">Photo ready</div>
                 <div className="text-sm text-muted-foreground mb-4">Source: Web upload</div>
@@ -292,7 +318,7 @@ function Diagnose() {
                 </div>
                 <div className="text-sm text-muted-foreground">Confidence: {percent(top.confidence)}</div>
 
-                {result.low_confidence && (
+                {uncertain && (
                   <p className="mt-3 rounded-lg border border-destructive bg-muted px-3 py-2 text-sm">
                     ⚠ Not sure, please retake the photo.
                   </p>
@@ -318,7 +344,13 @@ function Diagnose() {
       </div>
 
       {/* right column: the result details, guide and the optional save */}
-      {result ? (
+      {result && notPineapple ? (
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            No diagnosis for this photo. Try another photo of the pineapple.
+          </CardContent>
+        </Card>
+      ) : result ? (
         <div className="flex flex-col gap-4">
           <ProtocolCard protocol={result.protocol} />
 

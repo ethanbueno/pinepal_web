@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "backbone": "MobileNetV3-Large",
+  "model": "pinepal_model.tflite",
+  "input_size": 224,
+  "input_scaling": "0..1 (value / 255.0), RGB, bilinear resize",
+  "output": "index 0 = p(Pineapple); indexes 1-6 = disease_labels in order",
+  "gate_threshold": 0.95,
+  "disease_labels": [
+    "Crown_Rot",
+    "Fruit_Fasciation",
+    "Fruit_Rot",
+    "Mealybug_Wilt",
+    "Multiple_Crown",
+    "No_Disease"
+  ],
+  "disease_threshold": 0.6,
+  "labels_file": "labels.txt"
+}
