@@ -146,7 +146,112 @@ def start_frontend_after_api():
     threading.Thread(target=wait_then_start, daemon=True).start()
 
 
+# ---------------------------------------------------------------------------
+# Colors for the terminal output. They are only used in a real terminal: output panes that
+# are not one (for example VS Code's "Running" view for Run Code) cannot draw colors and
+# would show codes like [32m instead. NO_COLOR=1 turns them off, FORCE_COLOR=1 forces them on.
+# ---------------------------------------------------------------------------
+RESET, BOLD, DIM = "\x1b[0m", "\x1b[1m", "\x1b[2m"
+RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN = (f"\x1b[{n}m" for n in (31, 32, 33, 34, 35, 36))
+
+REQUEST_LINE = re.compile(r'^(\S+) - - \[([^\]]+)\] "(\w+) (\S+) ([^"]+)" (\d{3}) (\S+)\s*$')
+METHOD_COLORS = {"GET": GREEN, "POST": BLUE, "PUT": YELLOW, "PATCH": YELLOW, "DELETE": RED}
+
+
+def paint(text, *styles):
+    return "".join(styles) + text + RESET
+
+
+def colors_enabled():
+    if os.getenv("NO_COLOR"):
+        return False
+    force = os.getenv("FORCE_COLOR")
+    if force not in (None, "", "0"):
+        return True
+    return sys.stdout.isatty()
+
+
+def colorize_line(line):
+    if not line.strip() or "\x1b" in line:
+        return line
+
+    request = REQUEST_LINE.match(line)
+    if request:
+        ip, when, method, path, protocol, status, size = request.groups()
+        if method == "OPTIONS":  # the browser's preflight check: dim, it is just noise
+            return paint(line, DIM)
+        code = int(status)
+        status_color = [GREEN, CYAN, YELLOW, RED + BOLD][min(max(code // 100 - 2, 0), 3)]
+        return (
+            paint(f"{ip} - - [{when}]", DIM) + " "
+            + paint(method, METHOD_COLORS.get(method, MAGENTA), BOLD) + " " + path + " "
+            + paint(protocol, DIM) + " " + paint(status, status_color, BOLD) + paint(f" {size}", DIM)
+        )
+
+    text = line.strip()
+    if text.startswith("* Running on"):
+        return line.replace(text, paint("* Running on", GREEN) + " " + paint(text[len("* Running on "):], CYAN))
+    if text.startswith("* Web dashboard ready at"):
+        url, _, took = text[len("* Web dashboard ready at "):].partition(" ")
+        return paint("* Web dashboard ready at", GREEN, BOLD) + " " + paint(url, CYAN) + (" " + paint(took, DIM) if took else "")
+    if text.startswith("* Debugger PIN:"):
+        return line.replace(text, paint("* Debugger PIN:", YELLOW) + " " + paint(text.split(": ", 1)[1], BOLD))
+    if text.startswith("* Debugger is active"):
+        return paint(line, GREEN)
+    if text.startswith("* Debug mode: on"):
+        return line.replace(text, paint("* Debug mode:", DIM) + " " + paint("on", YELLOW))
+    if text.startswith(("WARNING:", "* Web dashboard:", "* Web dashboard not started", "Port ")):
+        return paint(line, YELLOW)
+    if text.startswith(("* Serving Flask app", "Press CTRL+C", "* Restarting with stat", "* Starting the web dashboard")):
+        return paint(line, DIM)
+    if text.startswith("Traceback (most recent call last)") or text.startswith("ERROR in") or " ERROR in " in line[:40]:
+        return paint(line, RED, BOLD)
+    if re.match(r"^\w[\w.]*(Error|Exception)\b", text) and not line.startswith(" "):
+        return paint(line, RED)
+    if line.startswith("  File "):
+        return paint(line, DIM)
+    if "[vite]" in line and re.search(r"error|failed", line, re.I):
+        return paint(line, RED)
+    if "[vite]" in line and re.search(r"hmr update|page reload|hmr invalidate", line):
+        return paint(line, DIM)
+    return line
+
+
+class ColorStream:
+    """Wraps stdout or stderr and colors each line on its way out."""
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def write(self, text):
+        if isinstance(text, str) and text.strip():
+            colored = "\n".join(colorize_line(part) for part in text.split("\n"))
+            self._stream.write(colored)
+            return len(text)
+        return self._stream.write(text)
+
+    def __getattr__(self, name):  # isatty, flush, encoding and the rest pass straight through
+        return getattr(self._stream, name)
+
+
+def install_colors():
+    if not colors_enabled():
+        return
+    if os.name == "nt":
+        os.system("")  # lets older Windows consoles read color codes
+    try:
+        # Werkzeug (Flask's server) styles some of its own lines, and on Windows they then arrive
+        # in pieces. Turn that off so every line reaches ColorStream whole.
+        import werkzeug.serving
+        werkzeug.serving._log_add_style = False
+    except (ImportError, AttributeError):
+        pass
+    sys.stdout = ColorStream(sys.stdout)
+    sys.stderr = ColorStream(sys.stderr)
+
+
 if __name__ == "__main__":
+    install_colors()
     # In debug mode Flask runs this file twice (a watcher and the server). Only the
     # watcher, which stays alive across reloads, starts the dashboard.
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
