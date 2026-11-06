@@ -234,7 +234,15 @@ def upload_scan():
     if existing and existing["farmer_id"] != farm["farmer_id"]:
         return refuse("This scan belongs to another account", 403)
 
-    photo = request.files.get("image")
+    # Every scan needs a municipality, or the map and the municipality filters can't find it.
+    # The farmer can pick one for the scan; without one it takes the farm's. A farm that has
+    # none yet gets this scan's below, so it becomes the default for the next scans.
+    if not scan["municipality"]:
+        scan["municipality"] = farm["municipality"] or None
+    if not scan["municipality"]:
+        return refuse("Choose the municipality of your farm before saving the scan", 400)
+
+    photo =request.files.get("image")
     image_path = ""
     if photo:
         image_path = save_photo(photo, scan["scan_uuid"])
