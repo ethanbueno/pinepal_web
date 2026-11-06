@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom"
-import { CheckIcon } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { CheckIcon, ScanSearchIcon } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import EmptyState from "./EmptyState"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import DiseaseBadge from "./DiseaseBadge"
 import { LOW_CONFIDENCE } from "../utils/diseases"
@@ -22,11 +23,11 @@ function ScansTable({ scans, showFarmer = true, bare = false }) {
 
   if (scans.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-2 text-center text-muted-foreground">
-          No scans yet. Scans synced from the mobile app will appear here.
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={ScanSearchIcon}
+        title="No scans to show"
+        text="No scans match these filters yet. Scans synced from the mobile app will appear here."
+      />
     )
   }
 
@@ -63,9 +64,9 @@ function ScansTable({ scans, showFarmer = true, bare = false }) {
               <TableCell>
                 <DiseaseBadge label={scan.predicted_label} />
               </TableCell>
-              <TableCell>{formatPercent(scan.confidence)}</TableCell>
+              <TableCell className="tabular-nums">{formatPercent(scan.confidence)}</TableCell>
               <TableCell>
-                {scan.verified_label ? <CheckIcon className="size-4" /> : "–"}
+                {scan.verified_label ? <CheckIcon className="size-4" aria-label="Verified" /> : "–"}
               </TableCell>
               <TableCell>{scan.image_source}</TableCell>
             </TableRow>

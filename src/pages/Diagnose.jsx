@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ImagePlusIcon, XIcon } from "lucide-react"
+import { ImagePlusIcon, XIcon, TriangleAlertIcon, ImageOffIcon, ClipboardListIcon } from "lucide-react"
 import { diagnoseImage } from "../api/diagnose"
 import { getFarmers, getMyFarmer } from "../api/farmers"
 import { createScan, uploadMyScan } from "../api/scans"
@@ -10,8 +10,11 @@ import logo from "../assets/pinepal-logo.png"
 import ProtocolCard from "../components/ProtocolCard"
 import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import EmptyState from "../components/EmptyState"
 import SelectField from "../components/SelectField"
 import { getDisease } from "../utils/diseases"
+import { startingGuides } from "../utils/guides"
 import { formatPercent } from "../utils/format"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -215,8 +218,7 @@ function Diagnose() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium">Scan Pineapple</h1>
-      <p className="text-muted-foreground mb-4">Upload a photo of the fruit to check for disease.</p>
+      <PageHeader title="Scan Pineapple" description="Upload a photo of the fruit to check for disease." />
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
@@ -231,26 +233,27 @@ function Diagnose() {
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             className={cn(
-              "flex flex-col items-center justify-center p-10 text-center cursor-pointer min-h-96",
-              "rounded-xl bg-card ring-1 ring-foreground/10 border-2 border-dashed border-border transition-colors",
-              dragging && "border-primary"
+              "flex min-h-96 cursor-pointer flex-col items-center justify-center p-10 text-center",
+              "rounded-xl border-2 border-dashed border-border bg-card transition-colors hover:border-primary/60",
+              "focus-within:ring-2 focus-within:ring-ring",
+              dragging && "border-primary bg-primary/5"
             )}
           >
             <img src={logo} alt="" className="mb-3 size-24" />
             <div className="font-semibold">Drag a photo here</div>
-            <div className="text-sm text-muted-foreground mb-4">JPG or PNG, up to 5 MB</div>
-            <span className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-sm font-medium h-9 px-4 rounded-lg">
+            <div className="mb-5 text-sm text-muted-foreground">JPG or PNG, up to 5 MB</div>
+            <span className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">
               <ImagePlusIcon className="size-4" />
               Choose from Gallery
             </span>
             <input
               type="file"
               accept="image/jpeg,image/png"
-              className="hidden"
+              className="sr-only"
               onChange={(e) => chooseFile(e.target.files[0])}
             />
           </label>
-          {error && <ErrorAlert className="mt-4">{error}</ErrorAlert>}
+          {error && <ErrorAlert className="">{error}</ErrorAlert>}
         </>
       )}
 
@@ -258,7 +261,7 @@ function Diagnose() {
       {preview && (
         <Card className="py-0">
           <div className="relative bg-black">
-            <img src={preview} alt="Pineapple" className="w-full max-h-[28rem] object-contain" />
+            <img src={preview} alt="Pineapple" className="max-h-[28rem] w-full object-contain" />
             <Button
               type="button"
               size="icon-lg"
@@ -273,8 +276,8 @@ function Diagnose() {
           <CardContent className="p-5">
             {result && notPineapple ? (
               <>
-                <div className="text-xl font-semibold">This doesn't look like a pineapple</div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <div className="text-xl font-semibold tracking-tight">This doesn't look like a pineapple</div>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   Pick a photo that clearly shows the pineapple fruit, crown or leaves, in good light. This photo
                   was not checked for disease and can't be saved as a scan.
                 </p>
@@ -289,137 +292,141 @@ function Diagnose() {
                     onChange={(e) => chooseFile(e.target.files[0])}
                   />
                 </label>
-                <Button variant="outline" size="lg" className="w-full h-11 mt-2" onClick={reset}>
+                <Button variant="outline" size="lg" className="mt-2 h-11 w-full" onClick={reset}>
                   Cancel
                 </Button>
               </>
             ) : !result ? (
               <>
-                <div className="text-xl font-semibold">Photo ready</div>
-                <div className="text-sm text-muted-foreground mb-4">Source: Web upload</div>
+                <div className="text-xl font-semibold tracking-tight">Photo ready</div>
+                <div className="mb-4 text-sm text-muted-foreground">Source: Web upload</div>
 
                 {error && <ErrorAlert>{error}</ErrorAlert>}
 
-                <Button size="lg" className="w-full h-11" disabled={diagnosing} onClick={handleDiagnose}>
+                <Button size="lg" className="h-11 w-full" disabled={diagnosing} onClick={handleDiagnose}>
                   {diagnosing ? "Analyzing..." : "Analyze Photo"}
                 </Button>
-                <Button variant="outline" size="lg" className="w-full h-11 mt-2" onClick={reset}>
+                <Button variant="outline" size="lg" className="mt-2 h-11 w-full" onClick={reset}>
                   Choose another
                 </Button>
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2 text-xl font-semibold">
-                  <span
-                    className="inline-block w-3 h-3 rounded-full"
-                    style={{ backgroundColor: topDisease.color }}
-                  />
+                <div className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+                  <span className="size-3 rounded-full" style={{ backgroundColor: topDisease.color }} />
                   {topDisease.name}
                 </div>
-                <div className="text-sm text-muted-foreground">Confidence: {percent(top.confidence)}</div>
+                <div className="text-sm text-muted-foreground tabular-nums">Confidence: {percent(top.confidence)}</div>
 
                 {uncertain && (
-                  <p className="mt-3 rounded-lg border border-destructive bg-muted px-3 py-2 text-sm">
-                    ⚠ Not sure, please retake the photo.
+                  <p className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                    <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
+                    Not sure, please retake the photo.
                   </p>
                 )}
 
-                <div className="text-sm text-muted-foreground mt-4 mb-1">Top 3 guesses</div>
-                {result.predictions.map((p) => (
-                  <div key={p.label} className="flex justify-between py-1 text-sm">
-                    <span>{getDisease(p.label).name}</span>
-                    <span>{percent(p.confidence)}</span>
-                  </div>
-                ))}
+                <div className="mt-5 mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  Top 3 guesses
+                </div>
+                <div className="divide-y">
+                  {result.predictions.map((p) => (
+                    <div key={p.label} className="flex items-center justify-between py-2 text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full" style={{ backgroundColor: getDisease(p.label).color }} />
+                        {getDisease(p.label).name}
+                      </span>
+                      <span className="font-medium tabular-nums">{percent(p.confidence)}</span>
+                    </div>
+                  ))}
+                </div>
 
-                <Button variant="outline" size="lg" className="w-full h-11 mt-4" onClick={reset}>
+                <Button variant="outline" size="lg" className="mt-4 h-11 w-full" onClick={reset}>
                   Scan another
                 </Button>
+                {!showSave && (
+                  <Button size="lg" className="mt-2 h-11 w-full" onClick={() => setShowSave(true)}>
+                    Save as scan
+                  </Button>
+                )}
               </>
             )}
           </CardContent>
         </Card>
       )}
 
-      </div>
-
-      {/* right column: the result details, guide and the optional save */}
-      {result && notPineapple ? (
+      {/* the save form opens under the result, in the same column as its button */}
+      {result && !notPineapple && showSave && (
         <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            No diagnosis for this photo. Try another photo of the pineapple.
-          </CardContent>
-        </Card>
-      ) : result ? (
-        <div className="flex flex-col gap-4">
-          <ProtocolCard protocol={result.protocol} />
-
-          {!showSave ? (
-            <Button variant="outline" size="lg" className="w-full h-11" onClick={() => setShowSave(true)}>
-              Save as scan
-            </Button>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-semibold">Save as scan</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isFarmer ? (
-                  <p className="mb-3 text-sm text-muted-foreground">
-                    {myFarm?.farm_name
-                      ? `Saved to your scans for ${myFarm.farm_name}${myFarm.municipality ? `, ${myFarm.municipality}` : ""}.`
-                      : "Your farm has no details yet. Click the map where your farm is, and it is saved as your farm's location."}
-                  </p>
-                ) : (
-                  <>
-                    <Label className="mb-1.5">Farmer</Label>
-                    <div className="mb-3">
-                      <SelectField
-                        value={farmerId}
-                        onChange={handleFarmerChange}
-                        options={farmerOptions}
-                        placeholder={farmers.length === 0 ? "No farmers yet" : "Choose a farmer"}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <Label className="mb-1.5">Location (click the map to move the pin)</Label>
+          <CardHeader>
+            <CardTitle className="font-semibold">Save as scan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isFarmer ? (
+              <p className="mb-3 text-sm text-muted-foreground">
+                {myFarm?.farm_name
+                  ? `Saved to your scans for ${myFarm.farm_name}${myFarm.municipality ? `, ${myFarm.municipality}` : ""}.`
+                  : "Your farm has no details yet. Click the map where your farm is, and it is saved as your farm's location."}
+              </p>
+            ) : (
+              <>
+                <Label className="mb-1.5 text-muted-foreground">Farmer</Label>
                 <div className="mb-3">
-                  <MiniMap
-                    height={220}
-                    center={location ? [location.lat, location.lng] : undefined}
-                    zoom={location ? 12 : undefined}
-                    onPick={(lat, lng) => setLocation({ lat, lng })}
-                    points={
-                      location
-                        ? [{ id: "pin", lat: location.lat, lng: location.lng, color: topDisease.color }]
-                        : []
-                    }
+                  <SelectField
+                    value={farmerId}
+                    onChange={handleFarmerChange}
+                    options={farmerOptions}
+                    placeholder={farmers.length === 0 ? "No farmers yet" : "Choose a farmer"}
                   />
                 </div>
+              </>
+      )}
 
-                <Label className="mb-1.5">Notes</Label>
-                <Textarea className="mb-3" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Label className="mb-1.5 text-muted-foreground">Location (click the map to move the pin)</Label>
+          <div className="mb-3">
+            <MiniMap
+              height={220}
+              center={location ? [location.lat, location.lng] : undefined}
+              zoom={location ? 12 : undefined}
+              onPick={(lat, lng) => setLocation({ lat, lng })}
+              points={
+                location
+                  ? [{ id: "pin", lat: location.lat, lng: location.lng, color: topDisease.color }]
+                  : []
+              }
+            />
+          </div>
 
-                <Button
-                  size="lg"
-                  className="w-full h-11"
-                  disabled={(isFarmer ? !location : !farmerId) || saving}
-                  onClick={handleSave}
-                >
-                  {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+          <Label className="mb-1.5 text-muted-foreground">Notes</Label>
+          <Textarea className="mb-4" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+          <Button
+            size="lg"
+            className="h-11 w-full"
+            disabled={(isFarmer ? !location : !farmerId) || saving}
+            onClick={handleSave}
+          >
+            {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}
+          </Button>
+        </CardContent>
+      </Card>
+      )}
+
+      </div>
+
+      {/* right column: the remediation guide for the result */}
+      {result && notPineapple ? (
+        <EmptyState icon={ImageOffIcon} title="No diagnosis" text="No diagnosis for this photo. Try another photo of the pineapple." />
+      ) : result ? (
+        <div className="flex flex-col gap-4">
+          {/* the server has no guides yet, so use the same guide as the mobile app */}
+          <ProtocolCard protocol={result.protocol ?? startingGuides.find((g) => g.label === top?.label)} />
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            The remediation guide and save options will appear here after the photo is analyzed.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={ClipboardListIcon}
+          title="Nothing analyzed yet"
+          text="The remediation guide and save options will appear here after the photo is analyzed."
+        />
       )}
       </div>
     </div>

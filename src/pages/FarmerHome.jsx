@@ -7,6 +7,10 @@ import StatCard from "../components/StatCard"
 import ScansTable from "../components/ScansTable"
 import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
+import EmptyState from "../components/EmptyState"
+import { UnlinkIcon } from "lucide-react"
 import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate } from "../utils/format"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,20 +51,19 @@ function FarmerHome() {
     }
   }, [user])
 
-  if (loading) return <p className="text-muted-foreground">Loading your farm...</p>
+  if (loading) return <LoadingBlocks rows={3} height="h-32" label="Loading your farm" />
   if (error) return <ErrorAlert>{error}</ErrorAlert>
 
   if (!farmer) {
     return (
-      <Card className="max-w-lg">
-        <CardHeader>
-          <CardTitle className="text-xl font-medium">Welcome, {user.full_name}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-muted-foreground">
-          Your account is not linked to a farm yet. Please ask an agricultural officer to add you on
-          the Farmers page.
-        </CardContent>
-      </Card>
+      <div>
+        <PageHeader title={`Welcome, ${user.full_name}`} />
+        <EmptyState
+          icon={UnlinkIcon}
+          title="Not linked to a farm yet"
+          text="Your account is not linked to a farm yet. Please ask an agricultural officer to add you on the Farmers page."
+        />
+      </div>
     )
   }
 
@@ -78,32 +81,37 @@ function FarmerHome() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium">Welcome, {user.full_name}</h1>
-      <p className="text-muted-foreground mb-5">
-        {farmer.farm_name
-          ? `${farmer.farm_name} · ${farmer.municipality}${farmer.farm_size_ha ? ` · ${farmer.farm_size_ha} ha` : ""}`
-          : "Your farm details are filled in from your first synced scan."}
-      </p>
+      <PageHeader
+        title={`Welcome, ${user.full_name}`}
+        description={
+          farmer.farm_name
+            ? `${farmer.farm_name} · ${farmer.municipality}${farmer.farm_size_ha ? ` · ${farmer.farm_size_ha} ha` : ""}`
+            : "Your farm details are filled in from your first synced scan."
+        }
+      />
 
-      <div className="grid gap-4 sm:grid-cols-3 mb-6">
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard title="My Scans" value={farmer.total_scans} />
-        <StatCard title="Diseased" value={diseased} note="scans with a problem" />
-        <StatCard title="Healthy" value={healthy} note="no disease found" />
+        <StatCard title="Diseased" value={diseased} note="Scans with a problem." />
+        <StatCard title="Healthy" value={healthy} note="No disease found." />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 mb-6">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="font-semibold">My scans by disease</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
             {DISEASES.map((d) => (
-              <div key={d.label} className="mb-2">
-                <div className="flex justify-between text-sm">
-                  <span>{d.name}</span>
-                  <span className="text-muted-foreground">{countOf(d.label)}</span>
+              <div key={d.label}>
+                <div className="mb-1.5 flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                    {d.name}
+                  </span>
+                  <span className="font-medium tabular-nums">{countOf(d.label)}</span>
                 </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full"
                     style={{
@@ -125,13 +133,18 @@ function FarmerHome() {
         />
       </div>
 
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold">Latest scans</h2>
-        <Link to="/my-scans" className="font-semibold underline underline-offset-4 text-sm">See all history →</Link>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Latest scans</h2>
+        <Link
+          to="/my-scans"
+          className="rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          See all history
+        </Link>
       </div>
       <ScansTable scans={recent.slice(0, 5)} showFarmer={false} />
       {recent.length > 0 && (
-        <p className="text-xs text-muted-foreground mt-2">Last scan: {formatDate(recent[0].scanned_at)}</p>
+        <p className="mt-2 text-xs text-muted-foreground">Last scan: {formatDate(recent[0].scanned_at)}</p>
       )}
     </div>
   )

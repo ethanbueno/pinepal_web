@@ -12,6 +12,9 @@ import BackButton from "../components/BackButton"
 import ConfirmModal from "../components/ConfirmModal"
 import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
+import ConfidenceBar from "../components/ConfidenceBar"
 import SelectField from "../components/SelectField"
 import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate, formatDateTime, formatPercent, scanImage } from "../utils/format"
@@ -24,8 +27,8 @@ const diseaseOptions = DISEASES.map((d) => ({ value: d.label, label: d.name }))
 function Info({ label, children }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm">{children}</div>
+      <div className="mb-0.5 text-xs text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium">{children}</div>
     </div>
   )
 }
@@ -113,11 +116,11 @@ function ScanDetail() {
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading scan...</p>
+  if (loading) return <LoadingBlocks rows={3} height="h-48" label="Loading scan" />
   if (error) {
     return (
-      <div>
-        <ErrorAlert>{error}</ErrorAlert>
+      <div className="flex flex-col items-start gap-4">
+        <ErrorAlert className="">{error}</ErrorAlert>
         <BackButton to={back.to}>{back.label}</BackButton>
       </div>
     )
@@ -129,22 +132,30 @@ function ScanDetail() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <BackButton to={back.to}>{back.label}</BackButton>
-          <h1 className="text-2xl font-medium mt-3">Scan detail</h1>
-        </div>
-        {user.role === "admin" && (
-          <Button variant="destructive" size="sm" disabled={deleting} onClick={() => setShowDelete(true)}>
-            <Trash2Icon />
-            {deleting ? "Deleting..." : "Delete scan"}
-          </Button>
-        )}
+      <div className="mb-4">
+        <BackButton to={back.to}>{back.label}</BackButton>
       </div>
+      <PageHeader
+        title="Scan detail"
+        description={`${scan.farm_name || scan.farmer_name} · ${formatDateTime(scan.scanned_at)}`}
+        action={
+          user.role === "admin" && (
+            <Button
+              variant="outline"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              disabled={deleting}
+              onClick={() => setShowDelete(true)}
+            >
+              <Trash2Icon />
+              {deleting ? "Deleting..." : "Delete scan"}
+            </Button>
+          )
+        }
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="self-start py-0">
-          <img src={scanImage(scan)} alt="Pineapple scan" className="w-full" />
+          <img src={scanImage(scan)} alt="Pineapple scan" className="aspect-square w-full object-cover" />
           {!scan.image_url && (
             <p className="px-4 pb-4 text-xs text-muted-foreground">
               No photo available. The picture is only a placeholder for the diagnosis.
@@ -154,14 +165,18 @@ function ScanDetail() {
 
         <div className="flex flex-col gap-4">
           <Card>
+            <CardHeader>
+              <CardTitle className="font-semibold">Diagnosis</CardTitle>
+            </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3 mb-1">
+              <div className="mb-3 flex flex-wrap items-center gap-3">
                 <DiseaseBadge label={finalLabel} />
                 <span className="font-semibold">
                   {scan.verified_label ? "Verified diagnosis" : `${formatPercent(scan.confidence, 1)} confidence`}
                 </span>
               </div>
-              <div className="text-sm text-muted-foreground mb-4">
+              {!scan.verified_label && <ConfidenceBar value={scan.confidence} />}
+              <div className="mt-3 mb-5 text-sm text-muted-foreground">
                 {scan.verified_label && (
                   <div>
                     AI prediction: {getDisease(scan.predicted_label).name} ({formatPercent(scan.confidence, 1)})
@@ -173,7 +188,7 @@ function ScanDetail() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4 border-t pt-4">
                 <Info label="Farmer">{scan.farmer_name}</Info>
                 <Info label="Farm">{scan.farm_name}</Info>
                 <Info label="Municipality">{scan.municipality}</Info>
@@ -197,7 +212,7 @@ function ScanDetail() {
                   Verified as <DiseaseBadge label={scan.verified_label} /> by {scan.verified_by}
                   {scan.verified_at && <> on {formatDateTime(scan.verified_at)}</>}
                   {scan.verified_label !== scan.predicted_label && (
-                    <span className="text-destructive font-semibold"> (Corrected)</span>
+                    <span className="font-semibold text-destructive"> (Corrected)</span>
                   )}
                 </p>
               ) : isFarmer ? (
@@ -205,9 +220,9 @@ function ScanDetail() {
               ) : (
                 <div className="flex flex-wrap items-end gap-3">
                   <div>
-                    <Label className="mb-1.5">Correct disease</Label>
+                    <Label className="mb-1.5 text-muted-foreground">Correct disease</Label>
                     <SelectField
-                      className="w-48"
+                      className="w-full sm:w-48"
                       value={chosenLabel}
                       onChange={setChosenLabel}
                       options={diseaseOptions}
@@ -217,7 +232,7 @@ function ScanDetail() {
                     {saving ? "Saving..." : "Save"}
                   </Button>
                   {chosenLabel !== scan.predicted_label && (
-                    <span className="text-sm text-destructive font-semibold">Corrected</span>
+                    <span className="text-sm font-semibold text-destructive">Corrected</span>
                   )}
                 </div>
               )}
@@ -226,7 +241,7 @@ function ScanDetail() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 mt-4">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <MiniMap
           height={260}
           center={[scan.latitude, scan.longitude]}

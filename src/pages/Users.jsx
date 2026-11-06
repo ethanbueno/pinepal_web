@@ -7,6 +7,8 @@ import { useToast } from "../components/toastcontext"
 import Modal from "../components/Modal"
 import ConfirmModal from "../components/ConfirmModal"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
 import SelectField from "../components/SelectField"
 import { ROLES, getRoleLabel } from "../utils/roles"
 import { formatDate } from "../utils/format"
@@ -126,13 +128,20 @@ function Users() {
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading users...</p>
+  const header = <PageHeader title="Users" description="Accounts that can sign in, sorted by role." />
+
+  if (loading) {
+    return (
+      <div>
+        {header}
+        <LoadingBlocks rows={5} height="h-11" label="Loading users" />
+      </div>
+    )
+  }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-medium">Users</h1>
-      </div>
+      {header}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Tabs value={tab.value} onValueChange={(value) => setSearchParams({ tab: value })}>
@@ -178,23 +187,32 @@ function Users() {
               <TableBody>
                 {tabUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className=" text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
                       No {tab.label.toLowerCase()} yet.
                     </TableCell>
                   </TableRow>
                 )}
                 {tabUsers.map((u) => (
-                  <TableRow key={u.id} className=" hover:bg-muted">
-                    <TableCell>{u.full_name}</TableCell>
-                    <TableCell>@{u.username}</TableCell>
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.full_name}</TableCell>
+                    <TableCell className="text-muted-foreground">@{u.username}</TableCell>
                     <TableCell>{getRoleLabel(u.role)}</TableCell>
                     <TableCell>{formatDate(u.created_at)}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" onClick={() => openEdit(u)}>Edit</Button>
+                        <Button size="sm" variant="outline" onClick={() => openEdit(u)}>
+                          Edit
+                        </Button>
                         {/* an admin can't delete their own account */}
                         {u.id !== currentUser.id && (
-                          <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(u)}>Delete</Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => setDeleteTarget(u)}
+                          >
+                            Delete
+                          </Button>
                         )}
                       </div>
                     </TableCell>
@@ -208,7 +226,7 @@ function Users() {
 
       <Modal open={showForm} title={editingId ? "Edit user" : "Add user"} onClose={() => setShowForm(false)}>
         <form onSubmit={handleSave}>
-          <div className="grid gap-3 mb-4">
+          <div className="mb-4 grid gap-4">
             <div>
               <Label className="mb-1.5">Full name</Label>
               <Input value={form.full_name} onChange={(e) => handleChange("full_name", e.target.value)} required />
@@ -234,8 +252,10 @@ function Users() {
 
           {formError && <ErrorAlert>{formError}</ErrorAlert>}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2 border-t pt-4">
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </Button>

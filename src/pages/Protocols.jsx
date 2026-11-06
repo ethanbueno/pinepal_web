@@ -6,6 +6,8 @@ import Modal from "../components/Modal"
 import ConfirmModal from "../components/ConfirmModal"
 import DiseaseBadge from "../components/DiseaseBadge"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
 import SelectField, { toOptions } from "../components/SelectField"
 import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate } from "../utils/format"
@@ -27,6 +29,7 @@ const emptyForm = {
   severity: "Medium",
   symptoms: "",
   immediate_action: "",
+  about: "",
   prevention: "",
 }
 
@@ -56,7 +59,7 @@ function Protocols() {
       .catch((err) => {
         if (ignore) return
         console.error(err)
-        setError("Could not load protocols.")
+        setError("Could not load the guides.")
         setLoading(false)
       })
 
@@ -82,6 +85,7 @@ function Protocols() {
       severity: protocol.severity,
       symptoms: protocol.symptoms,
       immediate_action: protocol.immediate_action,
+      about: protocol.about || "",
       prevention: protocol.prevention,
     })
     setShowForm(true)
@@ -95,16 +99,16 @@ function Protocols() {
     try {
       if (editingId) {
         await updateProtocol(editingId, form)
-        notify("Protocol updated. Phones will download it on their next sync.")
+        notify("Guide updated. Phones will download it on their next sync.")
       } else {
         await createProtocol(form)
-        notify("Protocol added.")
+        notify("Guide added.")
       }
       setShowForm(false)
       reload()
     } catch (err) {
       console.error(err)
-      notify("Could not save the protocol.", "error")
+      notify("Could not save the guide.", "error")
     } finally {
       setSaving(false)
     }
@@ -115,25 +119,39 @@ function Protocols() {
     setDeleteTarget(null)
     try {
       await deleteProtocol(target.protocol_id)
-      notify("Protocol deleted.")
+      notify("Guide deleted.")
       reload()
     } catch (err) {
       console.error(err)
-      notify("Could not delete the protocol.", "error")
+      notify("Could not delete the guide.", "error")
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading protocols...</p>
+  const header = (
+    <PageHeader
+      title="Guide"
+      description="Remediation guides for each class. Phones download changes on their next sync."
+      action={
+        <Button onClick={openAdd}>
+          <PlusIcon />
+          Add guide
+        </Button>
+      }
+    />
+  )
+
+  if (loading) {
+    return (
+      <div>
+        {header}
+        <LoadingBlocks rows={6} height="h-11" label="Loading guides" />
+      </div>
+    )
+  }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-medium">Protocols</h1>
-        <Button onClick={openAdd}>
-          <PlusIcon />
-          Add protocol
-        </Button>
-      </div>
+      {header}
 
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
@@ -152,24 +170,33 @@ function Protocols() {
           <TableBody>
             {protocols.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className=" text-center text-muted-foreground">
-                  No protocols yet. Click "Add protocol" to create the first remediation guide.
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                  No guides yet. Click "Add guide" to create the first remediation guide.
                 </TableCell>
               </TableRow>
             )}
             {protocols.map((p) => (
-              <TableRow key={p.protocol_id} className=" hover:bg-muted">
+              <TableRow key={p.protocol_id}>
                 <TableCell>
                   <DiseaseBadge label={p.label} />
                 </TableCell>
                 <TableCell>{p.type}</TableCell>
                 <TableCell>{p.severity}</TableCell>
-                <TableCell>v{p.version}</TableCell>
+                <TableCell className="tabular-nums">v{p.version}</TableCell>
                 <TableCell>{formatDate(p.updated_at)}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(p)}>Delete</Button>
+                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setDeleteTarget(p)}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -178,9 +205,9 @@ function Protocols() {
         </Table>
       </Card>
 
-      <Modal open={showForm} title={editingId ? "Edit protocol" : "Add protocol"} onClose={() => setShowForm(false)}>
+      <Modal open={showForm} title={editingId ? "Edit guide" : "Add guide"} onClose={() => setShowForm(false)}>
         <form onSubmit={handleSave}>
-          <div className="grid gap-3 sm:grid-cols-2 mb-3">
+          <div className="mb-4 grid gap-4 sm:grid-cols-2">
             <div>
               <Label className="mb-1.5">Class</Label>
               <SelectField
@@ -210,14 +237,15 @@ function Protocols() {
           </div>
 
           {[
+            ["about", "About"],
             ["symptoms", "Symptoms"],
-            ["immediate_action", "Immediate action"],
+            ["immediate_action", "Immediate action (one step per line)"],
             ["prevention", "Prevention"],
           ].map(([name, title]) => (
-            <div className="mb-3" key={name}>
+            <div className="mb-4" key={name}>
               <Label className="mb-1.5">{title}</Label>
               <Textarea
-                rows={3}
+                rows={name === "immediate_action" ? 5 : 3}
                 value={form[name]}
                 onChange={(e) => handleChange(name, e.target.value)}
                 required
@@ -225,8 +253,10 @@ function Protocols() {
             </div>
           ))}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2 border-t pt-4">
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </Button>
@@ -236,7 +266,7 @@ function Protocols() {
 
       <ConfirmModal
         open={deleteTarget !== null}
-        title="Delete protocol?"
+        title="Delete guide?"
         message={`The app will have no remediation guide for ${deleteTarget?.display_name}. This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}

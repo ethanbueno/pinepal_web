@@ -6,6 +6,8 @@ import { emptyFilters } from "../utils/filters"
 import ScansTable from "../components/ScansTable"
 import Pagination from "../components/Pagination"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
 
 const PER_PAGE = 20
 
@@ -48,14 +50,17 @@ function Scans() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium mb-4">Scans</h1>
+      <PageHeader
+        title="Scans"
+        description="Every scan synced from the mobile app or saved on the website. Click a row to open it."
+      />
 
       <FilterBar filters={filters} onChange={handleFilterChange} extra />
 
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       {loading ? (
-        <p className="text-muted-foreground">Loading scans...</p>
+        <LoadingBlocks rows={6} height="h-11" label="Loading scans" />
       ) : (
         <>
           <ScansTable scans={data.items} />

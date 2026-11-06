@@ -1,8 +1,10 @@
-import { mockProtocols } from "../mock/protocols";
+import { startingGuides } from "../utils/guides";
 
-// MOCK VERSION. Changes only last until the page is refreshed.
+// MOCK VERSION. There is no guides table in the Flask API yet, so the guides start
+// from the same content as the mobile app (src/data/guides.json) and changes only
+// last until the page is refreshed.
 
-const protocols = [...mockProtocols];
+const protocols = startingGuides.map((g) => ({ ...g }));
 
 const wait = (data) =>
   new Promise((resolve) => setTimeout(() => resolve(data), 300));

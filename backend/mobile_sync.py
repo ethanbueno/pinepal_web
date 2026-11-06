@@ -9,6 +9,9 @@ POST /api/mobile/scans   upload one scan (form data, with the photo as the "imag
                          The web Diagnose page uses it too when a farmer saves a scan.
                          Safe to repeat: sending the same scan_uuid again updates the notes
                          and the farmer's feedback instead of making a duplicate.
+GET  /api/mobile/scans   the farmer's own scans, for the Online view of the app's dashboard.
+                         Only what the charts and map need; the label is the one to count
+                         (officer's correction, then the farmer's, then the model's).
 
 Scans are synced by a farmer account or by a phone's device token. Each farmer account has
 one farmers row (farmers.user_id), and the scan is stored under that row's farmer_id; a phone
@@ -292,3 +295,64 @@ def upload_scan():
         connection.close()
 
     return jsonify({"scan_uuid": scan["scan_uuid"], "synced_at": now.isoformat()}), 200
+
+
+@mobile_sync.route("/api/mobile/scans", methods=["GET"])
+@jwt_required()
+def my_scans():
+    """The farmer's own scans, for the dashboard in the app. Same tokens as uploading: a farmer
+    account, or a phone that has not signed in yet. Never another farmer's scans."""
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        if get_jwt().get("device"):
+            cursor.execute(
+                "SELECT farmer_id, is_active FROM farmers WHERE farmer_id = %s AND user_id IS NULL",
+                (get_jwt_identity().removeprefix("device:"),),
+            )
+            farm = cursor.fetchone()
+            if not farm:
+                return jsonify({"error": "This phone's farmer ID now belongs to an account. Sign in to see your scans."}), 401
+            if not farm["is_active"]:
+                return jsonify({"error": DEACTIVATED}), 403
+        else:
+            cursor.execute("SELECT id, username, name, role FROM users WHERE id = %s", (get_jwt_identity(),))
+            user = cursor.fetchone()
+            if not user:
+                return jsonify({"error": "Account not found"}), 401
+            if user["role"] != "farmer":
+                return jsonify({"error": "Only farmer accounts have scans"}), 403
+            if is_deactivated(cursor, user):
+                return jsonify({"error": DEACTIVATED}), 403
+            cursor.execute("SELECT farmer_id FROM farmers WHERE user_id = %s", (user["id"],))
+            farm = cursor.fetchone()
+            if not farm:
+                return jsonify({"error": "This account is not linked to a farm. Contact your agricultural officer."}), 403
+
+        cursor.execute(
+            """
+            SELECT scan_uuid, scanned_at, latitude, longitude,
+                   COALESCE(verified_label, farmer_label, predicted_label) AS label
+            FROM mobile_scans
+            WHERE farmer_id = %s
+            ORDER BY scanned_at DESC
+            """,
+            (farm["farmer_id"],),
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        connection.close()
+
+    scans = [
+        {
+            "scan_uuid": row["scan_uuid"],
+            "label": row["label"],
+            "scanned_at": row["scanned_at"].isoformat(),
+            # DECIMAL columns come back as Decimal, which JSON cannot hold
+            "latitude": float(row["latitude"]),
+            "longitude": float(row["longitude"]),
+        }
+        for row in rows
+    ]
+    return jsonify({"scans": scans}), 200

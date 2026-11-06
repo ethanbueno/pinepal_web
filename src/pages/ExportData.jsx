@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react"
 import { DownloadIcon } from "lucide-react"
-import { countScans } from "../api/scans"
+import { countScans, getScans } from "../api/scans"
 import { downloadExport } from "../api/exportData"
 import { useToast } from "../components/toastcontext"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import ScansTable from "../components/ScansTable"
+import Pagination from "../components/Pagination"
+import LoadingBlocks from "../components/LoadingBlocks"
 import SelectField, { toOptions } from "../components/SelectField"
 import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
@@ -17,6 +21,7 @@ import { Label } from "@/components/ui/label"
 // the municipality starts at (and stays on) the temporary lock, like the Disease Map
 const emptyFilters = { disease: "", municipality: LOCKED_MUNICIPALITY, from: "", to: "", verifiedOnly: false }
 const diseaseOptions = DISEASES.map((d) => ({ value: d.label, label: d.name }))
+const PER_PAGE = 20
 
 function ExportData() {
   const notify = useToast()
@@ -26,7 +31,23 @@ function ExportData() {
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState("")
 
-  const update = (name, value) => setFilters({ ...filters, [name]: value })
+  // the scans that will be in the file, one page at a time
+  const [page, setPage] = useState(1)
+  const [scans, setScans] = useState({ items: [], total: 0 })
+  const [loadingScans, setLoadingScans] = useState(true)
+  const [scansError, setScansError] = useState("")
+
+  // a new filter always starts the list again from page 1
+  const update = (name, value) => {
+    setFilters({ ...filters, [name]: value })
+    setPage(1)
+    setLoadingScans(true)
+  }
+
+  const goToPage = (newPage) => {
+    setPage(newPage)
+    setLoadingScans(true)
+  }
 
   // same filters the export uses, so the number matches the file
   const scanFilters = {
@@ -57,6 +78,37 @@ function ExportData() {
     }
   }, [filters])
 
+  // same filters again, for the list of scans under the form
+  useEffect(() => {
+    let ignore = false
+
+    getScans({
+      disease: filters.disease,
+      municipality: filters.municipality,
+      from: filters.from,
+      to: filters.to,
+      verified: filters.verifiedOnly ? "yes" : "",
+      page,
+      per_page: PER_PAGE,
+    })
+      .then((result) => {
+        if (ignore) return
+        setScans(result)
+        setScansError("")
+        setLoadingScans(false)
+      })
+      .catch((err) => {
+        if (ignore) return
+        console.error(err)
+        setScansError("Could not load the scans.")
+        setLoadingScans(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [filters, page])
+
   const handleDownload = async () => {
     setError("")
     setDownloading(true)
@@ -73,21 +125,23 @@ function ExportData() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium">Export</h1>
-      <p className="text-muted-foreground mb-4">
-        Download scan records as a spreadsheet.
-        {LOCKED_MUNICIPALITY && ` Temporarily locked to ${LOCKED_MUNICIPALITY}.`}
-      </p>
+      <PageHeader
+        title="Export"
+        description={
+          "Download scan records as a spreadsheet." +
+          (LOCKED_MUNICIPALITY ? ` Temporarily locked to ${LOCKED_MUNICIPALITY}.` : "")
+        }
+      />
 
-      <Card>
+      <Card className="max-w-5xl">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle className="font-semibold">Filters</CardTitle>
           <CardDescription>Leave a filter empty to include everything.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="flex flex-col gap-1.5">
-              <Label>Disease</Label>
+              <Label className="text-muted-foreground">Disease</Label>
               <SelectField
                 allLabel="All diseases"
                 value={filters.disease}
@@ -96,7 +150,7 @@ function ExportData() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Municipality</Label>
+              <Label className="text-muted-foreground">Municipality</Label>
               <SelectField
                 allLabel={LOCKED_MUNICIPALITY ? undefined : "All municipalities"}
                 value={filters.municipality}
@@ -106,11 +160,11 @@ function ExportData() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>From</Label>
+              <Label className="text-muted-foreground">From</Label>
               <Input type="date" value={filters.from} onChange={(e) => update("from", e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>To</Label>
+              <Label className="text-muted-foreground">To</Label>
               <Input type="date" value={filters.to} onChange={(e) => update("to", e.target.value)} />
             </div>
           </div>
@@ -126,7 +180,7 @@ function ExportData() {
           <Separator />
 
           <div className="flex flex-col gap-1.5">
-            <Label>Format</Label>
+            <Label className="text-muted-foreground">Format</Label>
             <ToggleGroup
               variant="outline"
               spacing={0}
@@ -140,8 +194,8 @@ function ExportData() {
 
           {error && <ErrorAlert className="">{error}</ErrorAlert>}
         </CardContent>
-        <CardFooter className="justify-between gap-4 border-t">
-          <span className="text-sm text-muted-foreground">
+        <CardFooter className="flex-wrap justify-between gap-4 border-t">
+          <span className="text-sm text-muted-foreground tabular-nums">
             {rowCount === null ? "Counting rows..." : `${rowCount} ${rowCount === 1 ? "row" : "rows"} will be exported`}
           </span>
           <Button disabled={downloading || rowCount === 0} onClick={handleDownload}>
@@ -150,6 +204,29 @@ function ExportData() {
           </Button>
         </CardFooter>
       </Card>
+
+      {/* what the file will contain */}
+      <div className="mt-8 max-w-5xl">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-semibold">Scans in the export</h2>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {rowCount === null ? "Counting rows..." : `${rowCount} ${rowCount === 1 ? "row" : "rows"} will be exported`}
+          </span>
+        </div>
+
+        {scansError && <ErrorAlert>{scansError}</ErrorAlert>}
+
+        {loadingScans ? (
+          <LoadingBlocks rows={6} height="h-11" label="Loading scans" />
+        ) : (
+          <>
+            <ScansTable scans={scans.items} />
+            {scans.total > 0 && (
+              <Pagination page={page} perPage={PER_PAGE} total={scans.total} onChange={goToPage} />
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

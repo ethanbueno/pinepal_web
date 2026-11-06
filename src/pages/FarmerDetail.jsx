@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react"
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { getFarmer } from "../api/farmers"
 import { getScans } from "../api/scans"
 import ScansTable from "../components/ScansTable"
 import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
+import BackButton from "../components/BackButton"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
 import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate } from "../utils/format"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 function Info({ label, children }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      {children}
+      <div className="mb-0.5 text-xs text-muted-foreground">{label}</div>
+      <div className="font-medium">{children}</div>
     </div>
   )
 }
@@ -53,12 +56,12 @@ function FarmerDetail() {
     }
   }, [id])
 
-  if (loading) return <p className="text-muted-foreground">Loading farmer...</p>
+  if (loading) return <LoadingBlocks rows={3} height="h-40" label="Loading farmer" />
   if (error) {
     return (
-      <div>
-        <ErrorAlert>{error}</ErrorAlert>
-        <Link to={backTo} className="font-semibold underline underline-offset-4">Back to farmers</Link>
+      <div className="flex flex-col items-start gap-4">
+        <ErrorAlert className="">{error}</ErrorAlert>
+        <BackButton to={backTo}>Back to farmers</BackButton>
       </div>
     )
   }
@@ -78,13 +81,21 @@ function FarmerDetail() {
 
   return (
     <div>
-      <Link to={backTo} className="font-semibold underline underline-offset-4 text-sm">← Back to farmers</Link>
-      <h1 className="text-2xl font-medium mb-4">{farmer.full_name}</h1>
+      <div className="mb-4">
+        <BackButton to={backTo}>Back to farmers</BackButton>
+      </div>
+      <PageHeader
+        title={farmer.full_name}
+        description={farmer.farm_name ? `${farmer.farm_name} · ${farmer.municipality}` : farmer.municipality}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-2 mb-4">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <Card>
+          <CardHeader>
+            <CardTitle className="font-semibold">Farmer details</CardTitle>
+          </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-4 text-sm">
               <Info label="Farm">{farmer.farm_name}</Info>
               <Info label="Municipality">{farmer.municipality}</Info>
               <Info label="Farm size">{farmer.farm_size_ha ? `${farmer.farm_size_ha} ha` : "-"}</Info>
@@ -97,15 +108,17 @@ function FarmerDetail() {
               </Info>
             </div>
 
-            <h2 className="font-semibold mt-5 mb-2">Scans by disease ({farmer.total_scans} total)</h2>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <h2 className="mt-6 mb-3 border-t pt-4 text-sm font-semibold">
+              Scans by disease <span className="font-normal text-muted-foreground">({farmer.total_scans} total)</span>
+            </h2>
+            <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               {DISEASES.map((d) => {
                 const row = farmer.scans_by_disease.find((r) => r.label === d.label)
                 return (
                   <div key={d.label} className="flex items-center gap-2">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                    <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
                     <span className="grow">{d.name}</span>
-                    <span className="text-muted-foreground">{row ? row.count : 0}</span>
+                    <span className="font-medium tabular-nums">{row ? row.count : 0}</span>
                   </div>
                 )
               })}
@@ -121,7 +134,7 @@ function FarmerDetail() {
         />
       </div>
 
-      <h2 className="font-semibold mb-3">Scans</h2>
+      <h2 className="mb-3 text-lg font-semibold">Scans</h2>
       <ScansTable scans={scans} />
     </div>
   )

@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { PlusIcon } from "lucide-react"
+import { PlusIcon, UsersIcon } from "lucide-react"
 import { getFarmers, createFarmer, updateFarmer, setFarmerStatus, syncFarmer } from "../api/farmers"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
 import Modal from "../components/Modal"
 import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
+import PageHeader from "../components/PageHeader"
+import LoadingBlocks from "../components/LoadingBlocks"
+import EmptyState from "../components/EmptyState"
 import SelectField, { toOptions } from "../components/SelectField"
 import { MUNICIPALITIES, DEFAULT_MUNICIPALITY, MAP_CENTER } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
@@ -180,28 +183,40 @@ function Farmers({ embedded = false }) {
 
   return (
     <div>
-      <div className={`flex items-center mb-4 ${embedded ? "justify-end" : "justify-between"}`}>
-        {!embedded && <h1 className="text-2xl font-medium">Farmers</h1>}
-        <Button onClick={openAdd}>
-          <PlusIcon />
-          Add farmer
-        </Button>
-      </div>
+      {embedded ? (
+        <div className="mb-4 flex justify-end">
+          <Button onClick={openAdd}>
+            <PlusIcon />
+            Add farmer
+          </Button>
+        </div>
+      ) : (
+        <PageHeader
+          title="Farmers"
+          description="Registered farmers and their farms. Click a row to see a farmer's scans."
+          action={
+            <Button onClick={openAdd}>
+              <PlusIcon />
+              Add farmer
+            </Button>
+          }
+        />
+      )}
 
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="grow min-w-48">
-            <Label className="mb-1.5">Search</Label>
+          <div className="w-full grow sm:w-auto sm:min-w-48">
+            <Label className="mb-1.5 text-muted-foreground">Search</Label>
             <Input
               placeholder="Name or farm name"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div>
-            <Label className="mb-1.5">Municipality</Label>
+          <div className="w-full sm:w-auto">
+            <Label className="mb-1.5 text-muted-foreground">Municipality</Label>
             <SelectField
-              className="w-48"
+              className="w-full sm:w-48"
               allLabel="All"
               value={municipality}
               onChange={setMunicipality}
@@ -214,11 +229,9 @@ function Farmers({ embedded = false }) {
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       {loading ? (
-        <p className="text-muted-foreground">Loading farmers...</p>
+        <LoadingBlocks rows={6} height="h-11" label="Loading farmers" />
       ) : farmers.length === 0 ? (
-        <Card>
-          <CardContent className="py-2 text-center text-muted-foreground">No farmers found.</CardContent>
-        </Card>
+        <EmptyState icon={UsersIcon} title="No farmers found" text="Try another name or municipality, or add a farmer." />
       ) : (
         <Card className="py-0">
           <Table>
@@ -238,13 +251,13 @@ function Farmers({ embedded = false }) {
                 <TableRow
                   key={f.farmer_id}
                   onClick={() => navigate("/farmers/" + f.farmer_id)}
-                  className=" cursor-pointer hover:bg-muted"
+                  className="cursor-pointer"
                 >
-                  <TableCell>{f.full_name}</TableCell>
+                  <TableCell className="font-medium">{f.full_name}</TableCell>
                   <TableCell>{f.farm_name || <span className="text-muted-foreground">Not set yet</span>}</TableCell>
                   <TableCell>{f.municipality}</TableCell>
-                  <TableCell>{f.farm_size_ha}</TableCell>
-                  <TableCell>{f.total_scans}</TableCell>
+                  <TableCell className="tabular-nums">{f.farm_size_ha}</TableCell>
+                  <TableCell className="tabular-nums">{f.total_scans}</TableCell>
                   <TableCell>
                     <Badge variant={f.is_active ? "default" : "secondary"}>
                       {f.is_active ? "Active" : "Inactive"}
@@ -255,10 +268,13 @@ function Farmers({ embedded = false }) {
                       {!f.has_account && (
                         <Button size="sm" onClick={() => openSync(f)}>Sync now</Button>
                       )}
-                      <Button size="sm" variant="outline" onClick={() => openEdit(f)}>Edit</Button>
+                      <Button size="sm" variant="outline" onClick={() => openEdit(f)}>
+                        Edit
+                      </Button>
                       <Button
                         size="sm"
-                        variant={f.is_active ? "destructive" : "outline"}
+                        variant="outline"
+                        className={f.is_active ? "text-destructive hover:bg-destructive/10 hover:text-destructive" : ""}
                         onClick={() => handleToggleStatus(f)}
                       >
                         {f.is_active ? "Deactivate" : "Activate"}

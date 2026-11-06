@@ -48,7 +48,7 @@ const staffLinks = [
   { to: "/diagnose", label: "Diagnose", icon: StethoscopeIcon },
   // admins manage farmers from the Farmers tab on the Users page instead
   { to: "/farmers", label: "Farmers", icon: UsersIcon, notForAdmin: true },
-  { to: "/protocols", label: "Protocols", icon: FileTextIcon },
+  { to: "/protocols", label: "Guide", icon: FileTextIcon },
   { to: "/export", label: "Export", icon: DownloadIcon },
   { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true, alsoActiveOn: "/farmers" },
 ]
@@ -107,7 +107,7 @@ function AppSidebar({ user, onLogout }) {
                 <SidebarMenuItem key={to}>
                   <SidebarMenuButton
                     tooltip={label}
-                    className="h-9 px-3"
+                    className="h-9 px-3 data-active:bg-primary/15 data-active:text-primary-text data-active:hover:bg-primary/20 data-active:hover:text-primary-text"
                     isActive={
                       !!matchPath({ path: to, end: !!end }, pathname) ||
                       (!!alsoActiveOn && !!matchPath({ path: alsoActiveOn, end: false }, pathname))

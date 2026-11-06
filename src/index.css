@@ -16,6 +16,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-text: var(--primary-text);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -58,6 +59,7 @@
   --popover-foreground: #141413;
   --primary: #f0b323;
   --primary-foreground: #14110a;
+  --primary-text: #8a5f00; /* amber as text, dark enough to read on white (mobile: accentText) */
   --secondary: #f0eee6;
   --secondary-foreground: #141413;
   --muted: #f0eee6;
@@ -92,6 +94,7 @@
   --popover-foreground: #e6edf3;
   --primary: #f2c14e;
   --primary-foreground: #14110a;
+  --primary-text: #f2c14e;
   --secondary: #21262d;
   --secondary-foreground: #e6edf3;
   --muted: #21262d;
@@ -123,6 +126,13 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    caret-color: transparent; /* no blinking cursor outside text fields */
+  }
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    caret-color: auto;
   }
   html {
     @apply font-sans;
