@@ -28,6 +28,7 @@ function FormSection({ number, title, children }) {
 function Register() {
   const [fullName, setFullName] = useState("")
   const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [passwordConfirmation, setPasswordConfirmation] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
@@ -44,7 +45,7 @@ function Register() {
     setLoading(true)
     try {
       // sign up only makes farmer accounts; officers and admins are added by an admin
-      await registerRequest({ full_name: fullName, username, password, role: "farmer" })
+      await registerRequest({ full_name: fullName, username, email, password, role: "farmer" })
       notify(`Account created for @${username}. Sign in to continue.`)
       navigate("/login", { state: { registeredUsername: username } })
     } catch (error) {
@@ -88,6 +89,15 @@ function Register() {
                 autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+              <FloatingInput
+                id="email"
+                label="Email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <FloatingInput
