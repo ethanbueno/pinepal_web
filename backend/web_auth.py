@@ -1,3 +1,5 @@
+import re
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
@@ -10,6 +12,7 @@ from security import hash_password, verify_password
 web_auth = Blueprint("web_auth", __name__)
 
 ROLES = ("admin", "officer", "farmer")
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DEACTIVATED = "This account is deactivated. Contact your agricultural officer."
 
 
@@ -69,11 +72,15 @@ def register():
     data = request.get_json(silent=True) or {}
     full_name = (data.get("full_name") or "").strip()
     username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip()
     password = data.get("password") or ""
     role = data.get("role") or "farmer"
 
-    if not full_name or not username or not password:
+    if not full_name or not username or not email or not password:
         return jsonify({"error": "All fields are required"}), 400
+
+    if len(email) > 150 or not EMAIL_PATTERN.match(email):
+        return jsonify({"error": "Enter a valid email address"}), 400
 
     if role not in ROLES:
         return jsonify({"error": "Invalid role"}), 400
@@ -92,13 +99,19 @@ def register():
         connection.close()
         return jsonify({"error": "Username is already taken"}), 409
 
+    cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+    if cursor.fetchone():
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Email is already in use"}), 409
+
     # Every farmer account gets its farmers row in the same step. Signing up on a phone that
     # already has its own farmer ID (device_token) keeps that ID and its scans. Otherwise
     # the account gets the next farmer ID with blank farm details, which the first sync fills in.
     try:
         cursor.execute(
-            "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, %s)",
-            (full_name, username, hash_password(password), role),
+            "INSERT INTO users (name, username, email, password_hash, role) VALUES (%s, %s, %s, %s, %s)",
+            (full_name, username, email, hash_password(password), role),
         )
         user_id = cursor.lastrowid
         if not claim_phone_farmer(cursor, user_id, full_name, data.get("device_token")):
@@ -115,6 +128,7 @@ def register():
         "id": user_id,
         "full_name": full_name,
         "username": username,
+        "email": email,
         "role": role,
     }), 201
 
