@@ -1,18 +1,30 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ChevronLeftIcon } from "lucide-react"
 import { registerRequest } from "../api/auth"
 import { useToast } from "../components/toastcontext"
 import logo from "../assets/pinepal-logo.png"
 import ThemeToggle from "../components/ThemeToggle"
 import ErrorAlert from "../components/ErrorAlert"
+import JoinPanel from "../components/JoinPanel"
+import FloatingInput from "../components/FloatingInput"
 import { Button } from "@/components/ui/button"
 
-const inputClass =
-  "h-12 w-full rounded-xl border border-input bg-card px-4 text-base outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/25"
+// A numbered heading over a group of fields
+function FormSection({ number, title, children }) {
+  return (
+    <fieldset className="space-y-3">
+      <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
+        <span className="flex size-6 items-center justify-center rounded-full bg-primary/15 text-xs text-primary-text">
+          {number}
+        </span>
+        {title}
+      </legend>
+      {children}
+    </fieldset>
+  )
+}
 
-const labelClass = "mb-2 block text-sm font-medium"
-
+// The form is on the left and the "Join PinePal" panel on the right (Login is the other way round)
 function Register() {
   const [fullName, setFullName] = useState("")
   const [username, setUsername] = useState("")
@@ -43,104 +55,88 @@ function Register() {
     }
   }
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10 px-5 py-8 sm:px-6 sm:py-12">
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       <ThemeToggle className="fixed top-4 right-4 z-10" />
-      <div className="mx-auto w-full max-w-lg">
-        <Link
-          to="/login"
-          aria-label="Back to log in"
-          className="-ml-2 inline-flex size-9 items-center justify-center rounded-full text-foreground hover:bg-muted"
-        >
-          <ChevronLeftIcon className="size-5" />
-        </Link>
 
-        <div className="mt-3 flex items-center gap-1.5">
-          <img src={logo} alt="" className="size-5" />
-          <span className="text-sm font-semibold tracking-wide uppercase">PinePal</span>
+      {/* Right on laptops, on top on phones */}
+      <JoinPanel />
+
+      {/* Left on laptops: the form */}
+      <section className="flex items-start justify-start px-6 pt-8 pb-12 sm:px-10 lg:items-center lg:justify-center lg:py-12">
+        <div className="w-full max-w-md">
+          <h2 className="text-2xl font-semibold tracking-tight">Create your account</h2>
+          <p className="mt-1 mb-8 text-sm text-muted-foreground">
+            Scan your pineapples, keep a history of every diagnosis, and get treatment steps for your farm.
+          </p>
+
+          <form onSubmit={handleRegister} className="space-y-8">
+            <FormSection number={1} title="Your details">
+              <FloatingInput
+                id="full-name"
+                label="Full name"
+                autoComplete="name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </FormSection>
+
+            <FormSection number={2} title="Account">
+              <FloatingInput
+                id="username"
+                label="Username"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+              <FloatingInput
+                id="password"
+                label="Password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <FloatingInput
+                id="confirm-password"
+                label="Confirm password"
+                type="password"
+                autoComplete="new-password"
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                required
+              />
+            </FormSection>
+
+            <div className="space-y-3">
+              <div className="rounded-xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
+                This creates a <span className="font-medium text-foreground">farmer account</span>. Agricultural
+                officers and admins are added by an admin. Officers can see your scans and where they were taken, so
+                they can track outbreaks.
+              </div>
+
+              {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
+
+              <Button type="submit" disabled={loading} className="h-12 w-full rounded-full text-base">
+                {loading ? "Creating account..." : "Create account"}
+              </Button>
+            </div>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link to="/login" className="font-medium text-primary-text underline underline-offset-4">
+              Log in
+            </Link>
+          </p>
+
+          <p className="mt-8 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <img src={logo} alt="" className="size-4" /> Pineapple disease monitoring for Isabela
+          </p>
         </div>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-[1.7rem]">
-          Get started with a PinePal account
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Scan your pineapples, keep a history of every diagnosis, and get treatment steps for your farm.
-        </p>
-
-        <form onSubmit={handleRegister} className="mt-6 space-y-5">
-          <div>
-            <label htmlFor="full-name" className={labelClass}>Full name</label>
-            <input
-              id="full-name"
-              placeholder="Enter full name"
-              className={inputClass}
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="username" className={labelClass}>Username</label>
-            <input
-              id="username"
-              placeholder="Enter username"
-              className={inputClass}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className={labelClass}>Password</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter password"
-              className={inputClass}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirm-password" className={labelClass}>Confirm Password</label>
-            <input
-              id="confirm-password"
-              type="password"
-              placeholder="Confirm password"
-              className={inputClass}
-              value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
-            <p>
-              This creates a <span className="font-medium text-foreground">farmer account</span>. Agricultural officers
-              and admins are added by an admin.
-            </p>
-            <p>Agricultural officers can see your scans and where they were taken, so they can track outbreaks.</p>
-          </div>
-
-          {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
-
-          <div className="space-y-3 pt-1">
-            <Button type="submit" disabled={loading} className="h-12 w-full rounded-full text-base">
-              {loading ? "Creating account..." : "Create account"}
-            </Button>
-            <Button
-              variant="secondary"
-              className="h-12 w-full rounded-full text-base"
-              render={<Link to="/login" />}
-              nativeButton={false}
-            >
-              I already have an account
-            </Button>
-          </div>
-        </form>
-      </div>
+      </section>
     </div>
   )
 }
