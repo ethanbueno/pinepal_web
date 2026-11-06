@@ -63,6 +63,9 @@ function rangeLabel({ from, to }) {
   return `Showing scans from ${start} to ${end}`
 }
 
+// how many of the newest scans the server sends (RECENT_SCANS in backend/mobile_scans.py)
+const RECENT_SCANS = 10
+
 // a number's share of a total, as a whole percent for text and a width for bars
 const share = (count, total) => (total > 0 ? count / total : 0)
 
@@ -320,7 +323,7 @@ function Dashboard() {
             <Card className="xl:col-span-2">
               <CardHeader>
                 <CardTitle className="font-semibold">Recent scans</CardTitle>
-                <CardDescription>The 8 newest scans in this range.</CardDescription>
+                <CardDescription>The {RECENT_SCANS} newest scans in this range.</CardDescription>
                 <CardAction>
                   <Link
                     to="/scans"

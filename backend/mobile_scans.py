@@ -21,6 +21,7 @@ mobile_scans = Blueprint("mobile_scans", __name__)
 
 LABELS = ["No_Disease", "Crown_Rot", "Mealybug_Wilt", "Fruit_Rot", "Multiple_Crown", "Fruit_Fasciation"]
 LOW_CONFIDENCE = 0.6  # same as LOW_CONFIDENCE in src/utils/diseases.js
+RECENT_SCANS = 10  # newest scans on the web Dashboard (RECENT_SCANS in src/pages/Dashboard.jsx)
 FINAL = "COALESCE(verified_label, predicted_label)"
 
 # Photos uploaded by the mobile app are saved as <scan_uuid>.jpg / .png
@@ -322,7 +323,7 @@ def stats():
         [LOW_CONFIDENCE] + params,
     )
     groups = cursor.fetchall()
-    cursor.execute(f"SELECT * FROM mobile_scans {where} ORDER BY scanned_at DESC LIMIT 8", params)
+    cursor.execute(f"SELECT * FROM mobile_scans {where} ORDER BY scanned_at DESC LIMIT %s", params + [RECENT_SCANS])
     recent = cursor.fetchall()
     cursor.close()
     connection.close()
