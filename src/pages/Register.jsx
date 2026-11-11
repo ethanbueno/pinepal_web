@@ -70,6 +70,7 @@ function Register() {
           <form onSubmit={handleRegister} className="space-y-8">
             <FormSection number={1} title="Your details">
               <FloatingInput
+                size="compact"
                 id="full-name"
                 label="Full name"
                 autoComplete="name"
@@ -77,19 +78,13 @@ function Register() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
-              {/* locked: every account is in Echague for now */}
-              <FloatingInput
-                id="municipality"
-                label="Municipality"
-                value={LOCKED_MUNICIPALITY}
-                readOnly
-                aria-readonly="true"
-                className="[&_input]:cursor-not-allowed [&_input]:bg-muted [&_input]:text-muted-foreground"
-              />
+              {/* locked to Echague for now, so it is not shown. The backend sets it on every new account. */}
+              <input type="hidden" name="municipality" value={LOCKED_MUNICIPALITY} />
             </FormSection>
 
             <FormSection number={2} title="Account">
               <FloatingInput
+                size="compact"
                 id="username"
                 label="Username"
                 autoComplete="username"
@@ -98,6 +93,7 @@ function Register() {
                 required
               />
               <FloatingInput
+                size="compact"
                 id="email"
                 label="Email"
                 type="email"
@@ -107,6 +103,7 @@ function Register() {
                 required
               />
               <FloatingInput
+                size="compact"
                 id="password"
                 label="Password"
                 type="password"
@@ -116,6 +113,7 @@ function Register() {
                 required
               />
               <FloatingInput
+                size="compact"
                 id="confirm-password"
                 label="Confirm password"
                 type="password"

@@ -56,6 +56,7 @@ function Login() {
           <h2 className="mb-6 text-xl font-semibold">Log into PinePal</h2>
           <form onSubmit={handleLogin} className="space-y-3">
             <FloatingInput
+              size="compact"
               id="username"
               label="Username or email"
               type="text"
@@ -65,6 +66,7 @@ function Login() {
               required
             />
             <FloatingInput
+              size="compact"
               id="password"
               label="Password"
               type="password"
