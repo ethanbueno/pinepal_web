@@ -31,7 +31,9 @@ def error(message, status=400):
 
 def load(cursor, user_id):
     """The profile as the API sends it: { account, farm } (farm is null for staff)."""
-    cursor.execute("SELECT id, name, username, email, role, created_at FROM users WHERE id = %s", (user_id,))
+    cursor.execute(
+        "SELECT id, name, username, email, role, municipality, created_at FROM users WHERE id = %s", (user_id,)
+    )
     user = cursor.fetchone()
     farm = None
     if user["role"] == "farmer":
@@ -45,6 +47,7 @@ def load(cursor, user_id):
             "username": user["username"],
             "email": user["email"],
             "role": user["role"],
+            "municipality": user["municipality"],  # same as the farm's for a farmer
             "created_at": user["created_at"].isoformat() if user["created_at"] else None,
         },
         "farm": farm,

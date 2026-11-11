@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash varchar(255) NOT NULL,
   role enum('admin','officer','farmer') NOT NULL DEFAULT 'farmer',
   name varchar(100) NOT NULL,
+  -- a farmer's is kept the same as farmers.municipality (sync_user_municipality in farmers.py)
+  municipality varchar(100) NOT NULL DEFAULT '',
   created_at timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),
   UNIQUE KEY email (email),

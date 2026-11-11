@@ -27,7 +27,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
 from database import get_connection
-from farmers import add_farmer, claim_phone_farmer
+from farmers import add_farmer, claim_phone_farmer, sync_user_municipality
 from mobile_scans import LABELS
 from scans import UPLOAD_DIR
 from security import verify_password
@@ -269,6 +269,8 @@ def upload_scan():
                 "UPDATE farmers SET " + ", ".join(f"{column} = %s" for column in blanks) + " WHERE farmer_id = %s",
                 (*blanks.values(), farm["farmer_id"]),
             )
+            if "municipality" in blanks:
+                sync_user_municipality(cursor, farm["farmer_id"])
         cursor.execute(
             """
             INSERT INTO mobile_scans
