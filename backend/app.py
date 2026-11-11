@@ -20,6 +20,7 @@ from mobile_scans import mobile_scans
 from mobile_sync import mobile_sync
 from farmers import farmers
 from my_profile import profile
+from login_history import login_history
 
 load_dotenv()
 
@@ -42,6 +43,7 @@ app.register_blueprint(mobile_scans)
 app.register_blueprint(mobile_sync)
 app.register_blueprint(farmers)
 app.register_blueprint(profile)
+app.register_blueprint(login_history)
 
 # Home
 @app.route("/")

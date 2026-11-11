@@ -28,6 +28,7 @@ from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, j
 
 from database import get_connection
 from farmers import add_farmer, claim_phone_farmer, sync_user_municipality
+from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
 from mobile_scans import LABELS
 from scans import UPLOAD_DIR
 from security import verify_password
@@ -67,11 +68,13 @@ def mobile_login():
     if not user or not verify_password(password, user["password_hash"]):
         cursor.close()
         connection.close()
+        record_login("mobile", username, user, reason=WRONG_PASSWORD if user else UNKNOWN_USER)
         return jsonify({"error": "Invalid username or password"}), 401
 
     farmer_id = None
     try:
         if is_deactivated(cursor, user):
+            record_login("mobile", username, user, reason=DEACTIVATED_REASON)
             return jsonify({"error": DEACTIVATED}), 403
         if user["role"] == "farmer":
             # The phone's own farmer ID (from before sign in) joins this account: it becomes
@@ -85,6 +88,7 @@ def mobile_login():
         cursor.close()
         connection.close()
 
+    record_login("mobile", username, user, success=True)
     token = create_access_token(identity=str(user["id"]), expires_delta=TOKEN_LIFETIME)
     return jsonify({"access_token": token, "user": {**user_json(user), "farmer_id": farmer_id}}), 200
 
