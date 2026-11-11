@@ -5,6 +5,7 @@ from security import hash_password
 
 from database import get_connection
 from permissions import admin_required
+from farmers import LOCKED_MUNICIPALITY
 
 # Accounts for the web dashboard's Users page (admin only).
 # Users are { id, full_name, username, email, role, created_at }; errors are { "error": "message" }.
@@ -14,7 +15,7 @@ users = Blueprint(
 )
 
 ROLES = ("admin", "officer", "farmer")
-COLUMNS = "id, name, username, email, role, created_at"
+COLUMNS = "id, name, username, email, role, municipality, created_at"
 FARMERS_TAB = "Add farmers from the Farmers tab, together with their farm."
 
 
@@ -25,6 +26,7 @@ def user_json(row):
         "username": row["username"],
         "email": row["email"],
         "role": row["role"],
+        "municipality": row["municipality"],
         "created_at": row["created_at"].isoformat() if row["created_at"] else None,
     }
 
@@ -82,9 +84,10 @@ def create_user():
         connection.close()
         return jsonify({"error": "Username is already taken"}), 409
 
+    # staff have no farm, so their municipality is the locked one (Echague) from the form
     cursor.execute(
-        "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, %s)",
-        (form["full_name"], form["username"], hash_password(form["password"]), form["role"]),
+        "INSERT INTO users (name, username, password_hash, role, municipality) VALUES (%s, %s, %s, %s, %s)",
+        (form["full_name"], form["username"], hash_password(form["password"]), form["role"], LOCKED_MUNICIPALITY),
     )
     connection.commit()
     user = find_user(cursor, cursor.lastrowid)

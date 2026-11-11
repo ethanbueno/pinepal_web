@@ -21,7 +21,8 @@ mobile_scans = Blueprint("mobile_scans", __name__)
 
 LABELS = ["No_Disease", "Crown_Rot", "Mealybug_Wilt", "Fruit_Rot", "Multiple_Crown", "Fruit_Fasciation"]
 LOW_CONFIDENCE = 0.6  # same as LOW_CONFIDENCE in src/utils/diseases.js
-RECENT_SCANS = 10  # newest scans on the web Dashboard (RECENT_SCANS in src/pages/Dashboard.jsx)
+HIGH_CONFIDENCE = 0.9  # same as HIGH_CONFIDENCE in src/utils/diseases.js
+DASHBOARD_SCANS = 5  # scans per list (highest / lowest) on the web Dashboard (src/pages/Dashboard.jsx)
 FINAL = "COALESCE(verified_label, predicted_label)"
 
 # Photos uploaded by the mobile app are saved as <scan_uuid>.jpg / .png
@@ -93,6 +94,10 @@ def build_filters(args):
     if args.get("low_conf") in ("1", "true"):
         where.append("confidence < %s")
         params.append(LOW_CONFIDENCE)
+
+    if args.get("high_conf") in ("1", "true"):
+        where.append("confidence >= %s")
+        params.append(HIGH_CONFIDENCE)
 
     if args.get("from"):
         where.append("scanned_at >= %s")
@@ -306,8 +311,8 @@ def stats():
     where, params = build_filters({"from": request.args.get("from"), "to": request.args.get("to")})
 
     # Every number on the dashboard comes from ONE grouped query, added up here in Python,
-    # plus one query for the recent scans. Each query to a hosted database is a round trip
-    # over the internet, so two queries on one connection load much faster than seven.
+    # plus one query for the highest and lowest confidence scans. Each query to a hosted database
+    # is a round trip over the internet, so two queries on one connection load much faster than seven.
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute(
@@ -323,8 +328,19 @@ def stats():
         [LOW_CONFIDENCE] + params,
     )
     groups = cursor.fetchall()
-    cursor.execute(f"SELECT * FROM mobile_scans {where} ORDER BY scanned_at DESC LIMIT %s", params + [RECENT_SCANS])
-    recent = cursor.fetchall()
+    # the most and least confident scans in range, both in one round trip
+    scoped = where + (" AND " if where else "WHERE ")
+    cursor.execute(
+        f"""
+        (SELECT *, 'high' AS bucket FROM mobile_scans {scoped} confidence >= %s
+         ORDER BY confidence DESC, scanned_at DESC LIMIT %s)
+        UNION ALL
+        (SELECT *, 'low' AS bucket FROM mobile_scans {scoped} confidence < %s
+         ORDER BY confidence ASC, scanned_at DESC LIMIT %s)
+        """,
+        params + [HIGH_CONFIDENCE, DASHBOARD_SCANS] + params + [LOW_CONFIDENCE, DASHBOARD_SCANS],
+    )
+    extremes = cursor.fetchall()
     cursor.close()
     connection.close()
 
@@ -359,5 +375,6 @@ def stats():
             municipalities.values(),
             key=lambda m: (-m["diseased"], -m["total"], m["municipality"] or ""),
         ),
-        "recent": [serialize(r) for r in recent],
+        "highest_confidence": [serialize(r) for r in extremes if r["bucket"] == "high"],
+        "lowest_confidence": [serialize(r) for r in extremes if r["bucket"] == "low"],
     }), 200

@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash varchar(255) NOT NULL,
   role enum('admin','officer','farmer') NOT NULL DEFAULT 'farmer',
   name varchar(100) NOT NULL,
+  -- a farmer's is kept the same as farmers.municipality (sync_user_municipality in farmers.py)
+  municipality varchar(100) NOT NULL DEFAULT '',
   created_at timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),
   UNIQUE KEY email (email),
@@ -101,4 +103,22 @@ CREATE TABLE IF NOT EXISTS mobile_scans (
   KEY fk_mobile_scans_farmer (farmer_id),
   CONSTRAINT fk_mobile_scans_farmer FOREIGN KEY (farmer_id) REFERENCES farmers (farmer_id)
     ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Every sign-in attempt on the web and the mobile app (login_history.py); admins see it in
+-- the Login history drawer. Only the typed username is kept, never the password.
+CREATE TABLE IF NOT EXISTS login_history (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  user_id int(11) DEFAULT NULL,
+  username varchar(150) NOT NULL,
+  success tinyint(1) NOT NULL,
+  reason varchar(30) DEFAULT NULL,
+  platform enum('web','mobile') NOT NULL,
+  ip_address varchar(45) DEFAULT NULL,
+  user_agent varchar(255) DEFAULT NULL,
+  created_at datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id),
+  KEY idx_login_history_created (created_at),
+  KEY idx_login_history_user (user_id),
+  CONSTRAINT fk_login_history_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

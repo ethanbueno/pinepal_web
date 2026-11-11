@@ -4,7 +4,8 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 from database import get_connection
-from farmers import add_farmer, claim_phone_farmer
+from farmers import LOCKED_MUNICIPALITY, add_farmer, claim_phone_farmer, sync_user_municipality
+from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
 from security import hash_password, verify_password
 
 # Login for the web dashboard (matches the API contract in CLAUDEweb.md).
@@ -59,10 +60,13 @@ def login():
     connection.close()
 
     if not user or not verify_password(password, user["password_hash"]):
+        record_login("web", username, user, reason=WRONG_PASSWORD if user else UNKNOWN_USER)
         return jsonify({"error": "Invalid username or password"}), 401
     if blocked:
+        record_login("web", username, user, reason=DEACTIVATED_REASON)
         return jsonify({"error": DEACTIVATED}), 403
 
+    record_login("web", username, user, success=True)
     token = create_access_token(identity=str(user["id"]))
     return jsonify({"access_token": token, "user": user_json(user)}), 200
 
@@ -114,8 +118,15 @@ def register():
             (full_name, username, email, hash_password(password), role),
         )
         user_id = cursor.lastrowid
-        if not claim_phone_farmer(cursor, user_id, full_name, data.get("device_token")):
-            add_farmer(cursor, user_id, full_name)
+        farmer_id = claim_phone_farmer(cursor, user_id, full_name, data.get("device_token"))
+        if not farmer_id:
+            farmer_id = add_farmer(cursor, user_id, full_name)
+        # the sign-up form's municipality is locked to Echague, for a new or a claimed farm,
+        # and the account gets the same one
+        cursor.execute(
+            "UPDATE farmers SET municipality = %s WHERE user_id = %s", (LOCKED_MUNICIPALITY, user_id)
+        )
+        sync_user_municipality(cursor, farmer_id)
         connection.commit()
     except Exception:
         connection.rollback()

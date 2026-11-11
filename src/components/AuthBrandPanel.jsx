@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import logo from "../assets/pinepal-logo.png"
 import AppShowcase from "./AppShowcase"
 import { cn } from "@/lib/utils"
@@ -13,10 +14,11 @@ function AuthBrandPanel({ side = "left" }) {
         side === "left" ? "lg:border-r" : "lg:order-last lg:border-l"
       )}
     >
-      <div className="flex items-center gap-2.5">
+      {/* back to the landing page */}
+      <Link to="/welcome" className="flex w-fit items-center gap-2.5 rounded-md">
         <img src={logo} alt="" className="size-11 lg:size-14" />
         <span className="text-xl font-semibold tracking-wide uppercase lg:text-2xl">PinePal</span>
-      </div>
+      </Link>
 
       {/* Laptops: showcase above the headline, scaled down to fit the half-width column.
           Wide screens (2xl): headline bottom-left with the showcase beside it. */}

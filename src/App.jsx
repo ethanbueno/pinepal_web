@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom"
 import Layout from "./components/Layout"
 import ProtectedRoute from "./components/ProtectedRoute"
+import Landing from "./pages/Landing"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import FarmerHome from "./pages/FarmerHome"
@@ -17,6 +18,7 @@ import FarmerDetail from "./pages/FarmerDetail"
 import ExportData from "./pages/ExportData"
 import Users from "./pages/Users"
 import NotFound from "./pages/NotFound"
+import Profile from "./pages/Profile"
 
 const STAFF = ["admin", "officer"]
 
@@ -28,6 +30,7 @@ function staffOnly(page) {
 function App() {
   return (
     <Routes>
+      <Route path="/welcome" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
@@ -41,6 +44,7 @@ function App() {
         {/* every role: Home shows the dashboard for staff and the welcome page for farmers */}
         <Route path="/" element={<Home />} />
         <Route path="/scans/:uuid" element={<ScanDetail />} />
+        <Route path="/profile" element={<Profile />} />
 
         {/* farmers only */}
         <Route path="/my-farm" element={<ProtectedRoute roles={["farmer"]}><FarmerHome /></ProtectedRoute>} />

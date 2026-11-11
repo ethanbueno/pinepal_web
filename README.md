@@ -9,7 +9,7 @@ Web dashboard for **PinePal**, a pineapple disease detection system. Farmers sca
 
 | Area | What it does | Who |
 | --- | --- | --- |
-| Dashboard | Scans needing review, totals, diseased share, monthly trend, disease breakdown, recent scans, municipality ranking | staff |
+| Dashboard | Scans needing review, totals, diseased share, monthly trend, disease breakdown, highest and lowest confidence scans, municipality ranking | staff |
 | Disease Map | Scans plotted by diagnosis on the borders of Isabela's cities and municipalities | staff |
 | Scans | Filterable list, scan detail, officer verification | staff |
 | Diagnose | Upload a photo, get a diagnosis, save it as a scan | staff |

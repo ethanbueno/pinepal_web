@@ -6,7 +6,7 @@ import { getStats } from "../api/stats"
 import StatCard from "../components/StatCard"
 import ScansTable from "../components/ScansTable"
 import ErrorAlert from "../components/ErrorAlert"
-import { DISEASES, LOW_CONFIDENCE, getDisease } from "../utils/diseases"
+import { DISEASES, HIGH_CONFIDENCE, LOW_CONFIDENCE, getDisease } from "../utils/diseases"
 import { formatDate, formatPercent } from "../utils/format"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -63,8 +63,31 @@ function rangeLabel({ from, to }) {
   return `Showing scans from ${start} to ${end}`
 }
 
-// how many of the newest scans the server sends (RECENT_SCANS in backend/mobile_scans.py)
-const RECENT_SCANS = 10
+// how many scans each confidence list shows (DASHBOARD_SCANS in backend/mobile_scans.py)
+const DASHBOARD_SCANS = 5
+const percent = (value) => Math.round(value * 100) + "%"
+
+const linkClass =
+  "rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+
+// A heading over one of the Scans card's lists, with a link to all the scans like it
+// (filters = what the Scans page opens with)
+function ScansSection({ title, note, filters, children }) {
+  return (
+    <section className="flex flex-col gap-2">
+      <div className="flex items-start justify-between gap-3 px-6">
+        <div>
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <p className="text-xs text-muted-foreground">{note}</p>
+        </div>
+        <Link to="/scans" state={{ filters }} className={"shrink-0 " + linkClass}>
+          See all
+        </Link>
+      </div>
+      {children}
+    </section>
+  )
+}
 
 // a number's share of a total, as a whole percent for text and a width for bars
 const share = (count, total) => (total > 0 ? count / total : 0)
@@ -318,23 +341,44 @@ function Dashboard() {
             </Card>
           </div>
 
-          {/* the latest activity, next to where the disease is */}
+          {/* the surest and least sure scans, next to where the disease is */}
           <div className="grid gap-4 xl:grid-cols-3">
             <Card className="xl:col-span-2">
               <CardHeader>
-                <CardTitle className="font-semibold">Recent scans</CardTitle>
-                <CardDescription>The {RECENT_SCANS} newest scans in this range.</CardDescription>
+                <CardTitle className="font-semibold">Scans</CardTitle>
+                <CardDescription>
+                  Up to {DASHBOARD_SCANS} of the most and least confident scans in this range.
+                </CardDescription>
                 <CardAction>
-                  <Link
-                    to="/scans"
-                    className="rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                  >
+                  <Link to="/scans" className={linkClass}>
                     View all scans
                   </Link>
                 </CardAction>
               </CardHeader>
-              <CardContent className="px-0">
-                <ScansTable scans={stats.recent} bare />
+              <CardContent className="flex flex-col gap-6 px-0">
+                <ScansSection
+                  title="Highest confidence"
+                  note={`${percent(HIGH_CONFIDENCE)} confidence and above, most confident first.`}
+                  filters={{ ...range, high_conf: true }}
+                >
+                  <ScansTable
+                    scans={stats.highest_confidence}
+                    showVerified={false}
+                    bare
+                    emptyText={`No scans at ${percent(HIGH_CONFIDENCE)} confidence or above in this range.`}
+                  />
+                </ScansSection>
+                <ScansSection
+                  title="Lowest confidence"
+                  note={`Under ${percent(LOW_CONFIDENCE)} confidence, least confident first.`}
+                  filters={{ ...range, low_conf: true }}
+                >
+                  <ScansTable
+                    scans={stats.lowest_confidence}
+                    bare
+                    emptyText={`No scans under ${percent(LOW_CONFIDENCE)} confidence in this range.`}
+                  />
+                </ScansSection>
               </CardContent>
             </Card>
 

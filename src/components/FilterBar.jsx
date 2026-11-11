@@ -22,7 +22,7 @@ function Field({ label, children, className }) {
   )
 }
 
-// extra = true also shows the verified, low confidence and search filters
+// extra = true also shows the verified, low / high confidence and search filters
 function FilterBar({ filters, onChange, extra = false, showMunicipality = true }) {
   const update = (name, value) => onChange({ ...filters, [name]: value })
 
@@ -85,9 +85,18 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = true }
             <Label className="cursor-pointer pb-2">
               <Checkbox
                 checked={filters.low_conf}
-                onCheckedChange={(checked) => update("low_conf", checked)}
+                // low and high can't both be on, so checking one clears the other
+                onCheckedChange={(checked) => onChange({ ...filters, low_conf: checked, high_conf: false })}
               />
               Low confidence only
+            </Label>
+
+            <Label className="cursor-pointer pb-2">
+              <Checkbox
+                checked={filters.high_conf}
+                onCheckedChange={(checked) => onChange({ ...filters, high_conf: checked, low_conf: false })}
+              />
+              High confidence only
             </Label>
           </>
         )}

@@ -9,8 +9,9 @@ import ConfirmModal from "../components/ConfirmModal"
 import ErrorAlert from "../components/ErrorAlert"
 import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
-import SelectField from "../components/SelectField"
+import SelectField, { toOptions } from "../components/SelectField"
 import { ROLES, getRoleLabel } from "../utils/roles"
+import { LOCKED_MUNICIPALITY } from "../utils/diseases"
 import { formatDate } from "../utils/format"
 import Farmers from "./Farmers"
 import { Button } from "@/components/ui/button"
@@ -238,6 +239,16 @@ function Users() {
             <div>
               <Label className="mb-1.5">Role</Label>
               <SelectField value={form.role} onChange={(v) => handleChange("role", v)} options={ACCOUNT_ROLES} />
+            </div>
+            <div>
+              {/* locked: every account is in Echague for now */}
+              <Label className="mb-1.5">Municipality</Label>
+              <SelectField
+                value={LOCKED_MUNICIPALITY}
+                onChange={() => {}}
+                options={toOptions([LOCKED_MUNICIPALITY])}
+                disabled
+              />
             </div>
             <div>
               <Label className="mb-1.5">{editingId ? "New password (optional)" : "Password"}</Label>

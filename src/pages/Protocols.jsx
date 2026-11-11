@@ -267,7 +267,7 @@ function Protocols() {
       <ConfirmModal
         open={deleteTarget !== null}
         title="Delete guide?"
-        message={`The app will have no remediation guide for ${deleteTarget?.display_name}. This can't be undone.`}
+        message={`Are you sure you want to delete the guide for ${deleteTarget?.display_name}? The app will have no remediation guide for it. This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

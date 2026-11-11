@@ -43,7 +43,8 @@ function Login() {
     }
   }
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+    // laptops: the brand side takes 5/8 of the width, the login form 3/8
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[5fr_3fr]">
       <ThemeToggle className="fixed top-4 right-4 z-10" />
 
       {/* Left: brand and what the app does */}

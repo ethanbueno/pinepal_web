@@ -12,8 +12,8 @@ import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
 import PageHeader from "../components/PageHeader"
 import EmptyState from "../components/EmptyState"
-import SelectField, { toOptions } from "../components/SelectField"
-import { MUNICIPALITIES, getDisease } from "../utils/diseases"
+import SelectField from "../components/SelectField"
+import { getDisease } from "../utils/diseases"
 import { startingGuides } from "../utils/guides"
 import { formatPercent } from "../utils/format"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
+
+// every scan saved from this page goes under Echague (same as the mobile app)
+const SCAN_MUNICIPALITY = "Echague"
 
 // like the mobile app: 87.3%
 const percent = (value) => formatPercent(value, 1)
@@ -72,7 +75,6 @@ function Diagnose() {
   const [farmers, setFarmers] = useState([])
   const [farmerId, setFarmerId] = useState("")
   const [myFarm, setMyFarm] = useState(null) // farmers only
-  const [municipality, setMunicipality] = useState("") // farmers only, starts on the farm's
   const [location, setLocation] = useState(null) // { lat, lng }
   const [notes, setNotes] = useState("")
   const [saving, setSaving] = useState(false)
@@ -83,7 +85,6 @@ function Diagnose() {
       getMyFarmer()
         .then((farm) => {
           setMyFarm(farm)
-          setMunicipality(farm?.municipality || "")
           setLocation(farmPin(farm))
         })
         .catch((err) => console.error(err))
@@ -155,7 +156,7 @@ function Diagnose() {
         const saved = await uploadMyScan(file, {
           scan_uuid: newUuid(),
           farm_name: myFarm?.farm_name || null,
-          municipality,
+          municipality: SCAN_MUNICIPALITY,
           latitude: location.lat,
           longitude: location.lng,
           scanned_at: localTimestamp(),
@@ -180,7 +181,7 @@ function Diagnose() {
         farmer_id: farmer.farmer_id,
         farmer_name: farmer.full_name,
         farm_name: farmer.farm_name,
-        municipality: farmer.municipality,
+        municipality: SCAN_MUNICIPALITY,
         latitude: location.lat,
         longitude: location.lng,
         predicted_label: top.label,
@@ -370,20 +371,6 @@ function Diagnose() {
                     ? `Saved to your scans for ${myFarm.farm_name}.`
                     : "Your farm has no details yet. Click the map where your farm is, and it is saved as your farm's location."}
                 </p>
-                <Label className="mb-1.5 text-muted-foreground">Municipality</Label>
-                <div className="mb-1.5">
-                  <SelectField
-                    value={municipality}
-                    onChange={setMunicipality}
-                    options={toOptions(MUNICIPALITIES)}
-                    placeholder="Choose a municipality"
-                  />
-                </div>
-                <p className="mb-3 text-xs text-muted-foreground">
-                  {myFarm?.municipality
-                    ? `Your farm's municipality is ${myFarm.municipality}. Change it here for this scan only.`
-                    : "Your farm has no municipality yet. The one you choose becomes your farm's default."}
-                </p>
               </>
             ) : (
               <>
@@ -420,7 +407,7 @@ function Diagnose() {
           <Button
             size="lg"
             className="h-11 w-full"
-            disabled={(isFarmer ? !location || !municipality : !farmerId) || saving}
+            disabled={(isFarmer ? !location : !farmerId) || saving}
             onClick={handleSave}
           >
             {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}

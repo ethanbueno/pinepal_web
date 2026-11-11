@@ -11,7 +11,7 @@ import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
 import EmptyState from "../components/EmptyState"
 import SelectField, { toOptions } from "../components/SelectField"
-import { MUNICIPALITIES, DEFAULT_MUNICIPALITY, MAP_CENTER } from "../utils/diseases"
+import { MUNICIPALITIES, LOCKED_MUNICIPALITY, MAP_CENTER } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,7 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const emptyForm = {
   full_name: "",
   farm_name: "",
-  municipality: DEFAULT_MUNICIPALITY,
+  municipality: LOCKED_MUNICIPALITY,
   farm_size_ha: "",
   farm_latitude: MAP_CENTER[0],
   farm_longitude: MAP_CENTER[1],
@@ -93,7 +93,7 @@ function Farmers({ embedded = false }) {
     setForm({
       full_name: farmer.full_name,
       farm_name: farmer.farm_name,
-      municipality: farmer.municipality,
+      municipality: LOCKED_MUNICIPALITY,
       farm_size_ha: farmer.farm_size_ha ?? "",
       // a farmer who signed up has no farm pin until their first sync
       farm_latitude: farmer.farm_latitude ?? MAP_CENTER[0],
@@ -301,10 +301,12 @@ function Farmers({ embedded = false }) {
             </div>
             <div>
               <Label className="mb-1.5">Municipality</Label>
+              {/* locked: every farm is in Echague for now */}
               <SelectField
-                value={form.municipality}
-                onChange={(v) => handleChange("municipality", v)}
-                options={toOptions(MUNICIPALITIES)}
+                value={LOCKED_MUNICIPALITY}
+                onChange={() => {}}
+                options={toOptions([LOCKED_MUNICIPALITY])}
+                disabled
               />
             </div>
             <div>

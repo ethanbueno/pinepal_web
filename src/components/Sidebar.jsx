@@ -1,9 +1,12 @@
-import { NavLink, matchPath, useLocation } from "react-router-dom"
+import { useState } from "react"
+import { NavLink, matchPath, useLocation, useNavigate } from "react-router-dom"
+import LoginHistoryDrawer from "./LoginHistoryDrawer"
 import {
   BookOpenIcon,
   ChevronsUpDownIcon,
   DownloadIcon,
   FileTextIcon,
+  HistoryIcon,
   HouseIcon,
   ImagesIcon,
   LayoutDashboardIcon,
@@ -15,6 +18,7 @@ import {
   StethoscopeIcon,
   SunIcon,
   UserCogIcon,
+  UserIcon,
   UsersIcon,
 } from "lucide-react"
 import {
@@ -71,7 +75,9 @@ const initials = (name) =>
 
 function AppSidebar({ user, onLogout }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const { dark, toggleTheme } = useTheme()
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   // farmers get their own short menu, officers don't see admin-only links,
   // admins don't see links that live under another page for them
@@ -119,6 +125,20 @@ function AppSidebar({ user, onLogout }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {/* admins only: opens the Login history drawer instead of a page */}
+              {user.role === "admin" && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Login history"
+                    className="h-9 px-3"
+                    isActive={historyOpen}
+                    onClick={() => setHistoryOpen(true)}
+                  >
+                    <HistoryIcon />
+                    <span>Login history</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -139,6 +159,10 @@ function AppSidebar({ user, onLogout }) {
                 <ChevronsUpDownIcon className="ml-auto size-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="end" className="min-w-56">
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <UserIcon />
+                  My profile
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleTheme}>
                   {dark ? <SunIcon /> : <MoonIcon />}
                   {dark ? "Light mode" : "Dark mode"}
@@ -153,6 +177,8 @@ function AppSidebar({ user, onLogout }) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      {user.role === "admin" && <LoginHistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} />}
     </Sidebar>
   )
 }

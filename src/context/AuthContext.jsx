@@ -52,8 +52,19 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // after the Profile page saves a change, so the sidebar shows the new name right away
+  const updateUser = (changes) => {
+    const next = { ...user, ...changes };
+    try {
+      localStorage.setItem("user", JSON.stringify(next));
+    } catch {
+      // storage unavailable; the change still shows until the page reloads
+    }
+    setUser(next);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
