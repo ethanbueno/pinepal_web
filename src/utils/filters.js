@@ -6,5 +6,6 @@ export const emptyFilters = {
   to: "",
   verified: "",
   low_conf: false,
+  high_conf: false,
   search: "",
 };

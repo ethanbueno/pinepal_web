@@ -7,18 +7,21 @@ import DiseaseBadge from "./DiseaseBadge"
 import { LOW_CONFIDENCE } from "../utils/diseases"
 import { formatDate, formatPercent } from "../utils/format"
 
-// used by Scans, Dashboard (recent) and Farmer Detail
+// used by Scans, Dashboard (highest / lowest confidence) and Farmer Detail
 // bare = just the table, for a page that wraps it in its own card (the Dashboard)
-function ScansTable({ scans, showFarmer = true, bare = false }) {
+// emptyText = the line a bare table shows when there are no scans
+function ScansTable({
+  scans,
+  showFarmer = true,
+  showVerified = true,
+  bare = false,
+  emptyText = "No scans yet. Scans synced from the mobile app will appear here.",
+}) {
   const navigate = useNavigate()
   const location = useLocation()
 
   if (scans.length === 0 && bare) {
-    return (
-      <p className="px-6 py-4 text-center text-muted-foreground">
-        No scans yet. Scans synced from the mobile app will appear here.
-      </p>
-    )
+    return <p className="px-6 py-4 text-center text-sm text-muted-foreground">{emptyText}</p>
   }
 
   if (scans.length === 0) {
@@ -44,7 +47,7 @@ function ScansTable({ scans, showFarmer = true, bare = false }) {
             <TableHead>Municipality</TableHead>
             <TableHead>Predicted</TableHead>
             <TableHead>Confidence</TableHead>
-            <TableHead>Verified</TableHead>
+            {showVerified && <TableHead>Verified</TableHead>}
             <TableHead>Source</TableHead>
           </TableRow>
         </TableHeader>
@@ -65,9 +68,11 @@ function ScansTable({ scans, showFarmer = true, bare = false }) {
                 <DiseaseBadge label={scan.predicted_label} />
               </TableCell>
               <TableCell className="tabular-nums">{formatPercent(scan.confidence)}</TableCell>
-              <TableCell>
-                {scan.verified_label ? <CheckIcon className="size-4" aria-label="Verified" /> : "–"}
-              </TableCell>
+              {showVerified && (
+                <TableCell>
+                  {scan.verified_label ? <CheckIcon className="size-4" aria-label="Verified" /> : "–"}
+                </TableCell>
+              )}
               <TableCell>{scan.image_source}</TableCell>
             </TableRow>
           ))}

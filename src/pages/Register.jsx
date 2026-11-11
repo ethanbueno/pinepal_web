@@ -5,8 +5,8 @@ import { useToast } from "../components/toastcontext"
 import logo from "../assets/pinepal-logo.png"
 import ThemeToggle from "../components/ThemeToggle"
 import ErrorAlert from "../components/ErrorAlert"
-import JoinPanel from "../components/JoinPanel"
 import FloatingInput from "../components/FloatingInput"
+import { LOCKED_MUNICIPALITY } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
 
 // A numbered heading over a group of fields
@@ -24,7 +24,7 @@ function FormSection({ number, title, children }) {
   )
 }
 
-// The form is on the left and the "Join PinePal" panel on the right (Login is the other way round)
+// The sign-up form on its own, centered on the page
 function Register() {
   const [fullName, setFullName] = useState("")
   const [username, setUsername] = useState("")
@@ -56,14 +56,11 @@ function Register() {
     }
   }
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+    <div className="min-h-screen">
       <ThemeToggle className="fixed top-4 right-4 z-10" />
 
-      {/* Right on laptops, on top on phones */}
-      <JoinPanel />
-
-      {/* Left on laptops: the form */}
-      <section className="flex items-start justify-start px-6 pt-8 pb-12 sm:px-10 lg:items-center lg:justify-center lg:py-12">
+      {/* just the form, in the middle of the page */}
+      <section className="flex min-h-screen items-start justify-center px-6 pt-16 pb-12 sm:px-10 sm:items-center sm:py-12">
         <div className="w-full max-w-md">
           <h2 className="text-2xl font-semibold tracking-tight">Create your account</h2>
           <p className="mt-1 mb-8 text-sm text-muted-foreground">
@@ -79,6 +76,15 @@ function Register() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
+              />
+              {/* locked: every account is in Echague for now */}
+              <FloatingInput
+                id="municipality"
+                label="Municipality"
+                value={LOCKED_MUNICIPALITY}
+                readOnly
+                aria-readonly="true"
+                className="[&_input]:cursor-not-allowed [&_input]:bg-muted [&_input]:text-muted-foreground"
               />
             </FormSection>
 
@@ -142,9 +148,13 @@ function Register() {
             </Link>
           </p>
 
-          <p className="mt-8 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          {/* back to the welcome page */}
+          <Link
+            to="/welcome"
+            className="mx-auto mt-8 flex w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
             <img src={logo} alt="" className="size-4" /> Pineapple disease monitoring for Isabela
-          </p>
+          </Link>
         </div>
       </section>
     </div>

@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 from database import get_connection
-from farmers import add_farmer, claim_phone_farmer
+from farmers import LOCKED_MUNICIPALITY, add_farmer, claim_phone_farmer
 from security import hash_password, verify_password
 
 # Login for the web dashboard (matches the API contract in CLAUDEweb.md).
@@ -116,6 +116,10 @@ def register():
         user_id = cursor.lastrowid
         if not claim_phone_farmer(cursor, user_id, full_name, data.get("device_token")):
             add_farmer(cursor, user_id, full_name)
+        # the sign-up form's municipality is locked to Echague, for a new or a claimed farm
+        cursor.execute(
+            "UPDATE farmers SET municipality = %s WHERE user_id = %s", (LOCKED_MUNICIPALITY, user_id)
+        )
         connection.commit()
     except Exception:
         connection.rollback()

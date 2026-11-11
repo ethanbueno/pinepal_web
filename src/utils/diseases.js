@@ -9,6 +9,8 @@ export const DISEASES = [
 ];
 
 export const LOW_CONFIDENCE = 0.6;
+// at or above this a scan is in the Dashboard's "Highest confidence" list (HIGH_CONFIDENCE in backend/mobile_scans.py)
+export const HIGH_CONFIDENCE = 0.9;
 
 // All 3 cities and 34 municipalities of Isabela, A to Z. The names match the municipality column
 // in the scans data (and data/isabela.js).

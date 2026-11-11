@@ -46,6 +46,9 @@ SELECT = """
 """
 
 
+LOCKED_MUNICIPALITY = "Echague"  # every account's farm is in Echague (LOCKED_MUNICIPALITY in src/utils/diseases.js)
+
+
 def add_farmer(cursor, user_id, full_name, **farm):
     """Add a farmers row under the next farmer ID (F001, F002, ...) and return that ID.
 
@@ -149,9 +152,9 @@ def read_fields(data):
     """The farm fields of a form. Returns (fields, error message); exactly one is None."""
     full_name = (data.get("full_name") or "").strip()
     farm_name = (data.get("farm_name") or "").strip()
-    municipality = (data.get("municipality") or "").strip()
-    if not full_name or not farm_name or not municipality:
-        return None, "Full name, farm name and municipality are required"
+    municipality = LOCKED_MUNICIPALITY  # the form's field is locked; whatever is sent, it's Echague
+    if not full_name or not farm_name:
+        return None, "Full name and farm name are required"
     if len(full_name) > 100 or len(farm_name) > 150 or len(municipality) > 100:
         return None, "A field is too long"
 

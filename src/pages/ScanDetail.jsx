@@ -262,7 +262,7 @@ function ScanDetail() {
       <ConfirmModal
         open={showDelete}
         title="Delete scan?"
-        message={`Delete the ${formatDate(scan.scanned_at)} scan from ${scan.farm_name}? This can't be undone.`}
+        message={`Are you sure you want to delete the ${formatDate(scan.scanned_at)} scan from ${scan.farm_name}? This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setShowDelete(false)}
       />
