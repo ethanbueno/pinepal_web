@@ -1,4 +1,4 @@
-import { NavLink, matchPath, useLocation } from "react-router-dom"
+import { NavLink, matchPath, useLocation, useNavigate } from "react-router-dom"
 import {
   BookOpenIcon,
   ChevronsUpDownIcon,
@@ -15,6 +15,7 @@ import {
   StethoscopeIcon,
   SunIcon,
   UserCogIcon,
+  UserIcon,
   UsersIcon,
 } from "lucide-react"
 import {
@@ -71,6 +72,7 @@ const initials = (name) =>
 
 function AppSidebar({ user, onLogout }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const { dark, toggleTheme } = useTheme()
 
   // farmers get their own short menu, officers don't see admin-only links,
@@ -139,6 +141,10 @@ function AppSidebar({ user, onLogout }) {
                 <ChevronsUpDownIcon className="ml-auto size-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="end" className="min-w-56">
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <UserIcon />
+                  My profile
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleTheme}>
                   {dark ? <SunIcon /> : <MoonIcon />}
                   {dark ? "Light mode" : "Dark mode"}
