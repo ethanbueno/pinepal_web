@@ -104,7 +104,7 @@ function Landing() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/welcome" className="flex items-center gap-2">
             <img src={logo} alt="" className="size-8" />
-            <span className="font-semibold tracking-wide uppercase">
+            <span className="font-semibold">
               PinePal
             </span>
           </Link>
@@ -123,7 +123,7 @@ function Landing() {
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium">
                 <MapPinIcon className="size-3.5 text-primary-text" /> Pineapple
-                disease monitoring for Isabela
+                disease monitoring for Echague, Isabela
               </span>
               <h1 className="mt-5 text-4xl leading-[1.05] font-semibold tracking-tight sm:text-5xl lg:text-6xl">
                 Spot pineapple disease{" "}
@@ -266,7 +266,7 @@ function Landing() {
             <img src={logo} alt="" className="size-5" /> PinePal
           </span>
           <span>
-            Pineapple disease monitoring for Isabela
+            Pineapple disease monitoring for Echague, Isabela
             {LOCKED_MUNICIPALITY ? ` · Now serving ${LOCKED_MUNICIPALITY}` : ""}
           </span>
         </div>

@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom"
 import Layout from "./components/Layout"
 import ProtectedRoute from "./components/ProtectedRoute"
-import Landing from "./pages/Landing"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import FarmerHome from "./pages/FarmerHome"
@@ -30,7 +29,6 @@ function staffOnly(page) {
 function App() {
   return (
     <Routes>
-      <Route path="/welcome" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 

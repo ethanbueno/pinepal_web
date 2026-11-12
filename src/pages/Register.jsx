@@ -3,9 +3,8 @@ import { ArrowLeftIcon } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { registerRequest } from "../api/auth"
 import { useToast } from "../components/toastcontext"
-import logo from "../assets/pinepal-logo.png"
-import ThemeToggle from "../components/ThemeToggle"
 import ErrorAlert from "../components/ErrorAlert"
+import AuthSplitLayout from "../components/AuthSplitLayout"
 import FloatingInput from "../components/FloatingInput"
 import { LOCKED_MUNICIPALITY } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
@@ -13,8 +12,8 @@ import { Button } from "@/components/ui/button"
 // A numbered heading over a group of fields
 function FormSection({ number, title, children }) {
   return (
-    <fieldset className="space-y-3">
-      <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
+    <fieldset className="space-y-4">
+      <legend className="mb-2 flex items-center gap-2 text-sm font-semibold">
         <span className="flex size-6 items-center justify-center rounded-full bg-primary/15 text-xs text-primary-text">
           {number}
         </span>
@@ -25,7 +24,7 @@ function FormSection({ number, title, children }) {
   )
 }
 
-// The sign-up form on its own, centered on the page
+// The sign-up form, in the shared Login/Register layout
 function Register() {
   const [fullName, setFullName] = useState("")
   const [username, setUsername] = useState("")
@@ -57,118 +56,96 @@ function Register() {
     }
   }
   return (
-    <div className="min-h-screen">
-      <ThemeToggle className="fixed top-4 right-4 z-10" />
+    <AuthSplitLayout
+      compact
+      title="Create your account"
+      tagline="Scan your pineapples, keep a history of every diagnosis, and get treatment steps for your farm."
+      headerAction={
+        // back to the login page, next to the theme toggle
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Back to login"
+          render={<Link to="/login" />}
+          nativeButton={false}
+        >
+          <ArrowLeftIcon />
+        </Button>
+      }
+    >
+      <form onSubmit={handleRegister} className="space-y-5">
+        <FormSection number={1} title="Your details">
+          <FloatingInput
+            size="compact"
+            id="full-name"
+            label="Full name"
+            autoComplete="name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
+          {/* locked to Echague for now, so it is not shown. The backend sets it on every new account. */}
+          <input type="hidden" name="municipality" value={LOCKED_MUNICIPALITY} />
+        </FormSection>
 
-      {/* back to the login page, mirrors the theme toggle on the other corner */}
-      <Button
-        variant="outline"
-        size="icon"
-        aria-label="Back to login"
-        className="fixed top-4 left-4 z-10"
-        render={<Link to="/login" />}
-        nativeButton={false}
-      >
-        <ArrowLeftIcon />
-      </Button>
+        <FormSection number={2} title="Account">
+          <FloatingInput
+            size="compact"
+            id="username"
+            label="Username"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <FloatingInput
+            size="compact"
+            id="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <FloatingInput
+            size="compact"
+            id="password"
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <FloatingInput
+            size="compact"
+            id="confirm-password"
+            label="Confirm password"
+            type="password"
+            autoComplete="new-password"
+            value={passwordConfirmation}
+            onChange={(e) => setPasswordConfirmation(e.target.value)}
+            required
+          />
+        </FormSection>
 
-      {/* just the form, in the middle of the page */}
-      <section className="flex min-h-screen items-start justify-center px-6 pt-16 pb-12 sm:px-10 sm:items-center sm:py-12">
-        <div className="w-full max-w-md">
-          <h2 className="text-2xl font-semibold tracking-tight">Create your account</h2>
-          <p className="mt-1 mb-8 text-sm text-muted-foreground">
-            Scan your pineapples, keep a history of every diagnosis, and get treatment steps for your farm.
-          </p>
+        <div className="space-y-4">
+          {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
 
-          <form onSubmit={handleRegister} className="space-y-8">
-            <FormSection number={1} title="Your details">
-              <FloatingInput
-                size="compact"
-                id="full-name"
-                label="Full name"
-                autoComplete="name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-              {/* locked to Echague for now, so it is not shown. The backend sets it on every new account. */}
-              <input type="hidden" name="municipality" value={LOCKED_MUNICIPALITY} />
-            </FormSection>
-
-            <FormSection number={2} title="Account">
-              <FloatingInput
-                size="compact"
-                id="username"
-                label="Username"
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-              <FloatingInput
-                size="compact"
-                id="email"
-                label="Email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <FloatingInput
-                size="compact"
-                id="password"
-                label="Password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <FloatingInput
-                size="compact"
-                id="confirm-password"
-                label="Confirm password"
-                type="password"
-                autoComplete="new-password"
-                value={passwordConfirmation}
-                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                required
-              />
-            </FormSection>
-
-            <div className="space-y-3">
-              <div className="rounded-xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
-                This creates a <span className="font-medium text-foreground">farmer account</span>. Agricultural
-                officers and admins are added by an admin. Officers can see your scans and where they were taken, so
-                they can track outbreaks.
-              </div>
-
-              {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
-
-              <Button type="submit" disabled={loading} className="h-12 w-full rounded-full text-base">
-                {loading ? "Creating account..." : "Create account"}
-              </Button>
-            </div>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link to="/login" className="font-medium text-primary-text underline underline-offset-4">
-              Log in
-            </Link>
-          </p>
-
-          {/* back to the welcome page */}
-          <Link
-            to="/welcome"
-            className="mx-auto mt-8 flex w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <img src={logo} alt="" className="size-4" /> Pineapple disease monitoring for Isabela
-          </Link>
+          <Button type="submit" disabled={loading} className="h-10 w-full rounded-[10px] text-[15px] font-medium">
+            {loading ? "Creating account..." : "Create account"}
+          </Button>
         </div>
-      </section>
-    </div>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link to="/login" className="font-medium text-primary-text underline underline-offset-4">
+          Log in
+        </Link>
+      </p>
+    </AuthSplitLayout>
   )
 }
 export default Register

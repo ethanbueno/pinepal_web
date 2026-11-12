@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom"
 import logo from "../assets/pinepal-logo.png"
 import AppShowcase from "./AppShowcase"
 import { cn } from "@/lib/utils"
@@ -14,11 +13,10 @@ function AuthBrandPanel({ side = "left" }) {
         side === "left" ? "lg:border-r" : "lg:order-last lg:border-l"
       )}
     >
-      {/* back to the landing page */}
-      <Link to="/welcome" className="flex w-fit items-center gap-2.5 rounded-md">
+      <div className="flex w-fit items-center gap-2.5">
         <img src={logo} alt="" className="size-11 lg:size-14" />
-        <span className="text-xl font-semibold tracking-wide uppercase lg:text-2xl">PinePal</span>
-      </Link>
+        <span className="text-xl font-semibold lg:text-2xl">PinePal</span>
+      </div>
 
       {/* Laptops: showcase above the headline, scaled down to fit the half-width column.
           Wide screens (2xl): headline bottom-left with the showcase beside it. */}
@@ -34,7 +32,7 @@ function AuthBrandPanel({ side = "left" }) {
       </div>
 
       <p className="mt-4 hidden max-w-md text-sm text-muted-foreground lg:block">
-        Scan a fruit, get the diagnosis and treatment steps, and see where outbreaks are happening across Isabela.
+        Scan a pineapple, get the diagnosis and treatment steps, and see where outbreaks are happening across Echague, Isabela.
       </p>
     </section>
   )

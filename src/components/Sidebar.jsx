@@ -96,7 +96,7 @@ function AppSidebar({ user, onLogout }) {
             <SidebarMenuButton size="lg" render={<NavLink to="/" />}>
               <img src={logo} alt="" className="-my-2 size-12 shrink-0 group-data-[collapsible=icon]:my-0 group-data-[collapsible=icon]:size-8" />
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium tracking-wide uppercase">PinePal</span>
+                <span className="truncate font-medium">PinePal</span>
                 <span className="truncate text-xs">Pineapple Disease Identifier</span>
               </div>
             </SidebarMenuButton>

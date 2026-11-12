@@ -2,10 +2,8 @@ import { useState } from "react"
 import { useNavigate, useLocation, Link, Navigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
-import logo from "../assets/pinepal-logo.png"
-import ThemeToggle from "../components/ThemeToggle"
 import ErrorAlert from "../components/ErrorAlert"
-import AuthBrandPanel from "../components/AuthBrandPanel"
+import AuthSplitLayout from "../components/AuthSplitLayout"
 import FloatingInput from "../components/FloatingInput"
 import { Button } from "@/components/ui/button"
 
@@ -43,63 +41,44 @@ function Login() {
     }
   }
   return (
-    // laptops: the brand side takes 5/8 of the width, the login form 3/8
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[5fr_3fr]">
-      <ThemeToggle className="fixed top-4 right-4 z-10" />
+    <AuthSplitLayout
+      title="Log into PinePal"
+      tagline="Scan a pineapple, get the diagnosis and treatment steps, and see where outbreaks are happening across Echague, Isabela."
+    >
+      <form onSubmit={handleLogin} className="space-y-4">
+        <FloatingInput
+          size="compact"
+          id="username"
+          label="Username or email"
+          type="text"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <FloatingInput
+          size="compact"
+          id="password"
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
+        <Button type="submit" disabled={loading} className="h-10 w-full rounded-[10px] text-[15px] font-medium">
+          {loading ? "Signing in..." : "Log in"}
+        </Button>
+      </form>
 
-      {/* Left: brand and what the app does */}
-      <AuthBrandPanel side="left" />
-
-      {/* Right: the form */}
-      <section className="flex items-start justify-start px-6 pt-6 pb-12 sm:px-10 lg:items-center lg:justify-center lg:py-12">
-        <div className="w-full max-w-md">
-          <h2 className="mb-6 text-xl font-semibold">Log into PinePal</h2>
-          <form onSubmit={handleLogin} className="space-y-3">
-            <FloatingInput
-              size="compact"
-              id="username"
-              label="Username or email"
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <FloatingInput
-              size="compact"
-              id="password"
-              label="Password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
-            <Button type="submit" disabled={loading} className="mt-2 h-12 w-full rounded-full text-base">
-              {loading ? "Signing in..." : "Log in"}
-            </Button>
-          </form>
-
-          <div className="my-8 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> New to PinePal? <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <Button
-            variant="outline"
-            className="h-12 w-full rounded-full text-base"
-            render={<Link to="/register" />}
-            nativeButton={false}
-          >
-            Create new account
-          </Button>
-
-          <p className="mt-8 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-            <img src={logo} alt="" className="size-4" /> Pineapple disease monitoring for Isabela
-          </p>
-        </div>
-      </section>
-    </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        New to PinePal?{" "}
+        <Link to="/register" className="font-medium text-primary-text underline underline-offset-4">
+          Create an account
+        </Link>
+      </p>
+    </AuthSplitLayout>
   )
 }
 export default Login

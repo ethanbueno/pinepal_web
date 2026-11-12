@@ -128,14 +128,17 @@
     @apply bg-background text-foreground font-sans;
     caret-color: transparent; /* no blinking cursor outside text fields */
   }
-  input,
-  textarea,
-  select,
-  [contenteditable="true"] {
+  /* only a focused field shows the cursor. An unfocused field keeps it hidden too, because Chrome
+     borrows the field's caret color when you click the empty space right next to it. */
+  input:focus,
+  textarea:focus,
+  select:focus,
+  [contenteditable="true"]:focus {
     caret-color: auto;
   }
   html {
     @apply font-sans;
+    caret-color: transparent; /* also hide it on the page edges outside body */
   }
 }
 
