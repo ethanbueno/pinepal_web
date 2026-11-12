@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { ArrowLeftIcon } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { registerRequest } from "../api/auth"
 import { useToast } from "../components/toastcontext"
@@ -58,6 +59,18 @@ function Register() {
   return (
     <div className="min-h-screen">
       <ThemeToggle className="fixed top-4 right-4 z-10" />
+
+      {/* back to the login page, mirrors the theme toggle on the other corner */}
+      <Button
+        variant="outline"
+        size="icon"
+        aria-label="Back to login"
+        className="fixed top-4 left-4 z-10"
+        render={<Link to="/login" />}
+        nativeButton={false}
+      >
+        <ArrowLeftIcon />
+      </Button>
 
       {/* just the form, in the middle of the page */}
       <section className="flex min-h-screen items-start justify-center px-6 pt-16 pb-12 sm:px-10 sm:items-center sm:py-12">
