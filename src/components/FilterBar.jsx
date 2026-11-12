@@ -1,13 +1,18 @@
+import { useState } from "react"
+import { SlidersHorizontalIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import SelectField, { toOptions } from "./SelectField"
-import { DISEASES, MUNICIPALITIES } from "../utils/diseases"
+import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES } from "../utils/diseases"
 import { emptyFilters } from "../utils/filters"
 
 const diseaseOptions = DISEASES.map((d) => ({ value: d.label, label: d.name }))
+const confidenceOptions = [
+  { value: "low", label: "Low (under 60%)" },
+  { value: "high", label: "High (90% and up)" },
+]
 const verifiedOptions = [
   { value: "yes", label: "Verified" },
   { value: "no", label: "Not verified" },
@@ -22,15 +27,36 @@ function Field({ label, children, className }) {
   )
 }
 
-// extra = true also shows the verified, low / high confidence and search filters
-function FilterBar({ filters, onChange, extra = false, showMunicipality = true }) {
+// extra = true also shows the verified, low / high confidence and search filters.
+// The municipality filter is left out while PinePal is locked to one municipality.
+// On phones the filters fold away behind a Filters button, so the list is on the first screen.
+function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKED_MUNICIPALITY }) {
   const update = (name, value) => onChange({ ...filters, [name]: value })
+  const [open, setOpen] = useState(false)
+  // how many filters are set, shown on the phone button
+  const active = Object.entries(filters).filter(
+    ([key, value]) => value !== "" && value !== false && value !== emptyFilters[key]
+  ).length
 
   return (
     <Card className="mb-4">
-      <CardContent className="flex flex-wrap items-end gap-3">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="-my-1 flex items-center justify-between gap-2 px-(--card-spacing) text-sm font-medium sm:hidden"
+      >
+        <span className="flex items-center gap-2">
+          <SlidersHorizontalIcon className="size-4" /> Filters
+          {active > 0 && (
+            <span className="rounded-full bg-primary/15 px-2 text-xs text-primary-text">{active}</span>
+          )}
+        </span>
+        <span className="text-xs text-muted-foreground">{open ? "Hide" : "Show"}</span>
+      </button>
+      <CardContent className={"flex-wrap items-end gap-3 sm:flex " + (open ? "flex" : "hidden")}>
         {extra && (
-          <Field label="Search" className="grow min-w-48">
+          <Field label="Search" className="grow min-w-40">
             <Input
               type="text"
               placeholder="Farmer or farm name"
@@ -74,7 +100,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = true }
           <>
             <Field label="Verified">
               <SelectField
-                className="w-full sm:w-36"
+                className="w-full sm:w-32"
                 allLabel="All"
                 value={filters.verified}
                 onChange={(v) => update("verified", v)}
@@ -82,22 +108,16 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = true }
               />
             </Field>
 
-            <Label className="cursor-pointer pb-2">
-              <Checkbox
-                checked={filters.low_conf}
-                // low and high can't both be on, so checking one clears the other
-                onCheckedChange={(checked) => onChange({ ...filters, low_conf: checked, high_conf: false })}
+            {/* one choice for low / high, since a scan can't be both (the Dashboard's links set these) */}
+            <Field label="Confidence">
+              <SelectField
+                className="w-full sm:w-32"
+                allLabel="All"
+                value={filters.low_conf ? "low" : filters.high_conf ? "high" : ""}
+                onChange={(v) => onChange({ ...filters, low_conf: v === "low", high_conf: v === "high" })}
+                options={confidenceOptions}
               />
-              Low confidence only
-            </Label>
-
-            <Label className="cursor-pointer pb-2">
-              <Checkbox
-                checked={filters.high_conf}
-                onCheckedChange={(checked) => onChange({ ...filters, high_conf: checked, low_conf: false })}
-              />
-              High confidence only
-            </Label>
+            </Field>
           </>
         )}
 

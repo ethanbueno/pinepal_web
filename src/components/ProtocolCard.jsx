@@ -16,10 +16,11 @@ function Chip({ className, children }) {
   return <span className={"rounded-full border px-2.5 py-0.5 text-xs font-semibold " + className}>{children}</span>
 }
 
-// A titled part of the guide with an icon in a soft amber square, like the mobile guide sections
-function Section({ icon: Icon, title, children }) {
+// A titled part of the guide with an icon in a soft amber square, like the mobile guide sections.
+// plain = no line above it (the wide layout puts sections side by side instead)
+function Section({ icon: Icon, title, plain = false, children }) {
   return (
-    <div className="border-t pt-4 first:border-t-0 first:pt-0">
+    <div className={plain ? "" : "border-t pt-4 first:border-t-0 first:pt-0"}>
       <div className="mb-2 flex items-center gap-2.5">
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary-text">
           <Icon className="size-4" />
@@ -31,11 +32,13 @@ function Section({ icon: Icon, title, children }) {
   )
 }
 
-// The guide photo, or a plain placeholder when the photo is missing (same as the mobile app)
-function GuidePhoto({ url, name }) {
+// The guide photo, or a plain placeholder when the photo is missing (same as the mobile app).
+// placeholder = false shows nothing instead of the empty box.
+function GuidePhoto({ url, name, placeholder = true }) {
   const [broken, setBroken] = useState(false)
 
   if (!url || broken) {
+    if (!placeholder) return null
     return (
       <div className="flex h-44 items-center justify-center bg-muted text-muted-foreground">
         <ImageIcon className="size-10" />
@@ -45,8 +48,10 @@ function GuidePhoto({ url, name }) {
   return <img src={url} alt={name} className="h-44 w-full object-cover" onError={() => setBroken(true)} />
 }
 
-// the remediation guide for one disease class, laid out like the mobile Disease Guide
-function ProtocolCard({ protocol }) {
+// the remediation guide for one disease class, laid out like the mobile Disease Guide.
+// wide = it spans a whole page (Scan detail): no empty photo box, and the sections in two
+// columns on big screens so the lines don't get too long to read
+function ProtocolCard({ protocol, wide = false }) {
   if (!protocol) {
     return (
       <Card>
@@ -61,7 +66,7 @@ function ProtocolCard({ protocol }) {
 
   return (
     <Card className="gap-0 py-0">
-      <GuidePhoto url={protocol.image_url} name={protocol.display_name} />
+      <GuidePhoto url={protocol.image_url} name={protocol.display_name} placeholder={!wide} />
 
       {/* header: color strip, name, scientific name, type and severity */}
       <div className="flex border-b">
@@ -79,16 +84,21 @@ function ProtocolCard({ protocol }) {
         </div>
       </div>
 
-      <CardContent className="flex flex-col gap-4 py-4 text-[0.95rem] leading-relaxed">
+      <CardContent
+        className={
+          "py-4 text-[0.95rem] leading-relaxed " +
+          (wide ? "grid gap-x-8 gap-y-5 lg:grid-cols-2" : "flex flex-col gap-4")
+        }
+      >
         {protocol.about && (
-          <Section icon={InfoIcon} title="About">
+          <Section icon={InfoIcon} title="About" plain={wide}>
             <p className="whitespace-pre-line">{protocol.about}</p>
           </Section>
         )}
-        <Section icon={SearchIcon} title="Symptoms">
+        <Section icon={SearchIcon} title="Symptoms" plain={wide}>
           <p className="whitespace-pre-line">{protocol.symptoms}</p>
         </Section>
-        <Section icon={StethoscopeIcon} title="Immediate action">
+        <Section icon={StethoscopeIcon} title="Immediate action" plain={wide}>
           {/* numbered, because the order of the steps matters */}
           <ol className="flex list-none flex-col gap-1.5">
             {steps.map((step, i) => (
@@ -99,10 +109,12 @@ function ProtocolCard({ protocol }) {
             ))}
           </ol>
         </Section>
-        <Section icon={ShieldCheckIcon} title="Prevention">
+        <Section icon={ShieldCheckIcon} title="Prevention" plain={wide}>
           <p className="whitespace-pre-line">{protocol.prevention}</p>
         </Section>
-        <p className="border-t pt-3 text-xs text-muted-foreground">Version {protocol.version}</p>
+        <p className={"border-t pt-3 text-xs text-muted-foreground " + (wide ? "lg:col-span-2" : "")}>
+          Version {protocol.version}
+        </p>
       </CardContent>
     </Card>
   )

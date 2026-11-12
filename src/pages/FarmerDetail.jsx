@@ -9,6 +9,7 @@ import ErrorAlert from "../components/ErrorAlert"
 import BackButton from "../components/BackButton"
 import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
+import Pagination from "../components/Pagination"
 import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate } from "../utils/format"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +24,8 @@ function Info({ label, children }) {
   )
 }
 
+const PER_PAGE = 10
+
 function FarmerDetail() {
   const { id } = useParams()
   const { user } = useAuth()
@@ -30,6 +33,7 @@ function FarmerDetail() {
   const backTo = user.role === "admin" ? "/users?tab=farmers" : "/farmers"
   const [farmer, setFarmer] = useState(null)
   const [scans, setScans] = useState([])
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -89,14 +93,15 @@ function FarmerDetail() {
         description={farmer.farm_name ? `${farmer.farm_name} · ${farmer.municipality}` : farmer.municipality}
       />
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+      {/* the two cards stretch to the same height */}
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="font-semibold">Farmer details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <Info label="Farm">{farmer.farm_name}</Info>
+              <Info label="Farm">{farmer.farm_name || "–"}</Info>
               <Info label="Municipality">{farmer.municipality}</Info>
               <Info label="Farm size">{farmer.farm_size_ha ? `${farmer.farm_size_ha} ha` : "-"}</Info>
               <Info label="Username">{farmer.username ? `@${farmer.username}` : "No login yet"}</Info>
@@ -126,16 +131,39 @@ function FarmerDetail() {
           </CardContent>
         </Card>
 
-        <MiniMap
-          height={300}
-          center={hasPin ? [farmer.farm_latitude, farmer.farm_longitude] : undefined}
-          zoom={hasPin ? 12 : undefined}
-          points={points}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-semibold">Where they scanned</CardTitle>
+          </CardHeader>
+          {/* grows to the height of the card next to it, never shorter than 16rem */}
+          <CardContent className="relative min-h-64 flex-1">
+            <div className="absolute inset-y-0 right-(--card-spacing) left-(--card-spacing)">
+              <MiniMap
+                height="100%"
+                center={hasPin ? [farmer.farm_latitude, farmer.farm_longitude] : undefined}
+                zoom={hasPin ? 12 : undefined}
+                points={points}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <h2 className="mb-3 text-lg font-semibold">Scans</h2>
-      <ScansTable scans={scans} />
+      {/* every scan here is this farmer's, so no Farmer column; a page at a time */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-semibold">Scans</CardTitle>
+        </CardHeader>
+        <CardContent className="px-0">
+          <ScansTable
+            scans={scans.slice((page - 1) * PER_PAGE, page * PER_PAGE)}
+            showFarmer={false}
+            bare
+            emptyText="This farmer has no scans yet."
+          />
+        </CardContent>
+      </Card>
+      <Pagination page={page} perPage={PER_PAGE} total={scans.length} onChange={setPage} />
     </div>
   )
 }

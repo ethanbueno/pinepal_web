@@ -17,7 +17,7 @@ import LoadingBlocks from "../components/LoadingBlocks"
 import ConfidenceBar from "../components/ConfidenceBar"
 import SelectField from "../components/SelectField"
 import { DISEASES, getDisease } from "../utils/diseases"
-import { formatDate, formatDateTime, formatPercent, scanImage } from "../utils/format"
+import { formatDate, formatDateTime, formatPercent, placeholderImage, scanImage } from "../utils/format"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -59,6 +59,9 @@ function ScanDetail() {
   const [saving, setSaving] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  // The photo is kept by the backend that received it; on another backend (the database is
+  // shared) it can't load, so the placeholder shows instead of a broken image
+  const [failedPhoto, setFailedPhoto] = useState(null) // the photo url that didn't load
 
   useEffect(() => {
     let ignore = false
@@ -128,6 +131,13 @@ function ScanDetail() {
 
   const secondDisease = getDisease(scan.second_label)
   const finalLabel = scan.verified_label || scan.predicted_label
+  const photoFailed = Boolean(scan.image_url) && failedPhoto === scan.image_url
+  const photo = photoFailed ? placeholderImage(finalLabel) : scanImage(scan)
+  const photoNote = !scan.image_url
+    ? "No photo available. The picture is only a placeholder for the diagnosis."
+    : photoFailed
+      ? "The photo isn't on this server (it was uploaded to another PinePal backend)."
+      : ""
   const protocol = protocols.find((p) => p.label === finalLabel)
 
   return (
@@ -153,13 +163,19 @@ function ScanDetail() {
         }
       />
 
+      {/* left: the photo; right: the diagnosis, verifying it and where it was taken.
+          On laptops the photo stretches to exactly the right column's height (no gaps);
+          on phones it is a square above the rest. */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="self-start py-0">
-          <img src={scanImage(scan)} alt="Pineapple scan" className="aspect-square w-full object-cover" />
-          {!scan.image_url && (
-            <p className="px-4 pb-4 text-xs text-muted-foreground">
-              No photo available. The picture is only a placeholder for the diagnosis.
-            </p>
+        <Card className="relative aspect-square gap-0 py-0 lg:aspect-auto">
+          <img
+            src={photo}
+            alt="Pineapple scan"
+            onError={() => setFailedPhoto(scan.image_url)}
+            className="absolute inset-0 size-full object-cover"
+          />
+          {photoNote && (
+            <p className="absolute inset-x-0 bottom-0 bg-black/60 px-4 py-2 text-xs text-white">{photoNote}</p>
           )}
         </Card>
 
@@ -190,7 +206,7 @@ function ScanDetail() {
 
               <div className="grid grid-cols-2 gap-4 border-t pt-4">
                 <Info label="Farmer">{scan.farmer_name}</Info>
-                <Info label="Farm">{scan.farm_name}</Info>
+                <Info label="Farm">{scan.farm_name || "–"}</Info>
                 <Info label="Municipality">{scan.municipality}</Info>
                 <Info label="Source">{scan.image_source}</Info>
                 <Info label="Scanned">{formatDateTime(scan.scanned_at)}</Info>
@@ -238,31 +254,33 @@ function ScanDetail() {
               )}
             </CardContent>
           </Card>
+
+          <MiniMap
+            height={220}
+            center={[scan.latitude, scan.longitude]}
+            zoom={13}
+            points={[
+              {
+                id: scan.scan_uuid,
+                lat: scan.latitude,
+                lng: scan.longitude,
+                color: getDisease(finalLabel).color,
+                text: getDisease(finalLabel).name,
+              },
+            ]}
+          />
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <MiniMap
-          height={260}
-          center={[scan.latitude, scan.longitude]}
-          zoom={13}
-          points={[
-            {
-              id: scan.scan_uuid,
-              lat: scan.latitude,
-              lng: scan.longitude,
-              color: getDisease(finalLabel).color,
-              text: getDisease(finalLabel).name,
-            },
-          ]}
-        />
-        <ProtocolCard protocol={protocol} />
+      {/* the care guide is long, so it gets the whole width under both columns */}
+      <div className="mt-4">
+        <ProtocolCard protocol={protocol} wide />
       </div>
 
       <ConfirmModal
         open={showDelete}
         title="Delete scan?"
-        message={`Are you sure you want to delete the ${formatDate(scan.scanned_at)} scan from ${scan.farm_name}? This can't be undone.`}
+        message={`Are you sure you want to delete the ${formatDate(scan.scanned_at)} scan from ${scan.farm_name || scan.farmer_name}? This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setShowDelete(false)}
       />

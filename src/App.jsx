@@ -16,6 +16,7 @@ import Farmers from "./pages/Farmers"
 import FarmerDetail from "./pages/FarmerDetail"
 import ExportData from "./pages/ExportData"
 import Users from "./pages/Users"
+import LoginHistory from "./pages/LoginHistory"
 import NotFound from "./pages/NotFound"
 import Profile from "./pages/Profile"
 
@@ -62,6 +63,7 @@ function App() {
 
         {/* admin only */}
         <Route path="/users" element={<ProtectedRoute roles={["admin"]}><Users /></ProtectedRoute>} />
+        <Route path="/login-history" element={<ProtectedRoute roles={["admin"]}><LoginHistory /></ProtectedRoute>} />
 
         <Route path="*" element={<NotFound />} />
       </Route>

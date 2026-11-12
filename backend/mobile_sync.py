@@ -27,6 +27,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
 from database import get_connection
+from echague_area import OUTSIDE_ECHAGUE, in_echague
 from farmers import add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
 from mobile_scans import LABELS
@@ -150,6 +151,8 @@ def read_scan(form):
         return None, "second_confidence must be a number"
 
     source = form.get("image_source")
+    if source == "Web" and not in_echague(latitude, longitude):
+        return None, OUTSIDE_ECHAGUE
     return {
         "scan_uuid": scan_uuid,
         "farm_name": (form.get("farm_name") or "").strip()[:150] or None,

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
-import { SearchXIcon } from "lucide-react"
+import { CheckIcon, SearchXIcon } from "lucide-react"
 import { getStats } from "../api/stats"
 import StatCard from "../components/StatCard"
-import ScansTable from "../components/ScansTable"
+import DiseaseBadge from "../components/DiseaseBadge"
 import ErrorAlert from "../components/ErrorAlert"
 import { DISEASES, HIGH_CONFIDENCE, LOW_CONFIDENCE, getDisease } from "../utils/diseases"
 import { formatDate, formatPercent } from "../utils/format"
@@ -12,6 +12,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 import {
@@ -70,22 +71,58 @@ const percent = (value) => Math.round(value * 100) + "%"
 const linkClass =
   "rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
 
-// A heading over one of the Scans card's lists, with a link to all the scans like it
-// (filters = what the Scans page opens with)
-function ScansSection({ title, note, filters, children }) {
+// The table's first and last cells line up with the card title and the links above them
+// (the card's own padding), so every left and right edge in the card is the same
+const EDGE = "first:pl-(--card-spacing) last:pr-(--card-spacing)"
+// Every scan here is from Echague, so there is no Municipality column
+const COLUMNS = ["Date", "Farmer", "Predicted", "Confidence", "Source"]
+
+// One group of the Scans card: a heading row, then its scans.
+// showVerified = tag the verified ones next to the diagnosis (the lowest confidence group only;
+// the unverified ones there are tinted red instead).
+function ScanGroup({ title, note, scans, emptyText, showVerified }) {
+  const navigate = useNavigate()
   return (
-    <section className="flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-3 px-6">
-        <div>
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="text-xs text-muted-foreground">{note}</p>
-        </div>
-        <Link to="/scans" state={{ filters }} className={"shrink-0 " + linkClass}>
-          See all
-        </Link>
-      </div>
-      {children}
-    </section>
+    <TableBody className="[&_tr:last-child]:border-b">
+      <TableRow className="bg-muted/40 hover:bg-muted/40">
+        <TableCell colSpan={COLUMNS.length} className="px-(--card-spacing) py-2.5 whitespace-normal">
+          <div className="text-sm font-semibold">{title}</div>
+          <div className="text-xs text-muted-foreground">{note}</div>
+        </TableCell>
+      </TableRow>
+      {scans.length === 0 && (
+        <TableRow className="hover:bg-transparent">
+          <TableCell colSpan={COLUMNS.length} className="px-(--card-spacing) py-4 text-center text-muted-foreground">
+            {emptyText}
+          </TableCell>
+        </TableRow>
+      )}
+      {scans.map((scan) => (
+        <TableRow
+          key={scan.scan_uuid}
+          onClick={() => navigate("/scans/" + scan.scan_uuid, { state: { from: "/" } })}
+          className={
+            "cursor-pointer " +
+            (!scan.verified_label && scan.confidence < LOW_CONFIDENCE ? "bg-destructive/10 hover:bg-destructive/15" : "")
+          }
+        >
+          <TableCell className={EDGE}>{formatDate(scan.scanned_at)}</TableCell>
+          <TableCell className={EDGE}>{scan.farmer_name}</TableCell>
+          <TableCell className={EDGE}>
+            <span className="flex items-center gap-2">
+              <DiseaseBadge label={scan.predicted_label} />
+              {showVerified && scan.verified_label && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <CheckIcon className="size-3.5" /> Verified
+                </span>
+              )}
+            </span>
+          </TableCell>
+          <TableCell className={EDGE + " tabular-nums"}>{formatPercent(scan.confidence)}</TableCell>
+          <TableCell className={EDGE}>{scan.image_source}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
   )
 }
 
@@ -118,15 +155,15 @@ function ShareRow({ name, dotColor, count, detail, fraction, barColor, barClass 
 // Grey blocks in the shape of the dashboard while the numbers load
 function DashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-6" aria-label="Loading dashboard">
+    <div className="flex flex-col gap-4" aria-label="Loading dashboard">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[1, 2, 3, 4].map((n) => (
-          <Skeleton key={n} className="h-[118px] rounded-xl" />
+          <Skeleton key={n} className="h-[100px] rounded-xl" />
         ))}
       </div>
       <div className="grid gap-4 xl:grid-cols-3">
-        <Skeleton className="h-[400px] rounded-xl xl:col-span-2" />
-        <Skeleton className="h-[400px] rounded-xl" />
+        <Skeleton className="h-[340px] rounded-xl xl:col-span-2" />
+        <Skeleton className="h-[340px] rounded-xl" />
       </div>
     </div>
   )
@@ -176,7 +213,7 @@ function Dashboard() {
   const header = (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
           {rangeLabel(range)}. Disease counts use the verified diagnosis when there is one, otherwise the prediction.
         </p>
@@ -226,7 +263,7 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
         {header}
         <DashboardSkeleton />
       </div>
@@ -235,7 +272,7 @@ function Dashboard() {
 
   if (error) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
         {header}
         <ErrorAlert className="">
           {error} Check that the server is running, then pick a date range to try again.
@@ -250,12 +287,12 @@ function Dashboard() {
   const topMunicipalities = stats.by_municipality.slice(0, 5)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {header}
 
       {total === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
+          <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
             <SearchXIcon className="size-8 text-muted-foreground" />
             <p className="font-medium">No scans in this date range</p>
             <p className="text-sm text-muted-foreground">Try a wider range, or choose All time.</p>
@@ -294,7 +331,7 @@ function Dashboard() {
                 <CardDescription>Scans by diagnosis, month by month.</CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={lineConfig} className="aspect-auto h-[300px] w-full">
+                <ChartContainer config={lineConfig} className="aspect-auto h-[240px] w-full">
                   <LineChart data={stats.by_month}>
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="month" tickFormatter={monthName} tickLine={false} axisLine={false} tickMargin={8} />
@@ -347,7 +384,7 @@ function Dashboard() {
               <CardHeader>
                 <CardTitle className="font-semibold">Scans</CardTitle>
                 <CardDescription>
-                  Up to {DASHBOARD_SCANS} of the most and least confident scans in this range.
+                  Up to {DASHBOARD_SCANS} of the most and least confident Echague scans in this range.
                 </CardDescription>
                 <CardAction>
                   <Link to="/scans" className={linkClass}>
@@ -355,30 +392,33 @@ function Dashboard() {
                   </Link>
                 </CardAction>
               </CardHeader>
-              <CardContent className="flex flex-col gap-6 px-0">
-                <ScansSection
-                  title="Highest confidence"
-                  note={`${percent(HIGH_CONFIDENCE)} confidence and above, most confident first.`}
-                  filters={{ ...range, high_conf: true }}
-                >
-                  <ScansTable
+              {/* one table for both groups, so their columns line up */}
+              <CardContent className="px-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      {COLUMNS.map((column) => (
+                        <TableHead key={column} className={EDGE}>
+                          {column}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <ScanGroup
+                    title="Highest confidence"
+                    note={`${percent(HIGH_CONFIDENCE)} confidence and above, most confident first.`}
                     scans={stats.highest_confidence}
-                    showVerified={false}
-                    bare
                     emptyText={`No scans at ${percent(HIGH_CONFIDENCE)} confidence or above in this range.`}
+                    showVerified={false}
                   />
-                </ScansSection>
-                <ScansSection
-                  title="Lowest confidence"
-                  note={`Under ${percent(LOW_CONFIDENCE)} confidence, least confident first.`}
-                  filters={{ ...range, low_conf: true }}
-                >
-                  <ScansTable
+                  <ScanGroup
+                    title="Lowest confidence"
+                    note={`Under ${percent(LOW_CONFIDENCE)} confidence, least confident first. Red rows are not verified yet.`}
                     scans={stats.lowest_confidence}
-                    bare
                     emptyText={`No scans under ${percent(LOW_CONFIDENCE)} confidence in this range.`}
+                    showVerified
                   />
-                </ScansSection>
+                </Table>
               </CardContent>
             </Card>
 

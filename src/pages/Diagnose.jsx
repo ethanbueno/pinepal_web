@@ -14,6 +14,7 @@ import PageHeader from "../components/PageHeader"
 import EmptyState from "../components/EmptyState"
 import SelectField from "../components/SelectField"
 import { getDisease } from "../utils/diseases"
+import { OUTSIDE_TOWN, insideLockedTown } from "../utils/mapArea"
 import { startingGuides } from "../utils/guides"
 import { formatPercent } from "../utils/format"
 import { Button } from "@/components/ui/button"
@@ -217,6 +218,8 @@ function Diagnose() {
   const uncertain = result ? (result.uncertain ?? result.low_confidence) : false
   const top = result?.predictions?.[0] ?? null
   const topDisease = top ? getDisease(top.label) : null
+  // the pin must be inside Echague to save (the server checks it too)
+  const locationOutside = Boolean(location) && !insideLockedTown(location.lat, location.lng)
   const farmerOptions = farmers.map((f) => ({ value: f.farmer_id, label: `${f.full_name} - ${f.farm_name}` }))
 
   return (
@@ -236,7 +239,7 @@ function Diagnose() {
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             className={cn(
-              "flex min-h-96 cursor-pointer flex-col items-center justify-center p-10 text-center",
+              "flex min-h-80 cursor-pointer flex-col items-center justify-center p-8 text-center",
               "rounded-xl border-2 border-dashed border-border bg-card transition-colors hover:border-primary/60",
               "focus-within:ring-2 focus-within:ring-ring",
               dragging && "border-primary bg-primary/5"
@@ -245,7 +248,7 @@ function Diagnose() {
             <img src={logo} alt="" className="mb-3 size-24" />
             <div className="font-semibold">Drag a photo here</div>
             <div className="mb-5 text-sm text-muted-foreground">JPG or PNG, up to 5 MB</div>
-            <span className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">
+            <span className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">
               <ImagePlusIcon className="size-4" />
               Choose from Gallery
             </span>
@@ -285,7 +288,7 @@ function Diagnose() {
                   was not checked for disease and can't be saved as a scan.
                 </p>
                 {/* opens the file picker straight away; the new photo replaces this one */}
-                <label className="mt-4 flex h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary text-sm font-medium text-primary-foreground">
+                <label className="mt-4 flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary text-sm font-medium text-primary-foreground">
                   <ImagePlusIcon className="size-4" />
                   Choose another photo
                   <input
@@ -295,7 +298,7 @@ function Diagnose() {
                     onChange={(e) => chooseFile(e.target.files[0])}
                   />
                 </label>
-                <Button variant="outline" size="lg" className="mt-2 h-11 w-full" onClick={reset}>
+                <Button variant="outline" size="lg" className="mt-2 h-10 w-full" onClick={reset}>
                   Cancel
                 </Button>
               </>
@@ -306,10 +309,10 @@ function Diagnose() {
 
                 {error && <ErrorAlert>{error}</ErrorAlert>}
 
-                <Button size="lg" className="h-11 w-full" disabled={diagnosing} onClick={handleDiagnose}>
+                <Button size="lg" className="h-10 w-full" disabled={diagnosing} onClick={handleDiagnose}>
                   {diagnosing ? "Analyzing..." : "Analyze Photo"}
                 </Button>
-                <Button variant="outline" size="lg" className="mt-2 h-11 w-full" onClick={reset}>
+                <Button variant="outline" size="lg" className="mt-2 h-10 w-full" onClick={reset}>
                   Choose another
                 </Button>
               </>
@@ -343,11 +346,11 @@ function Diagnose() {
                   ))}
                 </div>
 
-                <Button variant="outline" size="lg" className="mt-4 h-11 w-full" onClick={reset}>
+                <Button variant="outline" size="lg" className="mt-4 h-10 w-full" onClick={reset}>
                   Scan another
                 </Button>
                 {!showSave && (
-                  <Button size="lg" className="mt-2 h-11 w-full" onClick={() => setShowSave(true)}>
+                  <Button size="lg" className="mt-2 h-10 w-full" onClick={() => setShowSave(true)}>
                     Save as scan
                   </Button>
                 )}
@@ -392,7 +395,14 @@ function Diagnose() {
               height={220}
               center={location ? [location.lat, location.lng] : undefined}
               zoom={location ? 12 : undefined}
-              onPick={(lat, lng) => setLocation({ lat, lng })}
+              onPick={(lat, lng) => {
+                // a pin outside Echague is refused right away
+                if (!insideLockedTown(lat, lng)) {
+                  notify(OUTSIDE_TOWN, "error")
+                  return
+                }
+                setLocation({ lat, lng })
+              }}
               points={
                 location
                   ? [{ id: "pin", lat: location.lat, lng: location.lng, color: topDisease.color }]
@@ -400,14 +410,20 @@ function Diagnose() {
               }
             />
           </div>
+          {/* a farm pin saved before the Echague lock can still be outside it */}
+          {locationOutside && (
+            <p className="-mt-1 mb-3 text-sm text-destructive">
+              This pin is outside Echague. Click the map inside the Echague border to move it before saving.
+            </p>
+          )}
 
           <Label className="mb-1.5 text-muted-foreground">Notes</Label>
           <Textarea className="mb-4" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
 
           <Button
             size="lg"
-            className="h-11 w-full"
-            disabled={(isFarmer ? !location : !farmerId) || saving}
+            className="h-10 w-full"
+            disabled={(isFarmer ? !location : !farmerId) || locationOutside || saving}
             onClick={handleSave}
           >
             {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}

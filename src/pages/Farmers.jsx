@@ -10,8 +10,10 @@ import ErrorAlert from "../components/ErrorAlert"
 import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
 import EmptyState from "../components/EmptyState"
+import PasswordInput from "../components/PasswordInput"
 import SelectField, { toOptions } from "../components/SelectField"
 import { MUNICIPALITIES, LOCKED_MUNICIPALITY, MAP_CENTER } from "../utils/diseases"
+import { OUTSIDE_TOWN, insideLockedTown } from "../utils/mapArea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -107,6 +109,11 @@ function Farmers({ embedded = false }) {
 
   const handleSave = async (e) => {
     e.preventDefault()
+    // the farm must be inside Echague (the server checks it too)
+    if (!insideLockedTown(form.farm_latitude, form.farm_longitude)) {
+      notify(OUTSIDE_TOWN, "error")
+      return
+    }
     setSaving(true)
     try {
       if (editingId) {
@@ -229,7 +236,7 @@ function Farmers({ embedded = false }) {
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       {loading ? (
-        <LoadingBlocks rows={6} height="h-11" label="Loading farmers" />
+        <LoadingBlocks rows={6} height="h-10" label="Loading farmers" />
       ) : farmers.length === 0 ? (
         <EmptyState icon={UsersIcon} title="No farmers found" text="Try another name or municipality, or add a farmer." />
       ) : (
@@ -330,8 +337,7 @@ function Farmers({ embedded = false }) {
               <Label className="mb-1.5">
                 {!editingId ? "Password" : hasAccount ? "New password (optional)" : "Password (creates their login)"}
               </Label>
-              <Input
-                type="password"
+              <PasswordInput
                 value={form.password}
                 onChange={(e) => handleChange("password", e.target.value)}
                 required={!editingId}
@@ -345,10 +351,23 @@ function Farmers({ embedded = false }) {
               height={220}
               center={[form.farm_latitude, form.farm_longitude]}
               zoom={11}
-              onPick={(lat, lng) => setForm({ ...form, farm_latitude: lat, farm_longitude: lng })}
+              onPick={(lat, lng) => {
+                // a farm pin outside Echague is refused right away
+                if (!insideLockedTown(lat, lng)) {
+                  notify(OUTSIDE_TOWN, "error")
+                  return
+                }
+                setForm({ ...form, farm_latitude: lat, farm_longitude: lng })
+              }}
               points={[{ id: "farm", lat: form.farm_latitude, lng: form.farm_longitude, color: "#16A34A" }]}
             />
           </div>
+          {/* a farm pinned before the Echague lock can still be outside it */}
+          {!insideLockedTown(form.farm_latitude, form.farm_longitude) && (
+            <p className="-mt-2 mb-4 text-sm text-destructive">
+              This farm's pin is outside Echague. Click the map inside the Echague border to move it before saving.
+            </p>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
@@ -427,8 +446,7 @@ function Farmers({ embedded = false }) {
                   </div>
                   <div>
                     <Label className="mb-1.5">Password</Label>
-                    <Input
-                      type="password"
+                    <PasswordInput
                       value={syncForm.password}
                       onChange={(e) => setSyncForm({ ...syncForm, password: e.target.value })}
                       minLength={6}

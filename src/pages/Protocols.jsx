@@ -144,7 +144,7 @@ function Protocols() {
     return (
       <div>
         {header}
-        <LoadingBlocks rows={6} height="h-11" label="Loading guides" />
+        <LoadingBlocks rows={6} height="h-10" label="Loading guides" />
       </div>
     )
   }

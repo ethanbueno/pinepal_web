@@ -76,7 +76,7 @@ function MyScans() {
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       {loading ? (
-        <LoadingBlocks rows={6} height="h-11" label="Loading your scans" />
+        <LoadingBlocks rows={6} height="h-10" label="Loading your scans" />
       ) : !farmer ? (
         <EmptyState
           icon={UnlinkIcon}

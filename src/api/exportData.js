@@ -1,21 +1,19 @@
 import api from "./axios";
 import { toParams } from "./scans";
 
-// Downloads the matching scans as a CSV file from the Flask API.
+// Downloads the matching scans from the Flask API as a CSV or an Excel (XLSX) file.
 // Resolves with the number of rows that were exported.
 export async function downloadExport(filters, format) {
-  if (format === "xlsx") {
-    throw new Error("XLSX export is not available yet. Use CSV.");
-  }
+  const extension = format === "xlsx" ? "xlsx" : "csv";
 
   const res = await api.get("/api/scans/export", {
-    params: toParams(filters),
+    params: { ...toParams(filters), format: extension },
     responseType: "blob",
   });
 
   const link = document.createElement("a");
   link.href = URL.createObjectURL(res.data);
-  link.download = "pinepal_scans_" + new Date().toISOString().slice(0, 10) + ".csv";
+  link.download = "pinepal_scans_" + new Date().toISOString().slice(0, 10) + "." + extension;
   link.click();
   URL.revokeObjectURL(link.href);
 

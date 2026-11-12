@@ -9,6 +9,7 @@ import ConfirmModal from "../components/ConfirmModal"
 import ErrorAlert from "../components/ErrorAlert"
 import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
+import PasswordInput from "../components/PasswordInput"
 import SelectField, { toOptions } from "../components/SelectField"
 import { ROLES, getRoleLabel } from "../utils/roles"
 import { LOCKED_MUNICIPALITY } from "../utils/diseases"
@@ -135,7 +136,7 @@ function Users() {
     return (
       <div>
         {header}
-        <LoadingBlocks rows={5} height="h-11" label="Loading users" />
+        <LoadingBlocks rows={5} height="h-10" label="Loading users" />
       </div>
     )
   }
@@ -252,8 +253,7 @@ function Users() {
             </div>
             <div>
               <Label className="mb-1.5">{editingId ? "New password (optional)" : "Password"}</Label>
-              <Input
-                type="password"
+              <PasswordInput
                 value={form.password}
                 onChange={(e) => handleChange("password", e.target.value)}
                 required={!editingId}

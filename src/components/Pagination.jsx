@@ -8,7 +8,8 @@ function Pagination({ page, perPage, total, onChange }) {
       <span className="text-muted-foreground tabular-nums">
         Page {page} of {lastPage} · {total} {total === 1 ? "result" : "results"}
       </span>
-      <div className="flex gap-2">
+      {/* nothing to page through when it all fits on one page */}
+      <div className={"flex gap-2 " + (lastPage === 1 ? "hidden" : "")}>
         <Button variant="outline" disabled={page <= 1} onClick={() => onChange(page - 1)}>
           Previous
         </Button>

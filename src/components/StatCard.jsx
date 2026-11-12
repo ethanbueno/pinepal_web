@@ -16,9 +16,9 @@ function StatCard({ title, value, note, to, state, tone }) {
         to && "group-hover:ring-primary group-focus-visible:ring-2 group-focus-visible:ring-ring"
       )}
     >
-      <CardContent className="flex flex-col gap-1.5">
+      <CardContent className="flex flex-col gap-1">
         <CardDescription className="font-medium">{title}</CardDescription>
-        <div className={cn("text-3xl font-semibold tracking-tight tabular-nums", warn && "text-destructive")}>
+        <div className={cn("text-2xl font-semibold tracking-tight tabular-nums", warn && "text-destructive")}>
           {value}
         </div>
         {note && <div className="text-xs leading-relaxed text-muted-foreground">{note}</div>}

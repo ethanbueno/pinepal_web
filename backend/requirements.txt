@@ -9,3 +9,4 @@ bcrypt
 numpy
 Pillow
 ai-edge-litert
+openpyxl

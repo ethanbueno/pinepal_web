@@ -25,6 +25,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import decode_token, get_jwt_identity, jwt_required
 
 from database import get_connection
+from echague_area import in_echague
 from permissions import farmer_scope, role_required, staff_required
 from security import hash_password
 
@@ -34,9 +35,6 @@ LABELS = ["No_Disease", "Crown_Rot", "Mealybug_Wilt", "Fruit_Rot", "Multiple_Cro
 USERNAME = re.compile(r"[A-Za-z0-9_.-]{3,50}")
 MIN_PASSWORD = 6
 
-# Isabela, with a little room: a farm pin outside this is a mistake
-LAT_RANGE = (16.3, 17.7)
-LNG_RANGE = (121.2, 122.7)
 
 SELECT = """
     SELECT f.*, u.username,
@@ -177,8 +175,9 @@ def read_fields(data):
         longitude = float(data.get("farm_longitude"))
     except (TypeError, ValueError):
         return None, "Farm location must be a latitude and a longitude"
-    if not (LAT_RANGE[0] <= latitude <= LAT_RANGE[1] and LNG_RANGE[0] <= longitude <= LNG_RANGE[1]):
-        return None, "The farm location is outside Isabela"
+    # PinePal only covers Echague for now, so the farm pin must be inside its border
+    if not in_echague(latitude, longitude):
+        return None, "The farm location must be inside Echague. Pin a spot within the Echague border."
 
     size = data.get("farm_size_ha")
     try:

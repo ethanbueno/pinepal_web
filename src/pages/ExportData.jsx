@@ -133,7 +133,7 @@ function ExportData() {
         }
       />
 
-      <Card className="max-w-5xl">
+      <Card>
         <CardHeader>
           <CardTitle className="font-semibold">Filters</CardTitle>
           <CardDescription>Leave a filter empty to include everything.</CardDescription>
@@ -206,21 +206,22 @@ function ExportData() {
       </Card>
 
       {/* what the file will contain */}
-      <div className="mt-8 max-w-5xl">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-semibold">Scans in the export</h2>
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {rowCount === null ? "Counting rows..." : `${rowCount} ${rowCount === 1 ? "row" : "rows"} will be exported`}
-          </span>
-        </div>
-
+      {/* what the file will contain (the row count is already next to Download) */}
+      <div className="mt-4">
         {scansError && <ErrorAlert>{scansError}</ErrorAlert>}
 
         {loadingScans ? (
-          <LoadingBlocks rows={6} height="h-11" label="Loading scans" />
+          <LoadingBlocks rows={6} height="h-10" label="Loading scans" />
         ) : (
           <>
-            <ScansTable scans={scans.items} />
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-semibold">Scans in the export</CardTitle>
+              </CardHeader>
+              <CardContent className="px-0">
+                <ScansTable scans={scans.items} bare emptyText="No scans match these filters." />
+              </CardContent>
+            </Card>
             {scans.total > 0 && (
               <Pagination page={page} perPage={PER_PAGE} total={scans.total} onChange={goToPage} />
             )}

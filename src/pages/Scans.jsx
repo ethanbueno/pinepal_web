@@ -60,7 +60,7 @@ function Scans() {
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       {loading ? (
-        <LoadingBlocks rows={6} height="h-11" label="Loading scans" />
+        <LoadingBlocks rows={6} height="h-10" label="Loading scans" />
       ) : (
         <>
           <ScansTable scans={data.items} />

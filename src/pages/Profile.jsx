@@ -1,46 +1,86 @@
 import { useEffect, useState } from "react"
-import { LockIcon, PencilIcon } from "lucide-react"
-import { getProfile, updateProfile, changePassword } from "../api/profile"
+import {
+  BadgeCheckIcon,
+  CalendarIcon,
+  HashIcon,
+  MailIcon,
+  MapPinIcon,
+  PencilIcon,
+  ShieldIcon,
+  SproutIcon,
+  UserIcon,
+} from "lucide-react"
+import { getProfile, updateProfile } from "../api/profile"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
-import PageHeader from "../components/PageHeader"
 import ErrorAlert from "../components/ErrorAlert"
+import PasswordInput from "../components/PasswordInput"
 import Modal from "../components/Modal"
 import { getRoleLabel } from "../utils/roles"
 import { formatDate } from "../utils/format"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const MIN_PASSWORD = 6 // same as MIN_PASSWORD in backend/farmers.py
+const ECHAGUE_ONLY = "Echague only for now"
 
-// One detail. locked = only an admin or officer can change it, so it gets a lock;
-// the others can be changed with Edit profile. disabled = greyed out like a disabled
-// field, with a note why (the municipality, while PinePal only covers Echague).
-function DetailRow({ label, value, locked = false, disabled = false, note }) {
+// The cover: pineapple-leaf greens, drawn with gradients so there is no image to load
+const COVER =
+  "radial-gradient(120% 140% at 15% 0%, #4d8a3a 0%, transparent 55%)," +
+  "radial-gradient(90% 120% at 85% 10%, #2f7d4f 0%, transparent 60%)," +
+  "repeating-linear-gradient(115deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 26px)," +
+  "repeating-linear-gradient(65deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 34px)," +
+  "linear-gradient(135deg, #1f4d2b 0%, #2f6b35 45%, #173b22 100%)"
+
+const initials = (name) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "?"
+
+// A section title in the app's accent color, like the reference's green headings
+function SectionTitle({ children }) {
+  return <CardTitle className="text-base font-semibold text-primary-text">{children}</CardTitle>
+}
+
+// One line of Personal info: an icon in a soft square, the value, and what it is under it.
+// muted = greyed out, with a note (the municipality, while PinePal only covers Echague).
+function InfoItem({ icon: Icon, value, label, muted = false, note }) {
   return (
-    <div
-      className={
-        "flex items-start justify-between gap-4 border-b py-2.5 text-sm last:border-b-0 " +
-        (disabled ? "cursor-not-allowed opacity-50" : "")
-      }
-      aria-disabled={disabled || undefined}
-    >
-      <span className="flex items-center gap-1.5 text-muted-foreground">
-        {locked && <LockIcon className="size-3.5" aria-label="Can't be changed here" />}
-        {label}
+    <div className={"flex items-center gap-3 " + (muted ? "opacity-50" : "")} aria-disabled={muted || undefined}>
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <Icon className="size-4.5" />
       </span>
-      <span className={"text-right break-all " + (disabled ? "text-muted-foreground" : "font-medium")}>
-        {value || "–"}
-        {note && <span className="block text-xs">{note}</span>}
-      </span>
+      <div className="min-w-0">
+        <div className={"truncate font-medium " + (muted ? "text-muted-foreground" : "")}>{value || "–"}</div>
+        <div className="text-xs text-muted-foreground">
+          {label}
+          {note && ` · ${note}`}
+        </div>
+      </div>
     </div>
   )
 }
 
-const ECHAGUE_ONLY = "Echague only for now"
+// A number tile of the Overview card
+function StatTile({ value, label }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-1 rounded-xl bg-primary/10 px-3 py-4 text-center">
+      <div className="text-xl font-semibold tabular-nums">{value}</div>
+      <div className="text-xs font-medium text-primary-text">{label}</div>
+    </div>
+  )
+}
+
+function Chip({ children }) {
+  return <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">{children}</span>
+}
 
 function Field({ id, label, hint, children }) {
   return (
@@ -52,18 +92,39 @@ function Field({ id, label, hint, children }) {
   )
 }
 
-const initials = (name) =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase() || "?"
+// What Edit profile can change, one at a time. Only the field being changed is sent, so
+// everything else stays exactly as it is. secure = a sign-in detail, which needs the
+// current password first (the server checks it too).
+const EDITABLE = [
+  { key: "full_name", label: "Full name", secure: false },
+  { key: "username", label: "Username", secure: true },
+  { key: "email", label: "Email", secure: true },
+  { key: "new_password", label: "Password", secure: true },
+  { key: "farm_name", label: "Farm name", secure: false, farmOnly: true },
+  { key: "farm_size_ha", label: "Farm size", secure: false, farmOnly: true },
+]
 
-// The signed-in user's own details, from the database. The page only shows them;
-// the floating Edit profile button opens the few that can be changed (the name,
-// and for farmers the farm name and size). The password has its own card.
+// The saved value of a field, as the form starts with it ("" for the password)
+function savedValue(key, { account, farm }) {
+  if (key === "full_name") return account.full_name
+  if (key === "username") return account.username
+  if (key === "email") return account.email ?? ""
+  if (key === "farm_name") return farm?.farm_name ?? ""
+  if (key === "farm_size_ha") return farm?.farm_size_ha ?? ""
+  return ""
+}
+
+// The saved value as the list shows it
+function shownValue(key, profile) {
+  if (key === "new_password") return "••••••••"
+  if (key === "username") return "@" + profile.account.username
+  if (key === "farm_size_ha") return profile.farm?.farm_size_ha != null ? `${profile.farm.farm_size_ha} ha` : ""
+  return savedValue(key, profile)
+}
+
+// The signed-in user's own details, from the database, laid out like a profile:
+// a cover with the name, Overview and Farm for farmers, Personal info on the side.
+// Edit profile lists what can be changed; each detail is changed on its own.
 function Profile() {
   const { updateUser } = useAuth()
   const notify = useToast()
@@ -71,13 +132,13 @@ function Profile() {
   const [profile, setProfile] = useState(null)
   const [error, setError] = useState("")
 
-  const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ full_name: "", farm_name: "", farm_size_ha: "" })
+  const [editing, setEditing] = useState(false) // the Edit profile popup is open
+  const [field, setField] = useState(null) // the one detail being changed, or null
+  const [value, setValue] = useState("")
+  const [confirm, setConfirm] = useState("") // the new password again
+  const [current, setCurrent] = useState("") // the current password, for sign-in details
+  const [formError, setFormError] = useState("")
   const [saving, setSaving] = useState(false)
-
-  const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" })
-  const [passwordError, setPasswordError] = useState("")
-  const [changing, setChanging] = useState(false)
 
   useEffect(() => {
     getProfile()
@@ -88,244 +149,283 @@ function Profile() {
       })
   }, [])
 
-  // the form starts on what is saved every time it opens
   const openEdit = () => {
-    setForm({
-      full_name: profile.account.full_name,
-      farm_name: profile.farm?.farm_name ?? "",
-      farm_size_ha: profile.farm?.farm_size_ha ?? "",
-    })
+    setField(null)
     setEditing(true)
+  }
+
+  const closeEdit = () => {
+    setField(null)
+    setEditing(false)
+  }
+
+  // open one detail for changing, starting on what is saved
+  const startChange = (key) => {
+    setField(key)
+    setValue(String(savedValue(key, profile)))
+    setConfirm("")
+    setCurrent("")
+    setFormError("")
   }
 
   const handleSave = async (e) => {
     e.preventDefault()
+    const item = EDITABLE.find((f) => f.key === field)
+    const text = field === "new_password" ? value : value.trim()
+    setFormError("")
+
+    if (field !== "new_password" && text === String(savedValue(field, profile))) {
+      setFormError("That's the same as what is saved.")
+      return
+    }
+    if ((field === "full_name" || field === "username" || field === "email") && !text) {
+      setFormError(`Enter your ${item.label.toLowerCase()}.`)
+      return
+    }
+    if (field === "new_password") {
+      if (text.length < MIN_PASSWORD) {
+        setFormError(`The new password must be at least ${MIN_PASSWORD} characters.`)
+        return
+      }
+      if (text !== confirm) {
+        setFormError("The new passwords do not match.")
+        return
+      }
+    }
+    if (item.secure && !current) {
+      setFormError(`Enter your current password to change your ${item.label.toLowerCase()}.`)
+      return
+    }
+
     setSaving(true)
     try {
-      const data = await updateProfile(form)
+      // only this one detail is sent; the server leaves the rest as they are
+      const data = await updateProfile({ [field]: text, ...(item.secure ? { current_password: current } : {}) })
       setProfile(data)
-      updateUser({ full_name: data.account.full_name })
-      setEditing(false)
-      notify("Profile saved.")
+      updateUser({ full_name: data.account.full_name, username: data.account.username })
+      setField(null)
+      notify(`${item.label} changed.`)
     } catch (err) {
       console.error(err)
-      notify(err.response?.data?.error || "Could not save your profile.", "error")
+      setFormError(err.response?.data?.error || `Could not change your ${item.label.toLowerCase()}.`)
     } finally {
       setSaving(false)
     }
   }
 
-  const handlePassword = async (e) => {
-    e.preventDefault()
-    setPasswordError("")
-    if (passwords.next.length < MIN_PASSWORD) {
-      setPasswordError(`The new password must be at least ${MIN_PASSWORD} characters.`)
-      return
-    }
-    if (passwords.next !== passwords.confirm) {
-      setPasswordError("The new passwords do not match.")
-      return
-    }
-    setChanging(true)
-    try {
-      await changePassword(passwords.current, passwords.next)
-      setPasswords({ current: "", next: "", confirm: "" })
-      notify("Password changed.")
-    } catch (err) {
-      console.error(err)
-      setPasswordError(err.response?.data?.error || "Could not change your password.")
-    } finally {
-      setChanging(false)
-    }
-  }
-
-  const header = (
-    <PageHeader
-      title="My profile"
-      description="Your details as saved in PinePal. Details with a lock can only be changed by an admin or officer."
-    />
-  )
-
-  if (error) {
-    return (
-      <div>
-        {header}
-        <ErrorAlert>{error}</ErrorAlert>
-      </div>
-    )
-  }
+  if (error) return <ErrorAlert>{error}</ErrorAlert>
 
   if (!profile) {
     return (
-      <div>
-        {header}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Skeleton className="h-80 rounded-xl" />
-          <Skeleton className="h-80 rounded-xl" />
-        </div>
+      <div className="grid gap-4 lg:grid-cols-[1fr_20rem]" aria-label="Loading your profile">
+        <Skeleton className="h-80 rounded-xl" />
+        <Skeleton className="h-80 rounded-xl" />
       </div>
     )
   }
 
   const { account, farm } = profile
   const isFarmer = account.role === "farmer"
+  const role = getRoleLabel(account.role)
+  const active = !isFarmer || !farm || farm.is_active
   const location =
     farm?.farm_latitude != null ? `${farm.farm_latitude.toFixed(5)}, ${farm.farm_longitude.toFixed(5)}` : "Not set yet"
-  const size = farm?.farm_size_ha != null ? `${farm.farm_size_ha} ha` : ""
 
   return (
-    // pb leaves room for the floating Edit profile button
-    <div className="pb-24">
-      {header}
-
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted text-base font-semibold">
-                {initials(account.full_name)}
-              </span>
-              <div className="min-w-0">
-                <CardTitle className="truncate font-semibold">{account.full_name}</CardTitle>
-                <CardDescription>{getRoleLabel(account.role)}</CardDescription>
+    <div className="grid items-start gap-4 lg:grid-cols-[1fr_20rem]">
+      <div className="flex min-w-0 flex-col gap-4">
+        {/* the profile card: cover, avatar, name, and Edit profile */}
+        <Card className="gap-0 py-0">
+          <div className="h-32 sm:h-40" style={{ background: COVER }} aria-hidden="true" />
+          <div className="flex flex-col gap-4 px-(--card-spacing) pb-4 sm:flex-row sm:items-end sm:gap-5 sm:px-6">
+            <div className="-mt-12 flex size-24 shrink-0 items-center justify-center rounded-full bg-primary text-3xl font-semibold text-primary-foreground ring-4 ring-card sm:-mt-16 sm:size-32 sm:text-4xl">
+              {initials(account.full_name)}
+            </div>
+            <div className="min-w-0 sm:pb-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="truncate text-2xl font-semibold tracking-tight">{account.full_name}</h1>
+                <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary-text">
+                  {role}
+                </span>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  {isFarmer ? <SproutIcon className="size-4" /> : <ShieldIcon className="size-4" />}
+                  {isFarmer && farm?.farm_name ? farm.farm_name : role}
+                </span>
+                <span className="flex items-center gap-1.5 opacity-60" title={ECHAGUE_ONLY}>
+                  <MapPinIcon className="size-4" />
+                  {account.municipality || "No municipality yet"}, Isabela
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Chip>@{account.username}</Chip>
+                {farm && <Chip>Farmer ID {farm.farmer_id}</Chip>}
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <h3 className="mb-1 text-sm font-semibold">Personal details</h3>
-            <DetailRow label="Full name" value={account.full_name} />
-            <DetailRow label="Username" value={"@" + account.username} locked />
-            <DetailRow label="Email" value={account.email} locked />
-            <DetailRow label="Role" value={getRoleLabel(account.role)} locked />
-            <DetailRow label="Municipality" value={account.municipality} locked disabled note={ECHAGUE_ONLY} />
-            <DetailRow label="Member since" value={account.created_at && formatDate(account.created_at)} locked />
-          </CardContent>
-        </Card>
-
-        {isFarmer && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-semibold">Farm</CardTitle>
-              {!farm && <CardDescription>No farm is linked to your account yet.</CardDescription>}
-            </CardHeader>
-            {farm && (
-              <CardContent>
-                <DetailRow label="Farm name" value={farm.farm_name} />
-                <DetailRow label="Farm size" value={size} />
-                <DetailRow label="Farmer ID" value={farm.farmer_id} locked />
-                <DetailRow label="Municipality" value={farm.municipality} locked disabled note={ECHAGUE_ONLY} />
-                <DetailRow label="Farm location" value={location} locked />
-                <DetailRow label="Status" value={farm.is_active ? "Active" : "Deactivated"} locked />
-                <DetailRow label="Registered" value={formatDate(farm.registered_at)} locked />
-                <DetailRow label="Scans" value={String(farm.total_scans)} locked />
-              </CardContent>
-            )}
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-semibold">Change password</CardTitle>
-            <CardDescription>Enter your current password first.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePassword} className="flex flex-col gap-4">
-              <Field id="current-password" label="Current password">
-                <Input
-                  id="current-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={passwords.current}
-                  onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                  required
-                />
-              </Field>
-              <Field id="new-password" label="New password" hint={`At least ${MIN_PASSWORD} characters.`}>
-                <Input
-                  id="new-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={passwords.next}
-                  onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
-                  required
-                />
-              </Field>
-              <Field id="confirm-password" label="Confirm new password">
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={passwords.confirm}
-                  onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                  required
-                />
-              </Field>
-              {passwordError && <ErrorAlert className="">{passwordError}</ErrorAlert>}
-              <Button type="submit" variant="outline" disabled={changing} className="w-full sm:w-fit">
-                {changing ? "Changing..." : "Change password"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* floating at the bottom of the screen, always in reach */}
-      <Button
-        size="lg"
-        onClick={openEdit}
-        className="fixed right-6 bottom-6 z-30 h-12 rounded-full px-6 text-base shadow-lg"
-      >
-        <PencilIcon className="size-4" /> Edit profile
-      </Button>
-
-      <Modal open={editing} title="Edit profile" onClose={() => setEditing(false)}>
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            {isFarmer
-              ? "You can change your name, farm name and farm size. Ask your agricultural officer to change anything else."
-              : "You can change your name. Ask an admin to change anything else."}
-          </p>
-          <Field id="full-name" label="Full name">
-            <Input
-              id="full-name"
-              value={form.full_name}
-              maxLength={100}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              required
-            />
-          </Field>
-          {isFarmer && (
-            <>
-              <Field id="farm-name" label="Farm name">
-                <Input
-                  id="farm-name"
-                  value={form.farm_name}
-                  maxLength={150}
-                  placeholder="For example: Bueno Farm"
-                  onChange={(e) => setForm({ ...form, farm_name: e.target.value })}
-                />
-              </Field>
-              <Field id="farm-size" label="Farm size (hectares)">
-                <Input
-                  id="farm-size"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={form.farm_size_ha}
-                  onChange={(e) => setForm({ ...form, farm_size_ha: e.target.value })}
-                />
-              </Field>
-            </>
-          )}
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={() => setEditing(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save changes"}
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t px-(--card-spacing) py-3 sm:px-6">
+            <span
+              className={
+                "flex items-center gap-1.5 text-sm font-medium " +
+                (active ? "text-green-700 dark:text-green-400" : "text-destructive")
+              }
+            >
+              <BadgeCheckIcon className="size-4" />
+              {active ? "Active account" : "Deactivated account"}
+            </span>
+            <Button onClick={openEdit}>
+              <PencilIcon className="size-4" /> Edit profile
             </Button>
           </div>
-        </form>
+        </Card>
+
+        {isFarmer && farm && (
+          <>
+            <Card>
+              <CardHeader>
+                <SectionTitle>Overview</SectionTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <StatTile value={farm.total_scans} label="Scans" />
+                <StatTile value={farm.farm_size_ha != null ? `${farm.farm_size_ha} ha` : "–"} label="Farm size" />
+                <StatTile value={farm.is_active ? "Active" : "Off"} label="Farm status" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <SectionTitle>Farm</SectionTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                <InfoItem icon={SproutIcon} value={farm.farm_name || "No farm name yet"} label="Farm name" />
+                <InfoItem icon={HashIcon} value={farm.farmer_id} label="Farmer ID" />
+                <InfoItem icon={MapPinIcon} value={location} label="Farm location" />
+                <InfoItem icon={CalendarIcon} value={formatDate(farm.registered_at)} label="Registered" />
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+
+      {/* the side column */}
+      <Card className="lg:sticky lg:top-4">
+        <CardHeader>
+          <SectionTitle>Personal info</SectionTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <InfoItem icon={MailIcon} value={account.email} label="Email" />
+          <InfoItem icon={UserIcon} value={"@" + account.username} label="Username" />
+          <InfoItem icon={ShieldIcon} value={role} label="Role" />
+          <InfoItem icon={MapPinIcon} value={account.municipality} label="Municipality" muted note={ECHAGUE_ONLY} />
+          <InfoItem
+            icon={CalendarIcon}
+            value={account.created_at ? formatDate(account.created_at) : ""}
+            label="Joined"
+          />
+          <p className="border-t pt-3 text-xs text-muted-foreground">
+            Change your email, username or password with Edit profile. Your role, municipality and join date can only be
+            changed by an admin.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Modal open={editing} title="Edit profile" onClose={closeEdit}>
+        <p className="-mt-1 mb-1 text-sm text-muted-foreground">
+          Choose what to change. Only that detail is saved; everything else stays the same.
+        </p>
+        <ul className="divide-y rounded-lg border">
+          {EDITABLE.filter((item) => !item.farmOnly || (isFarmer && farm)).map((item) => {
+            const open = field === item.key
+            return (
+              <li key={item.key} className="p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-xs text-muted-foreground">{item.label}</div>
+                    <div className="truncate font-medium">{shownValue(item.key, profile) || "–"}</div>
+                  </div>
+                  {!open && (
+                    <Button variant="outline" size="sm" disabled={field !== null} onClick={() => startChange(item.key)}>
+                      Change
+                    </Button>
+                  )}
+                </div>
+
+                {open && (
+                  <form onSubmit={handleSave} className="mt-3 flex flex-col gap-3">
+                    {item.key === "new_password" ? (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Field id="edit-value" label="New password" hint={`At least ${MIN_PASSWORD} characters.`}>
+                          <PasswordInput
+                            id="edit-value"
+                            autoComplete="new-password"
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            autoFocus
+                            required
+                          />
+                        </Field>
+                        <Field id="edit-confirm" label="Confirm new password">
+                          <PasswordInput
+                            id="edit-confirm"
+                            autoComplete="new-password"
+                            value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
+                            required
+                          />
+                        </Field>
+                      </div>
+                    ) : (
+                      <Field id="edit-value" label={`New ${item.label.toLowerCase()}`}>
+                        <Input
+                          id="edit-value"
+                          type={item.key === "email" ? "email" : item.key === "farm_size_ha" ? "number" : "text"}
+                          step={item.key === "farm_size_ha" ? "0.1" : undefined}
+                          min={item.key === "farm_size_ha" ? "0" : undefined}
+                          maxLength={item.key === "username" ? 50 : item.key === "full_name" ? 100 : 150}
+                          autoComplete={
+                            item.key === "email" ? "email" : item.key === "username" ? "username" : undefined
+                          }
+                          value={value}
+                          onChange={(e) => setValue(e.target.value)}
+                          autoFocus
+                        />
+                      </Field>
+                    )}
+
+                    {item.secure && (
+                      <Field id="edit-current" label="Current password" hint="Needed to change your sign-in details.">
+                        <PasswordInput
+                          id="edit-current"
+                          autoComplete="current-password"
+                          value={current}
+                          onChange={(e) => setCurrent(e.target.value)}
+                          required
+                        />
+                      </Field>
+                    )}
+
+                    {formError && <ErrorAlert className="">{formError}</ErrorAlert>}
+
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setField(null)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" size="sm" disabled={saving}>
+                        {saving ? "Saving..." : `Save ${item.label.toLowerCase()}`}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={closeEdit}>
+            Done
+          </Button>
+        </div>
       </Modal>
     </div>
   )

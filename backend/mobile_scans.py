@@ -13,6 +13,7 @@ from flask import Blueprint, Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
 from database import get_connection
+from echague_area import OUTSIDE_ECHAGUE, in_echague
 from permissions import farmer_scope, role_required, staff_required
 
 ANY_ROLE = ("admin", "officer", "farmer")
@@ -183,11 +184,61 @@ def map_scans():
     return jsonify(items), 200
 
 
+XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+XLSX_WIDTHS = {"scan_uuid": 38, "scanned_at": 20, "farm_name": 22, "municipality": 16,
+               "predicted_label": 18, "verified_label": 18}
+
+
+def export_xlsx(rows):
+    """The same columns as the CSV, as an Excel workbook: real dates and numbers, a bold
+    header that stays in view, and a filter on every column."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
+    book = Workbook()
+    sheet = book.active
+    sheet.title = "Scans"
+    sheet.append(EXPORT_COLUMNS)
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+
+    for r in rows:
+        row = dict(r)
+        values = []
+        for column in EXPORT_COLUMNS:
+            value = row["farmer_id"] if column == "farmer_name" else row.get(column)
+            if column in ("latitude", "longitude", "confidence") and value is not None:
+                value = float(value)  # MySQL decimals, as numbers Excel can sort and sum
+            values.append(value)
+        sheet.append(values)
+
+    for index, column in enumerate(EXPORT_COLUMNS, start=1):
+        letter = sheet.cell(row=1, column=index).column_letter
+        sheet.column_dimensions[letter].width = XLSX_WIDTHS.get(column, 14)
+        if column == "scanned_at":
+            for (cell,) in sheet.iter_rows(min_row=2, min_col=index, max_col=index):
+                cell.number_format = "yyyy-mm-dd hh:mm"
+        if column == "confidence":
+            for (cell,) in sheet.iter_rows(min_row=2, min_col=index, max_col=index):
+                cell.number_format = "0.00%"
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = sheet.dimensions
+
+    out = io.BytesIO()
+    book.save(out)
+    return out.getvalue()
+
+
 @mobile_scans.route("/api/scans/export", methods=["GET"])
 @staff_required
 def export_scans():
+    """The filtered scans as a file: format=csv (default) or format=xlsx."""
     where, params = build_filters(request.args)
     rows = query(f"SELECT * FROM mobile_scans {where} ORDER BY scanned_at DESC", params)
+    headers = {"X-Row-Count": str(len(rows))}
+
+    if request.args.get("format") == "xlsx":
+        return Response(export_xlsx(rows), mimetype=XLSX_TYPE, headers=headers)
 
     out = io.StringIO()
     writer = csv.writer(out, quoting=csv.QUOTE_ALL)
@@ -196,11 +247,7 @@ def export_scans():
         scan = serialize(r)
         writer.writerow([scan.get(c) if scan.get(c) is not None else "" for c in EXPORT_COLUMNS])
 
-    return Response(
-        out.getvalue(),
-        mimetype="text/csv",
-        headers={"X-Row-Count": str(len(rows))},
-    )
+    return Response(out.getvalue(), mimetype="text/csv", headers=headers)
 
 
 @mobile_scans.route("/api/scans/<scan_uuid>", methods=["GET"])
@@ -228,6 +275,8 @@ def create_scan():
         return jsonify({"error": "Missing: " + ", ".join(missing)}), 400
     if data["predicted_label"] not in LABELS or data["second_label"] not in LABELS:
         return jsonify({"error": "Unknown disease label"}), 400
+    if not in_echague(data["latitude"], data["longitude"]):
+        return jsonify({"error": OUTSIDE_ECHAGUE}), 400
 
     scan_uuid = str(uuid.uuid4())
     now = datetime.now().replace(microsecond=0)

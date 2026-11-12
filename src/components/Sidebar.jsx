@@ -1,6 +1,4 @@
-import { useState } from "react"
 import { NavLink, matchPath, useLocation, useNavigate } from "react-router-dom"
-import LoginHistoryDrawer from "./LoginHistoryDrawer"
 import {
   BookOpenIcon,
   ChevronsUpDownIcon,
@@ -55,6 +53,7 @@ const staffLinks = [
   { to: "/protocols", label: "Guide", icon: FileTextIcon },
   { to: "/export", label: "Export", icon: DownloadIcon },
   { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true, alsoActiveOn: "/farmers" },
+  { to: "/login-history", label: "Login history", icon: HistoryIcon, adminOnly: true },
 ]
 
 const farmerLinks = [
@@ -77,7 +76,6 @@ function AppSidebar({ user, onLogout }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { dark, toggleTheme } = useTheme()
-  const [historyOpen, setHistoryOpen] = useState(false)
 
   // farmers get their own short menu, officers don't see admin-only links,
   // admins don't see links that live under another page for them
@@ -125,20 +123,6 @@ function AppSidebar({ user, onLogout }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {/* admins only: opens the Login history drawer instead of a page */}
-              {user.role === "admin" && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="Login history"
-                    className="h-9 px-3"
-                    isActive={historyOpen}
-                    onClick={() => setHistoryOpen(true)}
-                  >
-                    <HistoryIcon />
-                    <span>Login history</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -178,7 +162,6 @@ function AppSidebar({ user, onLogout }) {
         </SidebarMenu>
       </SidebarFooter>
 
-      {user.role === "admin" && <LoginHistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} />}
     </Sidebar>
   )
 }

@@ -13,7 +13,7 @@ import EmptyState from "../components/EmptyState"
 import { UnlinkIcon } from "lucide-react"
 import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate } from "../utils/format"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 function FarmerHome() {
   const { user } = useAuth()
@@ -80,7 +80,7 @@ function FarmerHome() {
   })
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <PageHeader
         title={`Welcome, ${user.full_name}`}
         description={
@@ -90,13 +90,19 @@ function FarmerHome() {
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard title="My Scans" value={farmer.total_scans} />
+      {/* every card has a note, so the three line up */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          title="My Scans"
+          value={farmer.total_scans}
+          note={recent.length > 0 ? `Last scan ${formatDate(recent[0].scanned_at)}.` : "No scans yet."}
+        />
         <StatCard title="Diseased" value={diseased} note="Scans with a problem." />
         <StatCard title="Healthy" value={healthy} note="No disease found." />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+      {/* the two cards stretch to the same height */}
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="font-semibold">My scans by disease</CardTitle>
@@ -125,27 +131,47 @@ function FarmerHome() {
           </CardContent>
         </Card>
 
-        <MiniMap
-          height={300}
-          center={farmer.farm_latitude != null ? [farmer.farm_latitude, farmer.farm_longitude] : undefined}
-          zoom={farmer.farm_latitude != null ? 12 : undefined}
-          points={points}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-semibold">Where I scanned</CardTitle>
+          </CardHeader>
+          {/* grows to the height of the card next to it, never shorter than 16rem */}
+          <CardContent className="relative min-h-64 flex-1">
+            {/* absolute, so the map always has a real height to fill (phones included) */}
+            <div className="absolute inset-y-0 right-(--card-spacing) left-(--card-spacing)">
+              <MiniMap
+                height="100%"
+                center={farmer.farm_latitude != null ? [farmer.farm_latitude, farmer.farm_longitude] : undefined}
+                zoom={farmer.farm_latitude != null ? 12 : undefined}
+                points={points}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Latest scans</h2>
-        <Link
-          to="/my-scans"
-          className="rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          See all history
-        </Link>
-      </div>
-      <ScansTable scans={recent.slice(0, 5)} showFarmer={false} />
-      {recent.length > 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">Last scan: {formatDate(recent[0].scanned_at)}</p>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-semibold">Latest scans</CardTitle>
+          <CardAction>
+            <Link
+              to="/my-scans"
+              className="rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              See all history
+            </Link>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="px-0">
+          <ScansTable
+            scans={recent.slice(0, 5)}
+            showFarmer={false}
+            showMunicipality={false}
+            bare
+            emptyText="No scans yet. Scans you take with the app or on the Scan page will appear here."
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
