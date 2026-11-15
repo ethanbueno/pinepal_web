@@ -75,10 +75,13 @@ CREATE TABLE IF NOT EXISTS farmers (
 
 -- Scans synced from the mobile app (plus ones added on the web, image_source 'Web').
 -- The dashboard, map and analytics all read from this table.
--- Every scan belongs to a farmer, and a farmer with scans can't be deleted.
+-- A scan belongs to a farmer, and a farmer with scans can't be deleted. A scan staff saved on
+-- the web without choosing a farmer has no farmer_id; saved_by says which staff account saved it.
 CREATE TABLE IF NOT EXISTS mobile_scans (
   scan_uuid varchar(36) NOT NULL,
-  farmer_id varchar(50) NOT NULL,
+  farmer_id varchar(50) DEFAULT NULL,
+  saved_by int(11) DEFAULT NULL,
+  saved_by_name varchar(100) DEFAULT NULL,
   farm_name varchar(150) DEFAULT NULL,
   municipality varchar(100) DEFAULT NULL,
   latitude decimal(10,7) NOT NULL,
@@ -101,6 +104,7 @@ CREATE TABLE IF NOT EXISTS mobile_scans (
   PRIMARY KEY (scan_uuid),
   KEY idx_mobile_scans_scanned_at (scanned_at),
   KEY fk_mobile_scans_farmer (farmer_id),
+  CONSTRAINT fk_mobile_scans_saved_by FOREIGN KEY (saved_by) REFERENCES users (id) ON DELETE SET NULL,
   CONSTRAINT fk_mobile_scans_farmer FOREIGN KEY (farmer_id) REFERENCES farmers (farmer_id)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

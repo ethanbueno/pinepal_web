@@ -139,11 +139,11 @@ function Diagnose() {
     }
   }
 
-  // choosing a farmer moves the pin to that farm
+  // choosing a farmer moves the pin to that farm; "no farmer" keeps the pin where it is
   const handleFarmerChange = (id) => {
     setFarmerId(id)
     const farmer = farmers.find((f) => f.farmer_id === id)
-    setLocation(farmer ? { lat: farmer.farm_latitude, lng: farmer.farm_longitude } : null)
+    if (farmer?.farm_latitude != null) setLocation({ lat: farmer.farm_latitude, lng: farmer.farm_longitude })
   }
 
   const handleSave = async () => {
@@ -178,10 +178,9 @@ function Diagnose() {
     }
 
     try {
+      // no farmer chosen: the server saves it under the signed-in staff account
       const saved = await createScan({
-        farmer_id: farmer.farmer_id,
-        farmer_name: farmer.full_name,
-        farm_name: farmer.farm_name,
+        ...(farmer ? { farmer_id: farmer.farmer_id, farm_name: farmer.farm_name } : {}),
         municipality: SCAN_MUNICIPALITY,
         latitude: location.lat,
         longitude: location.lng,
@@ -193,11 +192,11 @@ function Diagnose() {
         image_url: preview,
         notes: notes || null,
       })
-      notify("Scan saved.")
+      notify(farmer ? "Scan saved." : "Scan saved under your account.")
       navigate("/scans/" + saved.scan_uuid)
     } catch (err) {
       console.error(err)
-      notify("Could not save the scan.", "error")
+      notify(err.response?.data?.error || "Could not save the scan.", "error")
       setSaving(false)
     }
   }
@@ -377,15 +376,21 @@ function Diagnose() {
               </>
             ) : (
               <>
-                <Label className="mb-1.5 text-muted-foreground">Farmer</Label>
-                <div className="mb-3">
+                <Label className="mb-1.5 text-muted-foreground">Farmer (optional)</Label>
+                <div className="mb-1.5">
+                  {/* empty = no farmer: the scan is saved under the signed-in staff account */}
                   <SelectField
                     value={farmerId}
                     onChange={handleFarmerChange}
                     options={farmerOptions}
-                    placeholder={farmers.length === 0 ? "No farmers yet" : "Choose a farmer"}
+                    allLabel="No farmer (save under my account)"
                   />
                 </div>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  {farmerId
+                    ? "The pin starts on this farmer's farm."
+                    : `Saved as yours (${user.full_name}). Click the map to place the pin.`}
+                </p>
               </>
       )}
 
@@ -423,7 +428,7 @@ function Diagnose() {
           <Button
             size="lg"
             className="h-10 w-full"
-            disabled={(isFarmer ? !location : !farmerId) || locationOutside || saving}
+            disabled={!location || locationOutside || saving}
             onClick={handleSave}
           >
             {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}
