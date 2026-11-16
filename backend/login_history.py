@@ -1,27 +1,22 @@
-"""Login history: every sign-in attempt on the web and the mobile app, for admins.
+"""Login history: every sign-in attempt on the web and the mobile app.
 
-record_login(...)          called by POST /api/auth/login (web) and POST /api/mobile/login
-                           (mobile) after each attempt, successful or not. It never makes a
-                           login fail: if the history can't be saved, the login goes on.
-GET /api/login-history     admin only. Newest first, a page at a time.
-                           Filters: search (username or name), result (success | failed),
-                           platform (web | mobile). Returns { items, total, page, per_page }.
+record_login(...)   called by POST /api/auth/login (web) and POST /api/mobile/login (mobile)
+                    after each attempt, successful or not. It never makes a login fail: if
+                    the history can't be saved, the login goes on.
+record_logout(...)  called by POST /api/auth/logout. Sign-outs go straight into audit_logs.
+
+A database trigger copies each new row into audit_logs (category 'login'), and admins see
+it on the Audit logs page (audit_logs.py, migrate_audit_logs.py).
 
 Passwords are never stored, only the username or email that was typed.
-Errors are { "error": "message" }.
 """
 import logging
 
-from flask import Blueprint, jsonify, request
+from flask import g, request
 
-from database import get_connection
-from permissions import admin_required
+from database import audit_context, get_connection
 
-login_history = Blueprint("login_history", __name__)
 log = logging.getLogger(__name__)
-
-PLATFORMS = ("web", "mobile")
-MAX_PER_PAGE = 100
 
 # Why an attempt failed, as saved in login_history.reason
 WRONG_PASSWORD = "wrong_password"
@@ -55,6 +50,7 @@ def record_login(platform, username, user=None, success=False, reason=None):
                 ),
             )
             connection.commit()
+            g.login_recorded = True  # activity_log.py: this row stands for the request
         finally:
             cursor.close()
             connection.close()
@@ -62,70 +58,29 @@ def record_login(platform, username, user=None, success=False, reason=None):
         log.exception("Could not save the login history")
 
 
-@login_history.route("/api/login-history", methods=["GET"])
-@admin_required
-def list_login_history():
+def record_logout(platform):
+    """Save a sign-out in audit_logs (category 'login', action LOGOUT) for the signed-in user.
+
+    Signing out only forgets the token on the device, so this is the server's one chance to
+    hear about it. Returns False when no one is signed in (an expired token): nothing to save.
+    """
+    user_id, label, ip, request_id = audit_context()
+    if user_id is None and label is None:
+        return False
     try:
-        page = max(1, int(request.args.get("page", 1)))
-        per_page = min(MAX_PER_PAGE, max(1, int(request.args.get("per_page", 25))))
-    except ValueError:
-        return jsonify({"error": "page and per_page must be numbers"}), 400
-
-    where, params = [], []
-    search = (request.args.get("search") or "").strip()
-    if search:
-        where.append("(h.username LIKE %s OR u.username LIKE %s OR u.name LIKE %s)")
-        like = f"%{search}%"
-        params += [like, like, like]
-    if request.args.get("result") == "success":
-        where.append("h.success = 1")
-    elif request.args.get("result") == "failed":
-        where.append("h.success = 0")
-    if request.args.get("platform") in PLATFORMS:
-        where.append("h.platform = %s")
-        params.append(request.args["platform"])
-    clause = ("WHERE " + " AND ".join(where)) if where else ""
-
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute(
-        f"SELECT COUNT(*) AS n FROM login_history h LEFT JOIN users u ON u.id = h.user_id {clause}", params
-    )
-    total = int(cursor.fetchone()["n"])
-    cursor.execute(
-        f"""
-        SELECT h.id, h.username, h.success, h.reason, h.platform, h.ip_address, h.user_agent, h.created_at,
-               u.id AS user_id, u.name AS full_name, u.role
-        FROM login_history h
-        LEFT JOIN users u ON u.id = h.user_id
-        {clause}
-        ORDER BY h.created_at DESC, h.id DESC
-        LIMIT %s OFFSET %s
-        """,
-        params + [per_page, (page - 1) * per_page],
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    connection.close()
-
-    return jsonify({
-        "items": [
-            {
-                "id": r["id"],
-                "username": r["username"],  # what was typed: a username or an email
-                "user_id": r["user_id"],  # null when no account matched (or it was deleted)
-                "full_name": r["full_name"],
-                "role": r["role"],
-                "success": bool(r["success"]),
-                "reason": r["reason"],
-                "platform": r["platform"],
-                "ip_address": r["ip_address"],
-                "user_agent": r["user_agent"],
-                "created_at": r["created_at"].isoformat(),
-            }
-            for r in rows
-        ],
-        "total": total,
-        "page": page,
-        "per_page": per_page,
-    }), 200
+        connection = get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(
+                "INSERT INTO audit_logs (category, action, actor_id, actor_label, ip_address, request_id, "
+                "platform, user_agent) VALUES ('login', 'LOGOUT', %s, %s, %s, %s, %s, %s)",
+                (user_id, label, ip, request_id, platform, (request.headers.get("User-Agent") or "")[:255]),
+            )
+            connection.commit()
+            g.login_recorded = True  # activity_log.py: this row stands for the request
+        finally:
+            cursor.close()
+            connection.close()
+    except Exception:
+        log.exception("Could not save the sign-out")
+    return True

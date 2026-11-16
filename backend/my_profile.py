@@ -19,7 +19,7 @@ from flask_jwt_extended import get_jwt_identity
 from database import get_connection
 from farmers import MIN_PASSWORD, SELECT, USERNAME, serialize as farm_json
 from permissions import role_required
-from security import hash_password, verify_password
+from security import set_password, stored_password_hash, verify_password
 from web_auth import EMAIL_PATTERN
 
 profile = Blueprint("profile", __name__)
@@ -122,7 +122,7 @@ def update_profile():
     connection = get_connection()
     cursor = connection.cursor()
     try:
-        cursor.execute("SELECT role, username, email, password_hash FROM users WHERE id = %s", (user_id,))
+        cursor.execute("SELECT role, username, email FROM users WHERE id = %s", (user_id,))
         user = cursor.fetchone()
         is_farmer = user["role"] == "farmer"
 
@@ -133,10 +133,10 @@ def update_profile():
 
         # signing-in details need the current password, so an unlocked screen can't take them over
         if new_password or "username" in account or "email" in account:
-            if not verify_password(data.get("current_password") or "", user["password_hash"]):
+            if not verify_password(data.get("current_password") or "", stored_password_hash(cursor, user_id)):
                 return error("Your current password is wrong", 403)
         if new_password:
-            account["password_hash"] = hash_password(new_password)
+            set_password(cursor, user_id, new_password)
 
         if "username" in account:
             cursor.execute("SELECT 1 FROM users WHERE username = %s AND id <> %s", (account["username"], user_id))
@@ -191,12 +191,9 @@ def change_password():
     connection = get_connection()
     cursor = connection.cursor()
     try:
-        cursor.execute("SELECT password_hash FROM users WHERE id = %s", (get_jwt_identity(),))
-        if not verify_password(current, cursor.fetchone()["password_hash"]):
+        if not verify_password(current, stored_password_hash(cursor, get_jwt_identity())):
             return error("Your current password is wrong", 403)
-        cursor.execute(
-            "UPDATE users SET password_hash = %s WHERE id = %s", (hash_password(new), get_jwt_identity())
-        )
+        set_password(cursor, get_jwt_identity(), new)
         connection.commit()
     finally:
         cursor.close()

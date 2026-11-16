@@ -4,7 +4,6 @@ import {
   ChevronsUpDownIcon,
   DownloadIcon,
   FileTextIcon,
-  HistoryIcon,
   HouseIcon,
   ImagesIcon,
   LayoutDashboardIcon,
@@ -12,6 +11,7 @@ import {
   MapIcon,
   MoonIcon,
   ScanSearchIcon,
+  ScrollTextIcon,
   SproutIcon,
   StethoscopeIcon,
   SunIcon,
@@ -53,7 +53,7 @@ const staffLinks = [
   { to: "/protocols", label: "Guide", icon: FileTextIcon },
   { to: "/export", label: "Export", icon: DownloadIcon },
   { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true, alsoActiveOn: "/farmers" },
-  { to: "/login-history", label: "Login history", icon: HistoryIcon, adminOnly: true },
+  { to: "/audit-logs", label: "Audit logs", icon: ScrollTextIcon, adminOnly: true },
 ]
 
 const farmerLinks = [

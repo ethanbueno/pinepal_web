@@ -47,7 +47,7 @@ WHERE u.role = 'farmer' AND f.farmer_id IS NULL
 
 
 def main():
-    connection = connect(
+    connection = connect(admin=True,
         database=os.getenv("DB_NAME"),
         autocommit=True,
         cursorclass=pymysql.cursors.DictCursor,

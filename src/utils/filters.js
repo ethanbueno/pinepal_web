@@ -7,5 +7,6 @@ export const emptyFilters = {
   verified: "",
   low_conf: false,
   high_conf: false,
+  mid_conf: false,
   search: "",
 };

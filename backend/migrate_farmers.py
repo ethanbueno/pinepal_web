@@ -53,7 +53,7 @@ GROUP BY farmer_id
 
 
 def main():
-    connection = connect(database=os.getenv("DB_NAME", "pinepal_db"), autocommit=False)
+    connection = connect(admin=True, database=os.getenv("DB_NAME", "pinepal_db"), autocommit=False)
     cursor = connection.cursor()
 
     cursor.execute(CREATE)

@@ -36,6 +36,14 @@ EXPORT_COLUMNS = [
 ]
 
 
+def shown_farmer(row):
+    """Who a scan belongs to, as the tables show it: the farmer ID, or for a scan staff saved
+    without choosing a farmer, the staff member's name."""
+    if row.get("farmer_id"):
+        return row["farmer_id"]
+    return f"{row.get('saved_by_name') or 'Staff'} (staff)"
+
+
 def serialize(row):
     scan = dict(row)
     for key in ("scanned_at", "synced_at", "verified_at"):
@@ -45,7 +53,7 @@ def serialize(row):
         if scan.get(key) is not None:
             scan[key] = float(scan[key])
     # The mobile data has no farmer names, so show the farmer ID.
-    scan["farmer_name"] = scan["farmer_id"]
+    scan["farmer_name"] = shown_farmer(scan)
     # Scans synced after the mobile update have their photo on the server. Older rows hold
     # a path on the phone, which the server does not have, so those stay without an image.
     scan["image_url"] = ""
@@ -99,6 +107,11 @@ def build_filters(args):
     if args.get("high_conf") in ("1", "true"):
         where.append("confidence >= %s")
         params.append(HIGH_CONFIDENCE)
+
+    # between the two: not low, not high (60% up to under 90%)
+    if args.get("mid_conf") in ("1", "true"):
+        where.append("confidence >= %s AND confidence < %s")
+        params += [LOW_CONFIDENCE, HIGH_CONFIDENCE]
 
     if args.get("from"):
         where.append("scanned_at >= %s")
@@ -163,7 +176,7 @@ def count_scans():
 def map_scans():
     where, params = build_filters(request.args)
     rows = query(
-        "SELECT scan_uuid, latitude, longitude, predicted_label, verified_label, "
+        "SELECT scan_uuid, latitude, longitude, predicted_label, verified_label, saved_by_name, "
         f"confidence, scanned_at, farmer_id FROM mobile_scans {where} ORDER BY scanned_at DESC",
         params,
     )
@@ -178,7 +191,7 @@ def map_scans():
             "verified_label": r["verified_label"],
             "confidence": float(r["confidence"]),
             "scanned_at": r["scanned_at"].isoformat(),
-            "farmer_name": r["farmer_id"],
+            "farmer_name": shown_farmer(r),
             "image_url": "",
         })
     return jsonify(items), 200
@@ -206,7 +219,7 @@ def export_xlsx(rows):
         row = dict(r)
         values = []
         for column in EXPORT_COLUMNS:
-            value = row["farmer_id"] if column == "farmer_name" else row.get(column)
+            value = shown_farmer(row) if column == "farmer_name" else row.get(column)
             if column in ("latitude", "longitude", "confidence") and value is not None:
                 value = float(value)  # MySQL decimals, as numbers Excel can sort and sum
             values.append(value)
@@ -266,10 +279,9 @@ def get_scan(scan_uuid):
 def create_scan():
     data = request.get_json(silent=True) or {}
 
-    required = [
-        "farmer_id", "farm_name", "municipality", "latitude", "longitude",
-        "predicted_label", "confidence", "second_label", "second_confidence",
-    ]
+    # No farmer chosen: the scan is saved under the staff member who saved it
+    farmer_id = (data.get("farmer_id") or "").strip() or None
+    required = ["latitude", "longitude", "predicted_label", "confidence", "second_label", "second_confidence"]
     missing = [f for f in required if data.get(f) in (None, "")]
     if missing:
         return jsonify({"error": "Missing: " + ", ".join(missing)}), 400
@@ -283,22 +295,27 @@ def create_scan():
 
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT 1 FROM farmers WHERE farmer_id = %s", (data["farmer_id"],))
-    if not cursor.fetchone():
-        cursor.close()
-        connection.close()
-        return jsonify({"error": "Unknown farmer"}), 400
+    if farmer_id:
+        cursor.execute("SELECT 1 FROM farmers WHERE farmer_id = %s", (farmer_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Unknown farmer"}), 400
+    cursor.execute("SELECT id, name FROM users WHERE id = %s", (get_jwt_identity(),))
+    staff = cursor.fetchone()
 
     cursor.execute(
         """
         INSERT INTO mobile_scans
-        (scan_uuid, farmer_id, farm_name, municipality, latitude, longitude, scanned_at,
-         predicted_label, confidence, second_label, second_confidence,
+        (scan_uuid, farmer_id, saved_by, saved_by_name, farm_name, municipality, latitude, longitude,
+         scanned_at, predicted_label, confidence, second_label, second_confidence,
          image_source, image_path, synced_at, notes)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Web', '', %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Web', '', %s, %s)
         """,
         (
-            scan_uuid, data["farmer_id"], data["farm_name"], data["municipality"],
+            scan_uuid, farmer_id, staff["id"], staff["name"],
+            (data.get("farm_name") or "").strip() or None,
+            (data.get("municipality") or "").strip() or LOCKED_MUNICIPALITY,
             data["latitude"], data["longitude"], now,
             data["predicted_label"], data["confidence"],
             data["second_label"], data["second_confidence"],

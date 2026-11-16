@@ -11,6 +11,7 @@ import { emptyFilters } from "../utils/filters"
 const diseaseOptions = DISEASES.map((d) => ({ value: d.label, label: d.name }))
 const confidenceOptions = [
   { value: "low", label: "Low (under 60%)" },
+  { value: "mid", label: "Middle (60–89%)" },
   { value: "high", label: "High (90% and up)" },
 ]
 const verifiedOptions = [
@@ -56,7 +57,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
       </button>
       <CardContent className={"flex-wrap items-end gap-3 sm:flex " + (open ? "flex" : "hidden")}>
         {extra && (
-          <Field label="Search" className="grow min-w-40">
+          <Field label="Search" className="grow min-w-32">
             <Input
               type="text"
               placeholder="Farmer or farm name"
@@ -108,13 +109,15 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
               />
             </Field>
 
-            {/* one choice for low / high, since a scan can't be both (the Dashboard's links set these) */}
+            {/* one choice for low / middle / high, since a scan is only ever one of them */}
             <Field label="Confidence">
               <SelectField
-                className="w-full sm:w-32"
+                className="w-full sm:w-40"
                 allLabel="All"
-                value={filters.low_conf ? "low" : filters.high_conf ? "high" : ""}
-                onChange={(v) => onChange({ ...filters, low_conf: v === "low", high_conf: v === "high" })}
+                value={filters.low_conf ? "low" : filters.mid_conf ? "mid" : filters.high_conf ? "high" : ""}
+                onChange={(v) =>
+                  onChange({ ...filters, low_conf: v === "low", mid_conf: v === "mid", high_conf: v === "high" })
+                }
                 options={confidenceOptions}
               />
             </Field>

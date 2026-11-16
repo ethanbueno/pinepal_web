@@ -32,7 +32,7 @@ from farmers import add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
 from mobile_scans import LABELS
 from scans import UPLOAD_DIR
-from security import verify_password
+from security import LOGIN_SELECT, verify_password
 from web_auth import DEACTIVATED, is_deactivated, user_json
 
 mobile_sync = Blueprint("mobile_sync", __name__)
@@ -62,7 +62,7 @@ def mobile_login():
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute(
-        "SELECT * FROM users WHERE username = %s OR email = %s",
+        LOGIN_SELECT + " WHERE u.username = %s OR u.email = %s",
         (username, username),
     )
     user = cursor.fetchone()

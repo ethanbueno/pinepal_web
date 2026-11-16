@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom"
+import { Navigate, Routes, Route } from "react-router-dom"
 import Layout from "./components/Layout"
 import ProtectedRoute from "./components/ProtectedRoute"
 import Login from "./pages/Login"
@@ -16,7 +16,7 @@ import Farmers from "./pages/Farmers"
 import FarmerDetail from "./pages/FarmerDetail"
 import ExportData from "./pages/ExportData"
 import Users from "./pages/Users"
-import LoginHistory from "./pages/LoginHistory"
+import AuditLogs from "./pages/AuditLogs"
 import NotFound from "./pages/NotFound"
 import Profile from "./pages/Profile"
 
@@ -63,7 +63,9 @@ function App() {
 
         {/* admin only */}
         <Route path="/users" element={<ProtectedRoute roles={["admin"]}><Users /></ProtectedRoute>} />
-        <Route path="/login-history" element={<ProtectedRoute roles={["admin"]}><LoginHistory /></ProtectedRoute>} />
+        <Route path="/audit-logs" element={<ProtectedRoute roles={["admin"]}><AuditLogs /></ProtectedRoute>} />
+        {/* the login history is part of the audit logs now */}
+        <Route path="/login-history" element={<Navigate to="/audit-logs" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Route>

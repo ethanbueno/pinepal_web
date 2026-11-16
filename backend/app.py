@@ -20,7 +20,8 @@ from mobile_scans import mobile_scans
 from mobile_sync import mobile_sync
 from farmers import farmers
 from my_profile import profile
-from login_history import login_history
+from audit_logs import audit_logs
+from activity_log import init_activity_log
 
 load_dotenv()
 
@@ -43,7 +44,10 @@ app.register_blueprint(mobile_scans)
 app.register_blueprint(mobile_sync)
 app.register_blueprint(farmers)
 app.register_blueprint(profile)
-app.register_blueprint(login_history)
+app.register_blueprint(audit_logs)
+
+# every request goes into audit_logs (activity_log.py)
+init_activity_log(app)
 
 # Home
 @app.route("/")

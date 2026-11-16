@@ -27,7 +27,7 @@ from flask_jwt_extended import decode_token, get_jwt_identity, jwt_required
 from database import get_connection
 from echague_area import in_echague
 from permissions import farmer_scope, role_required, staff_required
-from security import hash_password
+from security import set_password
 
 farmers = Blueprint("farmers", __name__)
 
@@ -296,11 +296,13 @@ def create_farmer():
         # the login and its farmers row are made together and linked by user_id;
         # the farmer gets the next farmer ID, separate from the username
         cursor.execute(
-            "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, 'farmer')",
-            (fields["full_name"], username, hash_password(password)),
+            "INSERT INTO users (name, username, role) VALUES (%s, %s, 'farmer')",
+            (fields["full_name"], username),
         )
+        new_user_id = cursor.lastrowid
+        set_password(cursor, new_user_id, password)
         farmer_id = add_farmer(
-            cursor, cursor.lastrowid, fields["full_name"],
+            cursor, new_user_id, fields["full_name"],
             farm_name=fields["farm_name"], municipality=fields["municipality"],
             farm_latitude=fields["farm_latitude"], farm_longitude=fields["farm_longitude"],
             farm_size_ha=fields["farm_size_ha"],
@@ -348,12 +350,8 @@ def update_farmer(farmer_id):
         if account_id:
             # keep the login's display name in step, and reset the password when one is given
             if password:
-                cursor.execute(
-                    "UPDATE users SET name = %s, password_hash = %s WHERE id = %s",
-                    (fields["full_name"], hash_password(password), account_id),
-                )
-            else:
-                cursor.execute("UPDATE users SET name = %s WHERE id = %s", (fields["full_name"], account_id))
+                set_password(cursor, account_id, password)
+            cursor.execute("UPDATE users SET name = %s WHERE id = %s", (fields["full_name"], account_id))
         elif password:
             # a farmer who came from the scan data has no login yet: make one and link it
             # to this row. The farmer ID stays the same, only the username is new.
@@ -365,10 +363,12 @@ def update_farmer(farmer_id):
                 connection.rollback()
                 return error("That username is already taken", 409)
             cursor.execute(
-                "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, 'farmer')",
-                (fields["full_name"], username, hash_password(password)),
+                "INSERT INTO users (name, username, role) VALUES (%s, %s, 'farmer')",
+                (fields["full_name"], username),
             )
-            cursor.execute("UPDATE farmers SET user_id = %s WHERE farmer_id = %s", (cursor.lastrowid, farmer_id))
+            new_user_id = cursor.lastrowid
+            set_password(cursor, new_user_id, password)
+            cursor.execute("UPDATE farmers SET user_id = %s WHERE farmer_id = %s", (new_user_id, farmer_id))
 
         # the account takes the farm's municipality (after an edit or a new link)
         sync_user_municipality(cursor, farmer_id)
@@ -424,10 +424,11 @@ def sync_farmer(farmer_id):
             if cursor.fetchone():
                 return error("That username is already taken", 409)
             cursor.execute(
-                "INSERT INTO users (name, username, password_hash, role) VALUES (%s, %s, %s, 'farmer')",
-                (full_name, username, hash_password(password)),
+                "INSERT INTO users (name, username, role) VALUES (%s, %s, 'farmer')",
+                (full_name, username),
             )
             user_id = cursor.lastrowid
+            set_password(cursor, user_id, password)
         else:
             cursor.execute("SELECT id, name, role FROM users WHERE username = %s", (username,))
             account = cursor.fetchone()
