@@ -6,7 +6,7 @@ import os
 
 from dotenv import load_dotenv
 from database import connect
-from security import hash_password
+from security import set_password
 
 load_dotenv()
 
@@ -44,7 +44,7 @@ DISEASES = [
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    connection = connect(
+    connection = connect(admin=True,
         autocommit=True,
     )
     cursor = connection.cursor()
@@ -70,9 +70,10 @@ def main():
         print("Admin not created: set ADMIN_PASSWORD in backend/.env and run again.")
     else:
         cursor.execute(
-            "INSERT INTO users (name, username, email, password_hash, role) VALUES (%s, %s, %s, %s, 'admin')",
-            (name, username, email, hash_password(password)),
+            "INSERT INTO users (name, username, email, role) VALUES (%s, %s, %s, 'admin')",
+            (name, username, email),
         )
+        set_password(cursor, cursor.lastrowid, password)
         print(f"Admin created: {username} ({email})")
 
     connection.close()

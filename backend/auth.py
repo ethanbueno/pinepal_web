@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 
-from security import hash_password, verify_password
+from security import LOGIN_SELECT, set_password, verify_password
 
 from database import get_connection
 auth = Blueprint("auth", __name__)
@@ -39,11 +39,12 @@ def register():
     cursor.execute(
         """
         INSERT INTO users
-        (name, email, password_hash, role)
-        VALUES (%s, %s, %s, 'user')
+        (name, email, role)
+        VALUES (%s, %s, 'user')
         """,
-        (name, email, hash_password(password))
+        (name, email)
     )
+    set_password(cursor, cursor.lastrowid, password)
 
     connection.commit()
     cursor.close()
@@ -72,7 +73,7 @@ def login():
     cursor = connection.cursor()
 
     cursor.execute(
-        "SELECT * FROM users WHERE email = %s",
+        LOGIN_SELECT + " WHERE u.email = %s",
         (email,)
     )
 

@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
   id int(11) NOT NULL AUTO_INCREMENT,
   email varchar(150) NULL,
   username varchar(50) NOT NULL,
-  password_hash varchar(255) NOT NULL,
   role enum('admin','officer','farmer') NOT NULL DEFAULT 'farmer',
   name varchar(100) NOT NULL,
   -- a farmer's is kept the same as farmers.municipality (sync_user_municipality in farmers.py)
@@ -14,6 +13,17 @@ CREATE TABLE IF NOT EXISTS users (
   PRIMARY KEY (id),
   UNIQUE KEY email (email),
   UNIQUE KEY username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Passwords, split off from users (vertical partitioning, migrate_optimization.py), so the
+-- users row every page reads carries no secret. Only bcrypt hashes are accepted.
+CREATE TABLE IF NOT EXISTS user_credentials (
+  user_id int(11) NOT NULL,
+  password_hash varchar(255) NOT NULL,
+  updated_at datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_credentials_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT chk_credentials_bcrypt CHECK (password_hash LIKE '$2_$%')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS diseases (
@@ -76,7 +86,7 @@ CREATE TABLE IF NOT EXISTS farmers (
 -- Scans synced from the mobile app (plus ones added on the web, image_source 'Web').
 -- The dashboard, map and analytics all read from this table.
 -- A scan belongs to a farmer, and a farmer with scans can't be deleted. A scan staff saved on
--- the web without choosing a farmer has no farmer_id; saved_by says which staff account saved it.
+-- the web without choosing a farmer has no farmer_id, and saved_by says which staff account saved it.
 CREATE TABLE IF NOT EXISTS mobile_scans (
   scan_uuid varchar(36) NOT NULL,
   farmer_id varchar(50) DEFAULT NULL,
@@ -109,8 +119,8 @@ CREATE TABLE IF NOT EXISTS mobile_scans (
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Every sign-in attempt on the web and the mobile app (login_history.py); admins see it in
--- the Login history drawer. Only the typed username is kept, never the password.
+-- Every sign-in attempt on the web and the mobile app (login_history.py). A trigger copies
+-- each row into audit_logs. Only the typed username is kept, never the password.
 CREATE TABLE IF NOT EXISTS login_history (
   id int(11) NOT NULL AUTO_INCREMENT,
   user_id int(11) DEFAULT NULL,
@@ -126,3 +136,38 @@ CREATE TABLE IF NOT EXISTS login_history (
   KEY idx_login_history_user (user_id),
   CONSTRAINT fk_login_history_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Everything that happens: every API request (activity), every sign-in attempt (login) and
+-- every change to users, farmers and mobile_scans (data). The triggers that fill it can't be
+-- created from this file, so run python migrate_audit_logs.py after setup_db.py.
+-- Admins see it on the Audit logs page (audit_logs.py).
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id bigint NOT NULL AUTO_INCREMENT,
+  category enum('activity','login','data') NOT NULL DEFAULT 'data',
+  action varchar(20) NOT NULL,
+  table_name varchar(30) DEFAULT NULL,
+  record_id varchar(64) DEFAULT NULL,
+  actor_id int(11) DEFAULT NULL,
+  actor_label varchar(150) DEFAULT NULL,
+  ip_address varchar(45) DEFAULT NULL,
+  request_id char(32) DEFAULT NULL,
+  summary varchar(255) DEFAULT NULL,
+  path varchar(255) DEFAULT NULL,
+  status_code smallint DEFAULT NULL,
+  duration_ms int DEFAULT NULL,
+  platform varchar(10) DEFAULT NULL,
+  user_agent varchar(255) DEFAULT NULL,
+  old_values json DEFAULT NULL,
+  new_values json DEFAULT NULL,
+  created_at datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id),
+  KEY idx_audit_logs_created (created_at),
+  KEY idx_audit_logs_category (category, created_at),
+  KEY idx_audit_logs_record (table_name, record_id),
+  KEY idx_audit_logs_actor (actor_id),
+  KEY idx_audit_logs_request (request_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- After setup_db.py, run python migrate_audit_logs.py (triggers) and then
+-- python migrate_optimization.py (CHECK rules, indexes, monthly partitions of audit_logs,
+-- and the scan_daily_stats table with its triggers), then python create_app_user.py.

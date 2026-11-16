@@ -5,8 +5,8 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 
 from database import get_connection
 from farmers import LOCKED_MUNICIPALITY, add_farmer, claim_phone_farmer, sync_user_municipality
-from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
-from security import hash_password, verify_password
+from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login, record_logout
+from security import LOGIN_SELECT, set_password, verify_password
 
 # Login for the web dashboard (matches the API contract in CLAUDEweb.md).
 # Errors are returned as { "error": "message" }.
@@ -51,7 +51,7 @@ def login():
     cursor = connection.cursor()
     # the login box accepts either the username or the email
     cursor.execute(
-        "SELECT * FROM users WHERE username = %s OR email = %s",
+        LOGIN_SELECT + " WHERE u.username = %s OR u.email = %s",
         (username, username),
     )
     user = cursor.fetchone()
@@ -114,10 +114,11 @@ def register():
     # the account gets the next farmer ID with blank farm details, which the first sync fills in.
     try:
         cursor.execute(
-            "INSERT INTO users (name, username, email, password_hash, role) VALUES (%s, %s, %s, %s, %s)",
-            (full_name, username, email, hash_password(password), role),
+            "INSERT INTO users (name, username, email, role) VALUES (%s, %s, %s, %s)",
+            (full_name, username, email, role),
         )
         user_id = cursor.lastrowid
+        set_password(cursor, user_id, password)
         farmer_id = claim_phone_farmer(cursor, user_id, full_name, data.get("device_token"))
         if not farmer_id:
             farmer_id = add_farmer(cursor, user_id, full_name)
@@ -142,6 +143,15 @@ def register():
         "email": email,
         "role": role,
     }), 201
+
+
+@web_auth.route("/api/auth/logout", methods=["POST"])
+def logout():
+    """Record a sign-out. The device forgets the token itself, so this always answers 204,
+    even with an expired token. The mobile app can send {"platform": "mobile"}."""
+    data = request.get_json(silent=True) or {}
+    record_logout("mobile" if data.get("platform") == "mobile" else "web")
+    return "", 204
 
 
 @web_auth.route("/api/auth/me", methods=["GET"])

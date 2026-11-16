@@ -8,7 +8,7 @@ import os
 
 from dotenv import load_dotenv
 from database import connect
-from security import hash_password
+from security import set_password
 
 load_dotenv()
 
@@ -21,14 +21,17 @@ def main():
 
     connection = connect(database=os.getenv("DB_NAME"), autocommit=True)
     cursor = connection.cursor()
-    cursor.execute("UPDATE users SET password_hash = %s WHERE username = 'admin'", (hash_password(password),))
-    if cursor.rowcount:
+    cursor.execute("SELECT id FROM users WHERE username = 'admin'")
+    admin = cursor.fetchone()
+    if admin:
+        set_password(cursor, admin[0], password)
         print(f"Admin password updated on {os.getenv('DB_HOST')}.")
     else:
         cursor.execute(
-            "INSERT INTO users (name, username, email, password_hash, role) VALUES (%s, %s, %s, %s, 'admin')",
-            ("PinePal Administrator", "admin", "admin@pinepal.com", hash_password(password)),
+            "INSERT INTO users (name, username, email, role) VALUES (%s, %s, %s, 'admin')",
+            ("PinePal Administrator", "admin", "admin@pinepal.com"),
         )
+        set_password(cursor, cursor.lastrowid, password)
         print(f"Admin account created on {os.getenv('DB_HOST')}.")
     connection.close()
 

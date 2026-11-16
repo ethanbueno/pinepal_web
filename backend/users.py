@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from security import hash_password
+from security import set_password
 
 from database import get_connection
 from permissions import admin_required
@@ -86,11 +86,13 @@ def create_user():
 
     # staff have no farm, so their municipality is the locked one (Echague) from the form
     cursor.execute(
-        "INSERT INTO users (name, username, password_hash, role, municipality) VALUES (%s, %s, %s, %s, %s)",
-        (form["full_name"], form["username"], hash_password(form["password"]), form["role"], LOCKED_MUNICIPALITY),
+        "INSERT INTO users (name, username, role, municipality) VALUES (%s, %s, %s, %s)",
+        (form["full_name"], form["username"], form["role"], LOCKED_MUNICIPALITY),
     )
+    new_id = cursor.lastrowid
+    set_password(cursor, new_id, form["password"])
     connection.commit()
-    user = find_user(cursor, cursor.lastrowid)
+    user = find_user(cursor, new_id)
     cursor.close()
     connection.close()
 
@@ -154,10 +156,7 @@ def update_user(id):
     cursor.execute("UPDATE farmers SET full_name = %s WHERE user_id = %s", (form["full_name"], id))
     # the password only changes when a new one is typed
     if form["password"]:
-        cursor.execute(
-            "UPDATE users SET password_hash = %s WHERE id = %s",
-            (hash_password(form["password"]), id),
-        )
+        set_password(cursor, id, form["password"])
     connection.commit()
     user = find_user(cursor, id)
     cursor.close()

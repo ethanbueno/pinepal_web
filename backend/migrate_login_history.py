@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS login_history (
 
 
 def main():
-    connection = connect(
+    connection = connect(admin=True,
         database=os.getenv("DB_NAME"),
         autocommit=True,
         cursorclass=pymysql.cursors.DictCursor,

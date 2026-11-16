@@ -18,7 +18,7 @@ load_dotenv()
 
 
 def main():
-    connection = connect(
+    connection = connect(admin=True,
         database=os.getenv("DB_NAME"),
         autocommit=True,
         cursorclass=pymysql.cursors.DictCursor,
