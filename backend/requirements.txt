@@ -6,6 +6,7 @@ python-dotenv
 Werkzeug
 bcrypt
 cryptography
+cloudinary
 
 numpy
 Pillow

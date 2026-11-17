@@ -19,7 +19,6 @@ without an account uses its own row. The first sync fills in the farm details th
 still missing. Deactivated farmers can neither sign in nor upload.
 Errors are { "error": "message" }.
 """
-import os
 import uuid as uuidlib
 from datetime import datetime, timedelta
 
@@ -31,7 +30,7 @@ from echague_area import OUTSIDE_ECHAGUE, in_echague
 from farmers import add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
 from mobile_scans import LABELS
-from scans import UPLOAD_DIR
+from photo_storage import PhotoStorageError, is_remote, save_scan_photo
 from security import LOGIN_SELECT, verify_password
 from web_auth import DEACTIVATED, is_deactivated, user_json
 
@@ -41,9 +40,6 @@ TOKEN_LIFETIME = timedelta(days=30)
 PHONE_TOKEN_LIFETIME = timedelta(days=3650)  # a phone without an account keeps its farmer ID
 FEEDBACK = ("correct", "incorrect")
 IMAGE_SOURCES = ("Camera", "Gallery", "Web")  # Web: a farmer saving from the web Diagnose page
-
-# The photo is checked by its first bytes, not by the name or type the phone sends
-IMAGE_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png"}
 
 
 def bad_request(message):
@@ -172,20 +168,6 @@ def read_scan(form):
     }, None
 
 
-def save_photo(upload, scan_uuid):
-    """Store the photo under a name made from the scan_uuid. Returns the file name or None."""
-    head = upload.stream.read(8)
-    upload.stream.seek(0)
-    extension = next((ext for magic, ext in IMAGE_TYPES.items() if head.startswith(magic)), None)
-    if extension is None:
-        return None
-
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    filename = f"{scan_uuid}.{extension}"
-    upload.save(os.path.join(UPLOAD_DIR, filename))
-    return filename
-
-
 @mobile_sync.route("/api/mobile/scans", methods=["POST"])
 @jwt_required()
 def upload_scan():
@@ -236,7 +218,7 @@ def upload_scan():
             return refuse("This account is not linked to a farm. Contact your agricultural officer.", 403)
 
     # A scan that already exists can only be updated by the farmer who took it
-    cursor.execute("SELECT farmer_id FROM mobile_scans WHERE scan_uuid = %s", (scan["scan_uuid"],))
+    cursor.execute("SELECT farmer_id, image_path FROM mobile_scans WHERE scan_uuid = %s", (scan["scan_uuid"],))
     existing = cursor.fetchone()
     if existing and existing["farmer_id"] != farm["farmer_id"]:
         return refuse("This scan belongs to another account", 403)
@@ -249,10 +231,16 @@ def upload_scan():
     if not scan["municipality"]:
         return refuse("Choose the municipality of your farm before saving the scan", 400)
 
-    photo =request.files.get("image")
+    # The photo is stored by photo_storage.py: on Cloudinary when CLOUDINARY_URL is set, else in
+    # uploads/. A scan sent again (new notes or feedback) whose photo is already on Cloudinary
+    # keeps that photo instead of uploading a second copy.
+    photo = request.files.get("image")
     image_path = ""
-    if photo:
-        image_path = save_photo(photo, scan["scan_uuid"])
+    if photo and not (existing and is_remote(existing["image_path"])):
+        try:
+            image_path = save_scan_photo(photo, scan["scan_uuid"])
+        except PhotoStorageError:
+            return refuse("The photo could not be stored right now. Try syncing again later.", 503)
         if image_path is None:
             return refuse("The photo must be a JPG or PNG", 415)
 

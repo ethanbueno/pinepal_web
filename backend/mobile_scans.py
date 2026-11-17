@@ -5,7 +5,6 @@ their own scans. Errors are { "error": "message" }.
 """
 import csv
 import io
-import re
 import uuid
 from datetime import datetime
 
@@ -15,6 +14,7 @@ from flask_jwt_extended import get_jwt_identity
 from database import get_connection
 from echague_area import OUTSIDE_ECHAGUE, in_echague
 from permissions import farmer_scope, role_required, staff_required
+from photo_storage import delete_scan_photo, photo_url
 
 ANY_ROLE = ("admin", "officer", "farmer")
 
@@ -25,9 +25,6 @@ LOW_CONFIDENCE = 0.6  # same as LOW_CONFIDENCE in src/utils/diseases.js
 HIGH_CONFIDENCE = 0.9  # same as HIGH_CONFIDENCE in src/utils/diseases.js
 DASHBOARD_SCANS = 5  # scans per list (highest / lowest) on the web Dashboard (src/pages/Dashboard.jsx)
 FINAL = "COALESCE(verified_label, predicted_label)"
-
-# Photos uploaded by the mobile app are saved as <scan_uuid>.jpg / .png
-UPLOADED_PHOTO = re.compile(r"[0-9a-f-]{36}\.(jpg|png)")
 
 EXPORT_COLUMNS = [
     "scan_uuid", "scanned_at", "farmer_name", "farm_name", "municipality",
@@ -54,11 +51,10 @@ def serialize(row):
             scan[key] = float(scan[key])
     # The mobile data has no farmer names, so show the farmer ID.
     scan["farmer_name"] = shown_farmer(scan)
-    # Scans synced after the mobile update have their photo on the server. Older rows hold
-    # a path on the phone, which the server does not have, so those stay without an image.
-    scan["image_url"] = ""
-    if UPLOADED_PHOTO.fullmatch(scan.get("image_path") or ""):
-        scan["image_url"] = f"{request.host_url.rstrip('/')}/uploads/{scan['image_path']}"
+    # Scans synced after the mobile update have their photo on Cloudinary (a full URL) or in
+    # uploads/ (photo_storage.py). Older rows hold a path on the phone, which the server does
+    # not have, so those stay without an image.
+    scan["image_url"] = photo_url(scan.get("image_path"), request.host_url)
     return scan
 
 
@@ -360,6 +356,8 @@ def verify_scan(scan_uuid):
 def delete_scan(scan_uuid):
     connection = get_connection()
     cursor = connection.cursor()
+    cursor.execute("SELECT image_path FROM mobile_scans WHERE scan_uuid = %s", (scan_uuid,))
+    row = cursor.fetchone()
     cursor.execute("DELETE FROM mobile_scans WHERE scan_uuid = %s", (scan_uuid,))
     connection.commit()
     deleted = cursor.rowcount
@@ -368,6 +366,8 @@ def delete_scan(scan_uuid):
 
     if not deleted:
         return not_found()
+    if row:
+        delete_scan_photo(row["image_path"])  # best effort, after the row is gone
     return "", 204
 
 
