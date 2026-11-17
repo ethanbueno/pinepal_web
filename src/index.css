@@ -199,3 +199,23 @@
   animation-duration: 300ms;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* PinePal loader (components/PinePalLoader.jsx): the ring arc stretches while it spins,
+   and the logo bobs gently. The ring circumference is 2 * pi * 45 = 283. */
+@keyframes pinepal-loader-arc {
+  0%, 100% { stroke-dasharray: 60 223; }
+  50% { stroke-dasharray: 110 173; }
+}
+.pinepal-loader-arc {
+  stroke-dasharray: 80 203;
+  animation: pinepal-loader-arc 1.4s ease-in-out infinite;
+}
+@keyframes pinepal-loader-bob {
+  0%, 100% { transform: translateY(2%); }
+  50% { transform: translateY(-3%); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pinepal-loader-bob {
+    animation: pinepal-loader-bob 1.4s ease-in-out infinite;
+  }
+}

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Skeleton } from "@/components/ui/skeleton"
+import LoadingBlocks from "../components/LoadingBlocks"
 
 const ECHAGUE_ONLY = "Echague only for now"
 
@@ -218,10 +218,7 @@ function Profile() {
 
   if (!profile) {
     return (
-      <div className="grid gap-4 lg:grid-cols-[1fr_20rem]" aria-label="Loading your profile">
-        <Skeleton className="h-80 rounded-xl" />
-        <Skeleton className="h-80 rounded-xl" />
-      </div>
+      <LoadingBlocks rows={2} height="h-48" label="Loading your profile" />
     )
   }
 

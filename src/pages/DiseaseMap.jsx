@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Toggle } from "@/components/ui/toggle"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import PinePalLoader from "../components/PinePalLoader"
 
 // How the scans are drawn: a dot per scan, colored by disease, or a heat map of where disease is
 const VIEWS = [
@@ -152,8 +153,9 @@ function DiseaseMap() {
         {loading && (
           <div
             aria-busy="true"
-            className="absolute inset-0 z-[1000] flex items-center justify-center bg-card/70 text-sm font-medium text-muted-foreground"
+            className="absolute inset-0 z-[1000] flex flex-col items-center justify-center gap-3 bg-card/70 text-sm font-medium text-muted-foreground"
           >
+            <PinePalLoader size={80} label="Loading map" />
             Loading map...
           </div>
         )}

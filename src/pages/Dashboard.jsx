@@ -11,7 +11,7 @@ import { formatDate, formatPercent } from "../utils/format"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Skeleton } from "@/components/ui/skeleton"
+import LoadingBlocks from "../components/LoadingBlocks"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
@@ -152,23 +152,6 @@ function ShareRow({ name, dotColor, count, detail, fraction, barColor, barClass 
   )
 }
 
-// Grey blocks in the shape of the dashboard while the numbers load
-function DashboardSkeleton() {
-  return (
-    <div className="flex flex-col gap-4" aria-label="Loading dashboard">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[1, 2, 3, 4].map((n) => (
-          <Skeleton key={n} className="h-[100px] rounded-xl" />
-        ))}
-      </div>
-      <div className="grid gap-4 xl:grid-cols-3">
-        <Skeleton className="h-[340px] rounded-xl xl:col-span-2" />
-        <Skeleton className="h-[340px] rounded-xl" />
-      </div>
-    </div>
-  )
-}
-
 function Dashboard() {
   const [preset, setPreset] = useState("all")
   const [range, setRange] = useState({ from: "", to: "" })
@@ -265,7 +248,7 @@ function Dashboard() {
     return (
       <div className="flex flex-col gap-4">
         {header}
-        <DashboardSkeleton />
+        <LoadingBlocks rows={4} height="h-32" label="Loading dashboard" />
       </div>
     )
   }

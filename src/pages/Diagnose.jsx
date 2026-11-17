@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
 import logo from "../assets/pinepal-logo.png"
 import ProtocolCard from "../components/ProtocolCard"
+import PinePalLoader from "../components/PinePalLoader"
 import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
 import PageHeader from "../components/PageHeader"
@@ -267,6 +268,12 @@ function Diagnose() {
         <Card className="py-0">
           <div className="relative bg-black">
             <img src={preview} alt="Pineapple" className="max-h-[28rem] w-full object-contain" />
+            {/* while the photo is being analyzed, the loader sits over it */}
+            {diagnosing && (
+              <div aria-busy="true" className="absolute inset-0 flex items-center justify-center bg-black/45">
+                <PinePalLoader size={88} label="Analyzing photo" onDark />
+              </div>
+            )}
             <Button
               type="button"
               size="icon-lg"
