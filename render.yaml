@@ -1,0 +1,34 @@
+# Render Blueprint for the PinePal API (the Flask backend in backend/).
+# The database stays on Aiven MySQL; this only runs Flask.
+# Steps and the values to fill in: backend/DEPLOY_RENDER.md
+services:
+  - type: web
+    name: pinepal-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # 1 worker so the model is loaded once (the free plan has 512 MB);
+    # threads handle requests at the same time. Render sets $PORT.
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      # Aiven MySQL: the same values as backend/.env on your laptop
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: pinepal_db
+      # ca.pem is added as a Secret File, which Render puts in /etc/secrets
+      - key: DB_SSL_CA
+        value: /etc/secrets/ca.pem
+      # Copy the one from backend/.env so existing logins keep working
+      - key: JWT_SECRET_KEY
+        sync: false

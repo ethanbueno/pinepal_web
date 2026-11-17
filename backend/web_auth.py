@@ -6,7 +6,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from database import get_connection
 from farmers import LOCKED_MUNICIPALITY, add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login, record_logout
-from security import LOGIN_SELECT, set_password, verify_password
+from security import LOGIN_SELECT, password_problem, set_password, verify_password
 
 # Login for the web dashboard (matches the API contract in CLAUDEweb.md).
 # Errors are returned as { "error": "message" }.
@@ -85,6 +85,9 @@ def register():
 
     if len(email) > 150 or not EMAIL_PATTERN.match(email):
         return jsonify({"error": "Enter a valid email address"}), 400
+
+    if password_problem(password):
+        return jsonify({"error": password_problem(password)}), 400
 
     if role not in ROLES:
         return jsonify({"error": "Invalid role"}), 400

@@ -1,148 +1,746 @@
 {
-  "No Disease": {
-    "name": "No Disease Detected",
-    "image": "assets/images/diseases/healthy.jpg",
-    "scientific_name": "Ananas comosus",
-    "severity": "None",
-    "pathogen_type": "No pathogen detected",
-    "description": "No disease symptoms were detected on this fruit. Shell colour, eye structure and crown appear normal for the observed maturity stage.",
-    "symptoms": [
-      "Uniform shell colour with firm, evenly spaced fruitlets.",
-      "Crown leaves upright and free of chlorosis or wilting.",
-      "No water-soaked lesions or discharge at the base or eyes."
-    ],
-    "remediation_steps": [
-      "No treatment is required for this fruit.",
-      "Continue the regular field monitoring schedule.",
-      "Record this scan as a baseline for the block."
-    ],
-    "preventive_measures": [
-      "Maintain the standard sanitation programme for tools and crates.",
-      "Keep drainage clear so water does not pool around the plant base.",
-      "Handle fruit carefully at harvest to avoid bruising the shell."
-    ]
-  },
   "Crown Rot": {
     "name": "Crown Rot",
     "image": "assets/images/diseases/crown_rot.jpg",
-    "scientific_name": "Ceratocystis paradoxa (Thielaviopsis paradoxa)",
+    "images": [
+      "assets/images/diseases/crown_rot.jpg",
+      "assets/images/diseases/crown_rot_2.jpg",
+      "assets/images/diseases/crown_rot_3.jpg",
+      "assets/images/diseases/crown_rot_4.jpg",
+      "assets/images/diseases/crown_rot_5.jpg"
+    ],
+    "photo_credits": [
+      {
+        "file": "crown_rot.jpg",
+        "title": "Heart rot of pineapple caused by Phytophthora",
+        "author": "Scot Nelson",
+        "license": "CC0 1.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Pineapple_Phytophthora_heart_rot2_(5829871682).jpg"
+      },
+      {
+        "file": "crown_rot_2.jpg",
+        "title": "Crown rot on a pineapple fruit (Philippines, dataset image 00522)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "crown_rot_3.jpg",
+        "title": "Pineapple heart leaves with Phytophthora rot",
+        "author": "Scot Nelson",
+        "license": "CC0 1.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Pineapple-phytophthora-5_(5688742092).jpg"
+      },
+      {
+        "file": "crown_rot_4.jpg",
+        "title": "Rotted base of a pineapple heart leaf (Phytophthora)",
+        "author": "Scot Nelson",
+        "license": "CC0 1.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Pineapple-phytophthora-3_(5688171587).jpg"
+      },
+      {
+        "file": "crown_rot_5.jpg",
+        "title": "Rotting crown of a pineapple fruit (Philippines, dataset image 01523)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      }
+    ],
+    "scientific_name": "Phytophthora spp. (heart rot); Ceratocystis paradoxa (butt and black rot)",
     "severity": "High",
-    "pathogen_type": "Fungus",
-    "description": "A fungal rot that enters through wounds at the crown or the cut base of the fruit and planting material. It spreads fastest in warm, wet conditions and can destroy the crown and move into the fruit.",
+    "pathogen_type": "Fungus or water mould",
+    "description": "Rot of the crown or the heart of the plant. In the field it is most often caused by Phytophthora water moulds, which thrive in wet, poorly drained soil. Ceratocystis paradoxa (also called Thielaviopsis) rots the cut base of crowns, slips and suckers and enters fruit through wounds. Fusarium heart rot has also been reported in the Philippines. DOST-PCAARRD found Phytophthora heart and fruit rot common in Queen pineapple farms in Leyte and Camarines Norte.",
     "symptoms": [
-      "Crown leaves turning yellow or brown, starting at the base.",
-      "Soft, water-soaked tissue where the crown joins the fruit.",
-      "Crown leaves that pull out easily, sometimes with a sweet, fermented smell."
+      "The white base of the youngest heart leaves becomes soft and rotten.",
+      "Crown or heart leaves turn yellow or brown, starting at their base.",
+      "Soft, water-soaked tissue where the leaves join, turning dark brown to black.",
+      "Leaves pull out easily, often with a bad smell.",
+      "Planting material with a soft grey to black rot at the base breaks off easily at ground level."
+    ],
+    "look_alikes": [
+      "Bacterial heart rot (Dickeya) also rots the heart, with water-soaked spots in the leaf centre and a strong fermented smell. It is worse in warm, wet weather. Fungicides do not cure it, so ask the MAO to confirm which rot it is.",
+      "Sunburn or chemical injury browns the crown, but the base of the leaves stays firm and does not smell.",
+      "Mealybug wilt reddens and curls the leaf tips while the heart stays firm."
     ],
     "remediation_steps": [
-      "Separate affected fruit and plants from healthy ones immediately.",
-      "Remove and destroy infected crowns and fruit away from the field and packing area.",
-      "Sanitise knives, crates and tables with a 10% sodium hypochlorite solution before reuse.",
-      "Treat cut surfaces of healthy fruit and planting material with an approved fungicide, following the label rate.",
-      "Consult the local agricultural extension office if the problem keeps spreading."
+      "Remove affected plants and fruit right away, on a dry day if you can (moving wet, rotting plants spreads bacterial rots). Bury them away from the field and packing area; do not leave them in the rows.",
+      "Clean knives, bolos and crates in 1 part household bleach (such as Zonrox) to 9 parts water, then rinse.",
+      "Improve drainage in the affected part of the block so water does not pool.",
+      "For field heart rot (Phytophthora), ask your MAO about a fungicide with dimethomorph, metalaxyl-M or fosetyl-aluminium. Dimethomorph worked best in 2025 field trials in Thailand, and all three have legal residue limits on pineapple in the Philippines. In problem spots, growers abroad spray these as protection before symptoms appear. Use only FPA-registered products and follow the label rate and harvest interval.",
+      "When you spray, wear gloves, long sleeves and a mask, wait the pre-harvest interval on the label before harvesting, triple-rinse empty containers, and write down the product, rate and date.",
+      "For rot on crowns, slips and suckers you will plant, dip them in a registered fungicide such as one with propiconazole or triadimefon right after you remove them.",
+      "Researchers in the Philippines found the fungus Trichoderma works against heart rot fungi. Ask the MAO or ISU whether a Trichoderma product is available locally.",
+      "Check the surrounding plants again after one to two weeks."
     ],
     "preventive_measures": [
-      "Avoid wounding the crown and fruit during harvest and handling.",
-      "Plant only healthy, dry planting material and treat it before setting it out.",
-      "Improve drainage and avoid working in the block while plants are wet."
-    ]
+      "Use disease-free planting material, from fields without heart rot.",
+      "Take planting material in dry weather, without leaving fruit pieces attached.",
+      "Adding chicken manure to the soil can help suppress Phytophthora.",
+      "Dry crowns, slips and suckers in a single layer with the cut ends facing the sun before planting. Do not pile them wet.",
+      "Plant on raised beds or well-drained soil, and avoid planting during heavy rain.",
+      "Avoid wounding the crown and fruit during weeding and harvest."
+    ],
+    "get_help": [
+      "Echague Municipal Agriculture Office (MAO): ask for the agricultural technician assigned to your barangay.",
+      "DA Regional Field Office 02 (Cagayan Valley): crop protection and pest diagnosis.",
+      "Isabela State University, Echague main campus: plant pathology and entomology experts.",
+      "ATI Regional Training Center 02: runs pineapple farming and IPM trainings for farmers and extension workers in Cagayan Valley.",
+      "Get help if more than a few plants in a block are affected, or if rot keeps appearing after you improve drainage."
+    ],
+    "sources": [
+      {
+        "title": "Major diseases of Queen pineapple",
+        "publisher": "Visayas State University",
+        "url": "https://vsu.edu.ph/21-content-main/informational/1740-major-diseases-of-queen-pineapple",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PCAARRD's program on Queen pineapple to help marginalized farmers in Bicol and Eastern Visayas (2018)",
+        "publisher": "DOST-PCAARRD",
+        "url": "https://newport.pcaarrd.dost.gov.ph/index.php/quick-information-dispatch-qid-articles/pcaarrd-s-program-on-queen-pineapple-to-help-marginalized-farmers-in-bicol-and-eastern-visayas",
+        "tier": "Philippines"
+      },
+      {
+        "title": "Fusarium heart rot: first report on pineapple in South Cotabato and Davao City, Philippines (2020)",
+        "publisher": "University of Southeastern Philippines",
+        "url": "https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/article/download/65/22",
+        "tier": "Philippines"
+      },
+      {
+        "title": "DOST project identified potential biocontrol agents against Queen pineapple pests",
+        "publisher": "DOST-PCAARRD",
+        "url": "https://newport.pcaarrd.dost.gov.ph/index.php/quick-information-dispatch-qid-articles/dost-project-identified-potential-biocontrol-agents-against-queen-pineapple-pests",
+        "tier": "Philippines"
+      },
+      {
+        "title": "In-vitro selection of pineapple cv. Queen with resistance to Phytophthora cinnamomi (Philippine Journal of Crop Science, 2014)",
+        "publisher": "University of the Philippines Los Baños",
+        "url": "https://www.ukdr.uplb.edu.ph/journal-articles/5018",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PNS/BAFS 159:2015 Pineapple: Maximum Residue Limits of Pesticides",
+        "publisher": "Bureau of Plant Industry / Bureau of Agriculture and Fisheries Standards (DA)",
+        "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%20159_2015%20Pineapple%20MRL.pdf",
+        "tier": "Philippines"
+      },
+      {
+        "title": "List of banned and restricted pesticides",
+        "publisher": "Fertilizer and Pesticide Authority (DA)",
+        "url": "https://fpa.da.gov.ph/resources/reports/list-of-banned-and-restricted-pesticides/",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PNS/BAFS 49:2021 Code of Good Agricultural Practices for fruits and vegetables",
+        "publisher": "Bureau of Agriculture and Fisheries Standards (DA)",
+        "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%2049_2021%20Code%20of%20GAP%20for%20Fruits%20and%20Vegetable%20Farming.pdf",
+        "tier": "Philippines"
+      },
+      {
+        "title": "AEWs join training of trainers on pineapple integrated farming system (2023)",
+        "publisher": "Agricultural Training Institute Region 2 (Cagayan Valley)",
+        "url": "https://ati2.da.gov.ph/ati-2/content/node/138",
+        "tier": "Philippines"
+      },
+      {
+        "title": "Identification and fungicide sensitivity of Phytophthora nicotianae for controlling pineapple heart rot in Thailand (2025)",
+        "publisher": "Agriculture and Natural Resources journal, Kasetsart University",
+        "url": "https://li01.tci-thaijo.org/index.php/anres/article/view/266991",
+        "tier": "Southeast Asia"
+      },
+      {
+        "title": "Diagnostic manual for plant diseases in Vietnam, section 10: root and stem rots",
+        "publisher": "ACIAR",
+        "url": "https://www.aciar.gov.au/sites/default/files/legacy/node/8613/MN129%20part5.pdf",
+        "tier": "Southeast Asia"
+      },
+      {
+        "title": "Smart pineapple farming assistant app for identifying diseases in MD2 pineapple (Food Research, 2025)",
+        "publisher": "Universiti Teknologi MARA, Malaysia",
+        "url": "https://www.myfoodresearch.com/uploads/8/4/8/5/84855864/_3__fr-ipc-2_sadikan.pdf",
+        "tier": "Southeast Asia"
+      },
+      {
+        "title": "Pineapple black rot, water blister, butt rot (fact sheet)",
+        "publisher": "Pacific Pests, Pathogens and Weeds (Lucidcentral)",
+        "url": "https://apps.lucidcentral.org/pppw_v10/text/web_full/entities/pineapple_black_rot_190.htm",
+        "tier": "International"
+      },
+      {
+        "title": "Bacterial heart rot and fruit collapse of pineapple",
+        "publisher": "PlantDiseases.org (APS compendium references)",
+        "url": "https://www.plantdiseases.org/sites/default/files/plant_disease/narratives/19.pdf",
+        "tier": "International"
+      },
+      {
+        "title": "International Pineapple Symposium industry workshop report (2014)",
+        "publisher": "Queensland DAF / Horticulture Australia",
+        "url": "https://era.dpi.qld.gov.au/id/eprint/15395/1/International%20Pineapple%20Symposium%20industry%20workshop_2014_PI12700_sanewski.pdf",
+        "tier": "International"
+      }
+    ],
+    "reviewed": "2026-11-17"
   },
   "Fruit Rot": {
     "name": "Fruit Rot",
     "image": "assets/images/diseases/fruit_rot.jpg",
-    "scientific_name": "Various fungi and bacteria",
+    "images": [
+      "assets/images/diseases/fruit_rot.jpg",
+      "assets/images/diseases/fruit_rot_2.jpg",
+      "assets/images/diseases/fruit_rot_3.jpg",
+      "assets/images/diseases/fruit_rot_4.jpg",
+      "assets/images/diseases/fruit_rot_5.jpg"
+    ],
+    "photo_credits": [
+      {
+        "file": "fruit_rot.jpg",
+        "title": "Rotting pineapple fruit in the field (Philippines, dataset image 00822)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "fruit_rot_2.jpg",
+        "title": "Soft rot on the lower part of a pineapple fruit (Philippines, dataset image 00875)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "fruit_rot_3.jpg",
+        "title": "Fruit rot on a pineapple (Philippines, dataset image 00260)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "fruit_rot_4.jpg",
+        "title": "Dark rot patches on a pineapple fruit (Philippines, dataset image 02356)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      }
+    ],
+    "scientific_name": "Mainly Ceratocystis paradoxa (black rot); also Fusarium and other fungi and bacteria",
     "severity": "High",
     "pathogen_type": "Fungus or bacterium",
-    "description": "Rotting of the fruit tissue caused by fungi or bacteria that enter through wounds, cracks or insect damage. It is worse in warm, humid conditions and during storage and transport.",
+    "description": "Rotting of the fruit flesh. The most common cause is black rot (Ceratocystis paradoxa), which enters through bruises, growth cracks and harvest cuts and develops mostly during transport and storage. Warm, wet weather at harvest makes it worse. Bacteria (Dickeya) can also cause fruit collapse, which fungicides do not control.",
     "symptoms": [
-      "Soft, water-soaked patches on the shell that darken over time.",
-      "Fruit that leaks juice or has a sour, fermented smell.",
-      "Mould or discoloured tissue spreading from a wound or bruise."
+      "Soft, watery rot under a shell that may still look normal at first.",
+      "Shell becomes dark, brittle and leaks juice, often with a sour or fermented smell.",
+      "In late stages only a collapsed shell with black fibres is left."
+    ],
+    "look_alikes": [
+      "Sunburn makes a pale, dry patch on one side. It is firm, not watery, but it can turn into rot later.",
+      "Overripe fruit is soft all over and sweet-smelling, without a spreading dark patch."
     ],
     "remediation_steps": [
-      "Remove rotting fruit from the lot immediately so it does not infect others.",
-      "Discard or bury infected fruit away from the packing area.",
-      "Sanitise crates, tables and knives with a 10% sodium hypochlorite solution before reuse.",
-      "Move the remaining fruit into cool, well-ventilated storage and sell or process it quickly.",
-      "Ask the extension office about approved post-harvest treatments for your area."
+      "Take rotting fruit out of the pile or crate right away so it does not spread to others.",
+      "Bury rejected fruit away from the packing area.",
+      "Clean knives, bolos and crates in 1 part household bleach (such as Zonrox) to 9 parts water, then rinse.",
+      "Sell or process the remaining fruit quickly, and keep it shaded, cool and well ventilated. If you have cold storage, keep partly ripe fruit at 10 to 13 °C and ripe fruit at 7 to 10 °C. Below 7 °C the fruit gets chilling injury (black heart).",
+      "If losses are high, ask the MAO about a post-harvest fungicide dip such as prochloraz or thiophanate-methyl. UPLB trials showed post-harvest dips control black rot in stored fruit, and both have legal residue limits on pineapple in the Philippines. Use only FPA-registered products and follow the label.",
+      "When you spray, wear gloves, long sleeves and a mask, wait the pre-harvest interval on the label before harvesting, triple-rinse empty containers, and write down the product, rate and date."
     ],
     "preventive_measures": [
-      "Harvest in dry hours and avoid dropping or stacking fruit roughly.",
-      "Control the insects that damage the shell.",
-      "Clean and dry packing surfaces between batches."
-    ]
-  },
-  "Fruit Fasciation": {
-    "name": "Fruit Fasciation",
-    "image": "assets/images/diseases/fruit_fasciation.jpg",
-    "scientific_name": "Physiological disorder (not caused by a pathogen)",
-    "severity": "Low",
-    "pathogen_type": "Physiological disorder",
-    "description": "An abnormal growth in which the fruit becomes flattened, ribbed or fused. It is generally not infectious, but affected fruit has poor market quality and the trait can be carried on by planting material taken from affected plants.",
-    "symptoms": [
-      "Fruit that is flattened or ribbed instead of cylindrical.",
-      "Fused or enlarged fruitlets along one side of the fruit.",
-      "Crown or stem that looks widened or flattened."
+      "Harvest early in the morning on dry days, not in the rain, and do not throw, drop or pile fruit roughly.",
+      "Do not put harvested fruit directly on the soil, and keep it in the shade while waiting for transport.",
+      "Do not overfill or underfill crates; both bruise the fruit. Leave space for air to move around the load.",
+      "Never use harvest crates to carry or store chemicals.",
+      "Do not pack sunburnt or cracked fruit with good fruit.",
+      "Clean and dry crates and packing tables between batches.",
+      "Control mealybugs and other insects that wound the shell."
     ],
-    "remediation_steps": [
-      "Mark affected plants so they can be found again.",
-      "Do not take suckers, slips or crowns from affected plants for planting.",
-      "Sell affected fruit for processing or local sale where appearance matters less.",
-      "Record the block and how many fruits are affected, and report repeated cases to the extension office."
+    "get_help": [
+      "Echague Municipal Agriculture Office (MAO): ask for the agricultural technician assigned to your barangay.",
+      "DA Regional Field Office 02 (Cagayan Valley): crop protection and pest diagnosis.",
+      "Isabela State University, Echague main campus: plant pathology and entomology experts.",
+      "ATI Regional Training Center 02: runs pineapple farming and IPM trainings for farmers and extension workers in Cagayan Valley.",
+      "Get help if many fruits rot in storage or transport, or if rot shows on fruit still in the field."
     ],
-    "preventive_measures": [
-      "Use planting material only from healthy, normal-looking plants.",
-      "Avoid plant stress from drought, waterlogging or sudden changes in growing conditions.",
-      "Keep records of affected blocks to spot patterns across cycles."
-    ]
+    "sources": [
+      {
+        "title": "Control of pineapple Thielaviopsis fruit rot with postharvest dip in guazatine and benomyl (1984)",
+        "publisher": "University of the Philippines Los Baños, Dept. of Plant Pathology",
+        "url": "https://agris.fao.org/search/en/records/64774c81bc45d9ecdbc037e7",
+        "tier": "Philippines"
+      },
+      {
+        "title": "Fusarium heart rot: first report on pineapple in South Cotabato and Davao City, Philippines (2020)",
+        "publisher": "University of Southeastern Philippines",
+        "url": "https://journal.usep.edu.ph/index.php/Southeastern_Philippines_Journal/article/download/65/22",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PNS/BAFS 159:2015 Pineapple: Maximum Residue Limits of Pesticides",
+        "publisher": "Bureau of Plant Industry / Bureau of Agriculture and Fisheries Standards (DA)",
+        "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%20159_2015%20Pineapple%20MRL.pdf",
+        "tier": "Philippines"
+      },
+      {
+        "title": "List of banned and restricted pesticides",
+        "publisher": "Fertilizer and Pesticide Authority (DA)",
+        "url": "https://fpa.da.gov.ph/resources/reports/list-of-banned-and-restricted-pesticides/",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PNS/BAFS 49:2021 Code of Good Agricultural Practices for fruits and vegetables",
+        "publisher": "Bureau of Agriculture and Fisheries Standards (DA)",
+        "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%2049_2021%20Code%20of%20GAP%20for%20Fruits%20and%20Vegetable%20Farming.pdf",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PNS/BAFS 198:2017 Code of practice for packaging and transport of fresh fruits and vegetables",
+        "publisher": "Bureau of Agriculture and Fisheries Standards (DA)",
+        "url": "https://bafs.da.gov.ph/bafs_admin/admin_page/pns_file/PNS.BAFS.198-2017.COP-Packaging-and-Transport-for-Fresh-Fruits-and-Vegetables.pdf",
+        "tier": "Philippines"
+      },
+      {
+        "title": "AEWs join training of trainers on pineapple integrated farming system (2023)",
+        "publisher": "Agricultural Training Institute Region 2 (Cagayan Valley)",
+        "url": "https://ati2.da.gov.ph/ati-2/content/node/138",
+        "tier": "Philippines"
+      },
+      {
+        "title": "Pineapple black rot, water blister, butt rot (fact sheet)",
+        "publisher": "Pacific Pests, Pathogens and Weeds (Lucidcentral)",
+        "url": "https://apps.lucidcentral.org/pppw_v10/text/web_full/entities/pineapple_black_rot_190.htm",
+        "tier": "International"
+      },
+      {
+        "title": "Pineapple: recommendations for maintaining postharvest quality",
+        "publisher": "UC Davis Postharvest Research and Extension Center",
+        "url": "https://postharvest.ucdavis.edu/node/7956",
+        "tier": "International"
+      },
+      {
+        "title": "Bacterial heart rot and fruit collapse of pineapple",
+        "publisher": "PlantDiseases.org (APS compendium references)",
+        "url": "https://www.plantdiseases.org/sites/default/files/plant_disease/narratives/19.pdf",
+        "tier": "International"
+      }
+    ],
+    "reviewed": "2026-11-17"
   },
   "Mealybug Wilt": {
     "name": "Mealybug Wilt of Pineapple",
     "image": "assets/images/diseases/mealybug_wilt.jpg",
-    "scientific_name": "Pineapple mealybug wilt-associated virus",
+    "images": [
+      "assets/images/diseases/mealybug_wilt.jpg",
+      "assets/images/diseases/mealybug_wilt_2.jpg",
+      "assets/images/diseases/mealybug_wilt_3.jpg",
+      "assets/images/diseases/mealybug_wilt_4.jpg",
+      "assets/images/diseases/mealybug_wilt_5.jpg"
+    ],
+    "photo_credits": [
+      {
+        "file": "mealybug_wilt.jpg",
+        "title": "Reddened, wilting leaves of mealybug wilt (Philippines, dataset image 01189)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "mealybug_wilt_2.jpg",
+        "title": "Mealybug wilt: reddish leaves around a fruit (Philippines, dataset image 00234)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "mealybug_wilt_3.jpg",
+        "title": "Mealybug wilt: reddish, yellowing leaves (Philippines, dataset image 00569)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "mealybug_wilt_4.jpg",
+        "title": "Pineapple leaf with mealybug wilt (Kerala, India, Mealybug_Wilt_0233)",
+        "author": "Saranya Raj, Nupur Prakash, Nidhi Malik (Mendeley Data)",
+        "license": "CC BY 4.0",
+        "url": "https://data.mendeley.com/datasets/gc5f8dfgrt/2"
+      }
+    ],
+    "scientific_name": "Pineapple mealybug wilt-associated viruses (PMWaV-1, -2, -3)",
     "severity": "High",
-    "pathogen_type": "Virus (mealybug transmitted)",
-    "description": "A viral wilt spread by mealybugs that are in turn tended by ants. Affected plants lose vigour and produce small, poor-quality fruit.",
+    "pathogen_type": "Virus (spread by mealybugs)",
+    "description": "A wilt caused by viruses that the pink pineapple mealybug (Dysmicoccus brevipes) carries from plant to plant. Ants, mainly the big-headed ant, protect the mealybugs and move them around, so controlling ants is the key step. DOST-PCAARRD lists it as a major problem of Queen pineapple in the Philippines. Plants can carry the virus without showing symptoms and still give lower yields.",
     "symptoms": [
-      "Leaf tips reddening then turning yellow and curling downward.",
-      "Wilting that starts at the leaf edges and moves inward.",
-      "Mealybug colonies and ant activity at the leaf axils and roots."
+      "Leaves turn red, then pink, and their tips curl downward and die back, often in an upside-down V shape down the leaf.",
+      "The plant looks limp, starting at the leaf edges, because the roots collapse.",
+      "White, waxy mealybugs at the leaf bases and roots, with ants nearby. Both the pink and the grey pineapple mealybug spread the virus.",
+      "Some plants seem to recover with healthy new leaves while the old leaves stay damaged; they can still carry the virus."
+    ],
+    "look_alikes": [
+      "Drought stress also makes leaves red and limp, but you will not find mealybugs and ants, and the plant recovers after rain.",
+      "Crown rot makes the heart soft and smelly; mealybug wilt does not."
     ],
     "remediation_steps": [
-      "Inspect the base and leaf axils for mealybug colonies and ant trails.",
-      "Control ants first, since removing them collapses the mealybug population.",
-      "Apply an approved insecticide targeting mealybugs at the label rate.",
-      "Remove and destroy severely wilted plants.",
-      "Re-inspect the block after two weeks to confirm the population has dropped."
+      "Check the leaf bases and roots of wilting plants and their neighbours for mealybugs and ant trails.",
+      "Control the ants first, with ant baits placed along the field borders and near nests. Ants protect and carry mealybugs and make the wilt worse. Without ants, natural enemies like ladybird beetles and parasitic wasps can control the mealybugs.",
+      "Remove and destroy badly wilted plants.",
+      "If mealybugs are still many, ask the MAO about an insecticide such as one with buprofezin, spirotetramat or pyriproxyfen. These have legal residue limits on pineapple in the Philippines; use only FPA-registered products and follow the label.",
+      "Biological options tested on Queen pineapple in the Philippines include predatory earwigs and the fungi Beauveria, Metarhizium and Lecanicillium. Ask the MAO or ISU if these are available locally.",
+      "When you spray, wear gloves, long sleeves and a mask, wait the pre-harvest interval on the label before harvesting, triple-rinse empty containers, and write down the product, rate and date.",
+      "Check the block again after two weeks to make sure mealybugs and ants have dropped. Even young crawlers carry the virus, so look closely."
     ],
     "preventive_measures": [
-      "Treat planting material before setting it out in the field.",
-      "Keep an ongoing ant baiting programme around the block borders.",
-      "Remove crop residue that shelters mealybugs between cycles."
-    ]
+      "Use planting material from fields with little or no wilt.",
+      "If you can control water temperature, soak crowns in water at 50 °C for 30 minutes before planting; this has been shown to clean them.",
+      "Do not plant a new crop right next to an old or infected one.",
+      "Plough around the field to break up ant nests, and keep field borders weeded.",
+      "Remove old crop residue that shelters mealybugs between cycles."
+    ],
+    "get_help": [
+      "Echague Municipal Agriculture Office (MAO): ask for the agricultural technician assigned to your barangay.",
+      "DA Regional Field Office 02 (Cagayan Valley): crop protection and pest diagnosis.",
+      "Isabela State University, Echague main campus: plant pathology and entomology experts.",
+      "ATI Regional Training Center 02: runs pineapple farming and IPM trainings for farmers and extension workers in Cagayan Valley.",
+      "Get help if wilt spreads to new rows after you control the ants."
+    ],
+    "sources": [
+      {
+        "title": "Queen pineapple NICER program pushes for improved pest and disease management",
+        "publisher": "DOST-PCAARRD",
+        "url": "https://pcaarrd.dost.gov.ph/index.php/quick-information-dispatch-qid-articles/queen-pineapple-nicer-program-pushes-for-improved-pest-and-disease-management",
+        "tier": "Philippines"
+      },
+      {
+        "title": "DOST project identified potential biocontrol agents against Queen pineapple pests",
+        "publisher": "DOST-PCAARRD",
+        "url": "https://newport.pcaarrd.dost.gov.ph/index.php/quick-information-dispatch-qid-articles/dost-project-identified-potential-biocontrol-agents-against-queen-pineapple-pests",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PCAARRD's program on Queen pineapple to help marginalized farmers in Bicol and Eastern Visayas (2018)",
+        "publisher": "DOST-PCAARRD",
+        "url": "https://newport.pcaarrd.dost.gov.ph/index.php/quick-information-dispatch-qid-articles/pcaarrd-s-program-on-queen-pineapple-to-help-marginalized-farmers-in-bicol-and-eastern-visayas",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PNS/BAFS 159:2015 Pineapple: Maximum Residue Limits of Pesticides",
+        "publisher": "Bureau of Plant Industry / Bureau of Agriculture and Fisheries Standards (DA)",
+        "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%20159_2015%20Pineapple%20MRL.pdf",
+        "tier": "Philippines"
+      },
+      {
+        "title": "List of banned and restricted pesticides",
+        "publisher": "Fertilizer and Pesticide Authority (DA)",
+        "url": "https://fpa.da.gov.ph/resources/reports/list-of-banned-and-restricted-pesticides/",
+        "tier": "Philippines"
+      },
+      {
+        "title": "PNS/BAFS 49:2021 Code of Good Agricultural Practices for fruits and vegetables",
+        "publisher": "Bureau of Agriculture and Fisheries Standards (DA)",
+        "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%2049_2021%20Code%20of%20GAP%20for%20Fruits%20and%20Vegetable%20Farming.pdf",
+        "tier": "Philippines"
+      },
+      {
+        "title": "AEWs join training of trainers on pineapple integrated farming system (2023)",
+        "publisher": "Agricultural Training Institute Region 2 (Cagayan Valley)",
+        "url": "https://ati2.da.gov.ph/ati-2/content/node/138",
+        "tier": "Philippines"
+      },
+      {
+        "title": "Species of pineapple mealybug wilt-associated mealybugs in Eastern and Southern Thailand",
+        "publisher": "Department of Agriculture, Thailand",
+        "url": "https://info.doa.go.th/research/pdf/2562/490_2562.pdf",
+        "tier": "Southeast Asia"
+      },
+      {
+        "title": "Disease etiology of mealybug wilt of MD2 pineapple in Malaysia (2025)",
+        "publisher": "Universiti Putra Malaysia / UiTM",
+        "url": "https://apps-2025.m.asnevents.com.au/schedule/session/25326/abstract/116951",
+        "tier": "Southeast Asia"
+      },
+      {
+        "title": "Pineapple mealybug wilt disease (fact sheet)",
+        "publisher": "Pacific Pests and Pathogens (Lucidcentral)",
+        "url": "https://apps.lucidcentral.org/ppp/text/web_mini/entities/pineapple_wilt_disease_380.htm",
+        "tier": "International"
+      },
+      {
+        "title": "Pink pineapple mealybug, Dysmicoccus brevipes (EENY/IN1106)",
+        "publisher": "University of Florida IFAS Extension",
+        "url": "https://edis.ifas.ufl.edu/publication/IN1106",
+        "tier": "International"
+      },
+      {
+        "title": "Closterovirus infection and mealybug exposure are necessary for mealybug wilt of pineapple (Phytopathology, 2002)",
+        "publisher": "University of Hawaii / American Phytopathological Society",
+        "url": "https://mail.growables.org/information/TropicalFruit/documents/PineappleWiltHawaii.pdf",
+        "tier": "International"
+      },
+      {
+        "title": "International Pineapple Symposium industry workshop report (2014)",
+        "publisher": "Queensland DAF / Horticulture Australia",
+        "url": "https://era.dpi.qld.gov.au/id/eprint/15395/1/International%20Pineapple%20Symposium%20industry%20workshop_2014_PI12700_sanewski.pdf",
+        "tier": "International"
+      }
+    ],
+    "reviewed": "2026-11-17"
+  },
+  "Fruit Fasciation": {
+    "name": "Fruit Fasciation",
+    "image": "assets/images/diseases/fruit_fasciation.jpg",
+    "images": [
+      "assets/images/diseases/fruit_fasciation.jpg",
+      "assets/images/diseases/fruit_fasciation_2.jpg",
+      "assets/images/diseases/fruit_fasciation_3.jpg",
+      "assets/images/diseases/fruit_fasciation_4.jpg",
+      "assets/images/diseases/fruit_fasciation_5.jpg"
+    ],
+    "photo_credits": [
+      {
+        "file": "fruit_fasciation.jpg",
+        "title": "Flattened, fan-shaped fasciated pineapple fruit (Philippines, dataset image 02195)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "fruit_fasciation_2.jpg",
+        "title": "Fasciated pineapple fruit (Philippines, dataset image 00694)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "fruit_fasciation_3.jpg",
+        "title": "Fasciated fruit with a wide, fan-shaped crown (Philippines, dataset image 01731)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "fruit_fasciation_4.jpg",
+        "title": "Fasciated pineapple fruit, side view (Philippines, dataset image 01572)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "fruit_fasciation_5.jpg",
+        "title": "Twisted, flattened fasciated fruit (Philippines, dataset image 01379)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      }
+    ],
+    "scientific_name": "Physiological or genetic disorder (not caused by a pathogen)",
+    "severity": "Low",
+    "pathogen_type": "Physiological disorder",
+    "description": "A deformed fruit that is flattened, twisted or fan-shaped, sometimes with many crowns. It is not contagious. It is linked to very vigorous plants that are slow to flower, high soil fertility, warm weather, and calcium or zinc deficiency, and the tendency can be passed on through planting material.",
+    "symptoms": [
+      "Fruit is flattened, fan-shaped or twisted instead of cylindrical.",
+      "Fruitlets are fused or crowded along one side.",
+      "The crown is widened or split into many small crowns."
+    ],
+    "look_alikes": [
+      "Multiple crown has two or more separate crowns on a normal-shaped fruit; fasciated fruit itself is deformed."
+    ],
+    "remediation_steps": [
+      "Mark the affected plants so you can find them again.",
+      "Do not take crowns, slips or suckers from these plants for planting.",
+      "Sell the fruit for processing or local sale where shape matters less; it is safe to eat.",
+      "Count how many fruits in the block are affected and keep a record each cycle."
+    ],
+    "preventive_measures": [
+      "Take planting material only from normal, healthy plants.",
+      "Use a balanced fertiliser programme, and do not overfeed. Make sure the plants get enough calcium and zinc.",
+      "Cull off-type plants so they do not build up in the field."
+    ],
+    "get_help": [
+      "Talk to the Echague MAO or ISU if more than a few fruits per block are affected, so they can check your planting material and soil."
+    ],
+    "sources": [
+      {
+        "title": "Pineapple: physiological disorders",
+        "publisher": "National Horticulture Board, India",
+        "url": "https://nhb.gov.in/pdf/fruits/pineapple/pin003.pdf",
+        "tier": "International"
+      },
+      {
+        "title": "Pineapple best practice manual, chapter 23: Other disorders (2009)",
+        "publisher": "Queensland pineapple industry / DPI",
+        "url": "https://static1.squarespace.com/static/66947addcaa8c0315bbe2c3f/t/6734269e8f90f52b3c8eb152/1731471007224/23+Other+disorders+final+2009.pdf",
+        "tier": "International"
+      }
+    ],
+    "reviewed": "2026-11-17"
   },
   "Multiple Crown": {
     "name": "Multiple Crown",
     "image": "assets/images/diseases/multiple_crown.jpg",
-    "scientific_name": "Physiological disorder (not caused by a pathogen)",
+    "images": [
+      "assets/images/diseases/multiple_crown.jpg",
+      "assets/images/diseases/multiple_crown_2.jpg",
+      "assets/images/diseases/multiple_crown_3.jpg",
+      "assets/images/diseases/multiple_crown_4.jpg",
+      "assets/images/diseases/multiple_crown_5.jpg"
+    ],
+    "photo_credits": [
+      {
+        "file": "multiple_crown.jpg",
+        "title": "Pineapple fruit with multiple crowns (Philippines, dataset image 01680)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "multiple_crown_2.jpg",
+        "title": "Pineapple fruit with two crowns (Philippines, dataset image 02244)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "multiple_crown_3.jpg",
+        "title": "Multiple crowns on a pineapple fruit (Philippines, dataset image 00838)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "multiple_crown_4.jpg",
+        "title": "Cluster of crowns on one fruit (Philippines, dataset image 02716)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "multiple_crown_5.jpg",
+        "title": "Multiple crowns, seen from above (Philippines, dataset image 00170)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      }
+    ],
+    "scientific_name": "Physiological or genetic disorder (not caused by a pathogen)",
     "severity": "Low",
     "pathogen_type": "Physiological disorder",
-    "description": "A fruit that grows two or more crowns, or a crown that splits into several. It is not infectious, but it lowers the market value of fresh fruit and is often linked to plant stress or growing conditions around flower induction.",
+    "description": "A fruit with two or more crowns. It is not contagious. Causes include genetic off-types in the planting material, sunburn of the plant top between open-heart and red-bud stage, nutrient problems, and chemical injury between flower induction and flowering.",
     "symptoms": [
       "Two or more crowns growing from the top of one fruit.",
       "A crown that looks split, crowded or unusually large.",
-      "Otherwise normal-looking fruit shell and flesh."
+      "The rest of the fruit looks normal, though it may be flatter and broader."
+    ],
+    "look_alikes": [
+      "Fruit fasciation also can have many crowns, but the fruit itself is flattened or twisted."
     ],
     "remediation_steps": [
-      "Treat the fruit as a quality problem rather than a disease; it can still be eaten or processed.",
-      "Do not use these crowns as planting material.",
-      "Separate affected fruit from fresh-market grades.",
-      "Record how often it appears in the block and report high rates to the extension office."
+      "Treat it as a quality problem, not a disease. The fruit is safe to eat or process.",
+      "Do not use these crowns or slips as planting material.",
+      "Sort affected fruit out of the fresh-market grade.",
+      "Record how often it appears in each block. Growers abroad report it happens now and then and rarely costs much yield."
     ],
     "preventive_measures": [
-      "Use uniform, healthy planting material.",
-      "Avoid excessive nitrogen and plant stress before flower induction.",
-      "Follow the recommended timing and rates for flower-induction treatments."
-    ]
+      "Take planting material only from normal plants, and cull off-types.",
+      "Use a balanced fertiliser programme with enough calcium.",
+      "Avoid spraying chemicals that can injure the plant from flower induction until flowering.",
+      "Close planting reduces sunburn on the plant tops during hot months."
+    ],
+    "get_help": [
+      "Talk to the Echague MAO or ISU if a block has many multiple-crown fruits, so they can check your planting material."
+    ],
+    "sources": [
+      {
+        "title": "Pineapple best practice manual, chapter 23: Other disorders (2009)",
+        "publisher": "Queensland pineapple industry / DPI",
+        "url": "https://static1.squarespace.com/static/66947addcaa8c0315bbe2c3f/t/6734269e8f90f52b3c8eb152/1731471007224/23+Other+disorders+final+2009.pdf",
+        "tier": "International"
+      },
+      {
+        "title": "Pineapple: physiological disorders",
+        "publisher": "National Horticulture Board, India",
+        "url": "https://nhb.gov.in/pdf/fruits/pineapple/pin003.pdf",
+        "tier": "International"
+      },
+      {
+        "title": "International Pineapple Symposium industry workshop report (2014)",
+        "publisher": "Queensland DAF / Horticulture Australia",
+        "url": "https://era.dpi.qld.gov.au/id/eprint/15395/1/International%20Pineapple%20Symposium%20industry%20workshop_2014_PI12700_sanewski.pdf",
+        "tier": "International"
+      }
+    ],
+    "reviewed": "2026-11-17"
+  },
+  "No Disease": {
+    "name": "No Disease Detected",
+    "image": "assets/images/diseases/healthy.jpg",
+    "images": [
+      "assets/images/diseases/healthy.jpg",
+      "assets/images/diseases/healthy_2.jpg",
+      "assets/images/diseases/healthy_3.jpg",
+      "assets/images/diseases/healthy_4.jpg",
+      "assets/images/diseases/healthy_5.jpg"
+    ],
+    "photo_credits": [
+      {
+        "file": "healthy.jpg",
+        "title": "Ananas comosus, Dole Pineapple Plantation, Oahu, Hawaii",
+        "author": "Diego Delso",
+        "license": "CC BY-SA 3.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Ananas_comosus,_Dole_Pineapple_Plantation,_Oahu,_Hawaii,_USA2.jpg"
+      },
+      {
+        "file": "healthy_2.jpg",
+        "title": "Healthy pineapple fruits with crowns (Philippines, dataset image 01400)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "healthy_3.jpg",
+        "title": "Developing pineapple fruit, Tagum City, Davao del Norte",
+        "author": "Casey Clark G. Sumalinog (iNaturalist)",
+        "license": "CC BY 4.0",
+        "url": "https://www.inaturalist.org/observations/210788484"
+      },
+      {
+        "file": "healthy_4.jpg",
+        "title": "Healthy pineapple fruit in the field (Philippines, dataset image 00571)",
+        "author": "ece-4-workspace/pinyasuri-ai-2, Roboflow Universe",
+        "license": "CC BY 4.0",
+        "url": "https://universe.roboflow.com/ece-4-workspace/pinyasuri-ai-2"
+      },
+      {
+        "file": "healthy_5.jpg",
+        "title": "Young flowering pineapple fruit, Tagum City, Davao del Norte",
+        "author": "Casey Clark G. Sumalinog (iNaturalist)",
+        "license": "CC BY 4.0",
+        "url": "https://www.inaturalist.org/observations/209348904"
+      }
+    ],
+    "scientific_name": "Ananas comosus",
+    "severity": "None",
+    "pathogen_type": "No pathogen detected",
+    "description": "No disease symptoms were found on this fruit. No treatment is needed. Keep checking your plants about every two weeks, including the leaves and the base of the plant.",
+    "symptoms": [],
+    "look_alikes": [
+      "Early mealybug wilt shows on the leaves (reddening, curling tips) before the fruit looks wrong, so check the leaves and the base of the plant too.",
+      "Sunburn makes a pale or yellow patch on the side facing the sun. It is not a disease, but sunburnt fruit rots more easily."
+    ],
+    "checks": [
+      "Look at the whole plant, not just the fruit: the heart leaves, the leaf bases, and the base of the stem.",
+      "Pull one or two lower leaves apart and look for white, waxy mealybugs and ants.",
+      "Press gently around the crown and the base of the fruit. It should feel firm, not soft or wet, and should not smell sour.",
+      "Check the plants next to this one. Problems often start in a patch, not on a single plant.",
+      "If something looks wrong even though the scan says healthy, trust what you see and scan that part again."
+    ],
+    "scan_tips": [
+      "Scan in daylight or good light, without strong shadows or glare on the fruit.",
+      "Fill most of the frame with the fruit, including the crown, and hold the phone steady.",
+      "Wipe the camera lens if the picture looks blurry.",
+      "Scan from two or three sides. A problem on the back of the fruit will not show from the front.",
+      "If the app asks you to retake the photo, move closer or change the angle and try again.",
+      "Rescan the block every two weeks, and sooner after heavy rain or if plants start to look weak."
+    ],
+    "remediation_steps": [],
+    "preventive_measures": [],
+    "get_help": [],
+    "sources": [],
+    "reviewed": "2026-11-17"
   }
 }

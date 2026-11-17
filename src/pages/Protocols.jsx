@@ -1,49 +1,40 @@
 import { useEffect, useState } from "react"
-import { PlusIcon } from "lucide-react"
+import { useNavigate, useSearchParams } from "react-router-dom"
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { getProtocols, createProtocol, updateProtocol, deleteProtocol } from "../api/protocols"
 import { useToast } from "../components/toastcontext"
-import Modal from "../components/Modal"
+import BackButton from "../components/BackButton"
 import ConfirmModal from "../components/ConfirmModal"
-import DiseaseBadge from "../components/DiseaseBadge"
 import ErrorAlert from "../components/ErrorAlert"
-import PageHeader from "../components/PageHeader"
+import GuideEditForm from "../components/GuideEditForm"
+import GuideTile from "../components/GuideTile"
 import LoadingBlocks from "../components/LoadingBlocks"
-import SelectField, { toOptions } from "../components/SelectField"
-import { DISEASES, getDisease } from "../utils/diseases"
-import { formatDate } from "../utils/format"
+import PageHeader from "../components/PageHeader"
+import ProtocolCard from "../components/ProtocolCard"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-const TYPES = ["Disease", "Disorder", "Healthy"]
-const SEVERITIES = ["None", "Low", "Medium", "High"]
-const diseaseOptions = DISEASES.map((d) => ({ value: d.label, label: d.name }))
-
-const emptyForm = {
-  label: "Crown_Rot",
-  display_name: "",
-  type: "Disease",
-  severity: "Medium",
-  symptoms: "",
-  immediate_action: "",
-  about: "",
-  prevention: "",
+// The guides API is still a mock, so say where the changes go
+function MockNote() {
+  return (
+    <p className="mt-3 text-xs text-muted-foreground">
+      Changes last until the page is refreshed. Saving to the database is not set up yet.
+    </p>
+  )
 }
 
+// The staff Guide page: the same compact list and full guide as the farmer Guides page
+// (?guide=<id> opens one), plus adding, editing and deleting guides.
 function Protocols() {
   const [protocols, setProtocols] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [reloadCount, setReloadCount] = useState(0)
 
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState(emptyForm)
-  const [saving, setSaving] = useState(false)
+  // editor = null when closed, { protocol } when open (protocol null = a new guide)
+  const [editor, setEditor] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const notify = useToast()
 
   useEffect(() => {
@@ -68,49 +59,22 @@ function Protocols() {
     }
   }, [reloadCount])
 
-  const reload = () => setReloadCount(reloadCount + 1)
+  const reload = () => setReloadCount((n) => n + 1)
 
-  const openAdd = () => {
-    setEditingId(null)
-    setForm(emptyForm)
-    setShowForm(true)
-  }
-
-  const openEdit = (protocol) => {
-    setEditingId(protocol.protocol_id)
-    setForm({
-      label: protocol.label,
-      display_name: protocol.display_name,
-      type: protocol.type,
-      severity: protocol.severity,
-      symptoms: protocol.symptoms,
-      immediate_action: protocol.immediate_action,
-      about: protocol.about || "",
-      prevention: protocol.prevention,
-    })
-    setShowForm(true)
-  }
-
-  const handleChange = (name, value) => setForm({ ...form, [name]: value })
-
-  const handleSave = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      if (editingId) {
-        await updateProtocol(editingId, form)
-        notify("Guide updated. Phones will download it on their next sync.")
-      } else {
-        await createProtocol(form)
-        notify("Guide added.")
-      }
-      setShowForm(false)
+  // errors are thrown back to the form, which shows them and stays open
+  const handleSave = async (fields) => {
+    const editing = editor.protocol
+    if (editing) {
+      await updateProtocol(editing.protocol_id, fields)
+      notify("Guide updated.")
+      setEditor(null)
       reload()
-    } catch (err) {
-      console.error(err)
-      notify("Could not save the guide.", "error")
-    } finally {
-      setSaving(false)
+    } else {
+      const created = await createProtocol(fields)
+      notify("Guide added.")
+      setEditor(null)
+      reload()
+      navigate("?guide=" + created.protocol_id)
     }
   }
 
@@ -120,6 +84,7 @@ function Protocols() {
     try {
       await deleteProtocol(target.protocol_id)
       notify("Guide deleted.")
+      navigate("/protocols")
       reload()
     } catch (err) {
       console.error(err)
@@ -127,143 +92,20 @@ function Protocols() {
     }
   }
 
-  const header = (
-    <PageHeader
-      title="Guide"
-      description="Remediation guides for each class. Phones download changes on their next sync."
-      action={
-        <Button onClick={openAdd}>
-          <PlusIcon />
-          Add guide
-        </Button>
-      }
-    />
-  )
+  const guideId = searchParams.get("guide")
+  const selected = guideId ? protocols.find((p) => String(p.protocol_id) === guideId) : null
 
-  if (loading) {
-    return (
-      <div>
-        {header}
-        <LoadingBlocks rows={6} height="h-10" label="Loading guides" />
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      {header}
-
-      {error && <ErrorAlert>{error}</ErrorAlert>}
-
-      <Card className="py-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Class</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Severity</TableHead>
-              <TableHead>Version</TableHead>
-              <TableHead>Last updated</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {protocols.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                  No guides yet. Click "Add guide" to create the first remediation guide.
-                </TableCell>
-              </TableRow>
-            )}
-            {protocols.map((p) => (
-              <TableRow key={p.protocol_id}>
-                <TableCell>
-                  <DiseaseBadge label={p.label} />
-                </TableCell>
-                <TableCell>{p.type}</TableCell>
-                <TableCell>{p.severity}</TableCell>
-                <TableCell className="tabular-nums">v{p.version}</TableCell>
-                <TableCell>{formatDate(p.updated_at)}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setDeleteTarget(p)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-
-      <Modal open={showForm} title={editingId ? "Edit guide" : "Add guide"} onClose={() => setShowForm(false)}>
-        <form onSubmit={handleSave}>
-          <div className="mb-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <Label className="mb-1.5">Class</Label>
-              <SelectField
-                value={form.label}
-                disabled={editingId !== null}
-                onChange={(v) => handleChange("label", v)}
-                options={diseaseOptions}
-              />
-            </div>
-            <div>
-              <Label className="mb-1.5">Display name</Label>
-              <Input
-                value={form.display_name}
-                placeholder={getDisease(form.label).name}
-                onChange={(e) => handleChange("display_name", e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label className="mb-1.5">Type</Label>
-              <SelectField value={form.type} onChange={(v) => handleChange("type", v)} options={toOptions(TYPES)} />
-            </div>
-            <div>
-              <Label className="mb-1.5">Severity</Label>
-              <SelectField value={form.severity} onChange={(v) => handleChange("severity", v)} options={toOptions(SEVERITIES)} />
-            </div>
-          </div>
-
-          {[
-            ["about", "About"],
-            ["symptoms", "Symptoms"],
-            ["immediate_action", "Immediate action (one step per line)"],
-            ["prevention", "Prevention"],
-          ].map(([name, title]) => (
-            <div className="mb-4" key={name}>
-              <Label className="mb-1.5">{title}</Label>
-              <Textarea
-                rows={name === "immediate_action" ? 5 : 3}
-                value={form[name]}
-                onChange={(e) => handleChange(name, e.target.value)}
-                required
-              />
-            </div>
-          ))}
-
-          <div className="flex justify-end gap-2 border-t pt-4">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
+  const dialogs = (
+    <>
+      {editor && (
+        <GuideEditForm
+          key={editor.protocol ? editor.protocol.protocol_id : "new"}
+          open
+          protocol={editor.protocol}
+          onSave={handleSave}
+          onClose={() => setEditor(null)}
+        />
+      )}
       <ConfirmModal
         open={deleteTarget !== null}
         title="Delete guide?"
@@ -271,6 +113,69 @@ function Protocols() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+    </>
+  )
+
+  // one guide, the same full card farmers see, with edit and delete on top
+  if (selected) {
+    return (
+      <div className="w-full">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <BackButton to="/protocols">All guides</BackButton>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setDeleteTarget(selected)}
+            >
+              <Trash2Icon />
+              Delete
+            </Button>
+            <Button size="sm" onClick={() => setEditor({ protocol: selected })}>
+              <PencilIcon />
+              Edit guide
+            </Button>
+          </div>
+        </div>
+        <ProtocolCard protocol={selected} wide />
+        <MockNote />
+        {dialogs}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Guide"
+        description="Click a condition to see its guide and edit it."
+        action={
+          <Button onClick={() => setEditor({ protocol: null })}>
+            <PlusIcon />
+            Add guide
+          </Button>
+        }
+      />
+
+      {loading ? (
+        <LoadingBlocks rows={4} height="h-24" label="Loading guides" />
+      ) : error ? (
+        <ErrorAlert>{error}</ErrorAlert>
+      ) : protocols.length === 0 ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">
+          No guides yet. Click "Add guide" to create the first remediation guide.
+        </p>
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {protocols.map((p) => (
+            <GuideTile key={p.protocol_id} protocol={p} />
+          ))}
+        </div>
+      )}
+
+      <MockNote />
+      {dialogs}
     </div>
   )
 }

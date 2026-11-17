@@ -6,6 +6,8 @@ import { useToast } from "../components/toastcontext"
 import ErrorAlert from "../components/ErrorAlert"
 import AuthSplitLayout from "../components/AuthSplitLayout"
 import FloatingInput from "../components/FloatingInput"
+import PasswordChecklist from "../components/PasswordChecklist"
+import { passwordProblem } from "../utils/passwordRules"
 import { LOCKED_MUNICIPALITY } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
 
@@ -38,6 +40,11 @@ function Register() {
   const handleRegister = async (e) => {
     e.preventDefault()
     setErrorMessage("")
+    const problem = passwordProblem(password)
+    if (problem) {
+      setErrorMessage(problem)
+      return
+    }
     if (password !== passwordConfirmation) {
       setErrorMessage("Passwords do not match.")
       return
@@ -128,6 +135,8 @@ function Register() {
             onChange={(e) => setPasswordConfirmation(e.target.value)}
             required
           />
+          {/* the rules, ticked off while typing; shows once the password box has something in it */}
+          <PasswordChecklist password={password} confirm={passwordConfirmation} className="px-1" />
         </FormSection>
 
         <div className="space-y-4">

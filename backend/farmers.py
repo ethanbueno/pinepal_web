@@ -27,13 +27,12 @@ from flask_jwt_extended import decode_token, get_jwt_identity, jwt_required
 from database import get_connection
 from echague_area import in_echague
 from permissions import farmer_scope, role_required, staff_required
-from security import set_password
+from security import password_problem, set_password
 
 farmers = Blueprint("farmers", __name__)
 
 LABELS = ["No_Disease", "Crown_Rot", "Mealybug_Wilt", "Fruit_Rot", "Multiple_Crown", "Fruit_Fasciation"]
 USERNAME = re.compile(r"[A-Za-z0-9_.-]{3,50}")
-MIN_PASSWORD = 6
 
 
 SELECT = """
@@ -283,8 +282,8 @@ def create_farmer():
     password = data.get("password") or ""
     if not USERNAME.fullmatch(username):
         return error("Username must be 3 to 50 letters, numbers, dots, dashes or underscores", 400)
-    if len(password) < MIN_PASSWORD:
-        return error(f"Password must be at least {MIN_PASSWORD} characters", 400)
+    if password_problem(password):
+        return error(password_problem(password), 400)
 
     connection = get_connection()
     cursor = connection.cursor()
@@ -328,8 +327,8 @@ def update_farmer(farmer_id):
         return error(problem, 400)
 
     password = data.get("password") or ""
-    if password and len(password) < MIN_PASSWORD:
-        return error(f"Password must be at least {MIN_PASSWORD} characters", 400)
+    if password and password_problem(password):
+        return error(password_problem(password), 400)
     username = (data.get("username") or "").strip()
 
     connection = get_connection()
@@ -407,8 +406,8 @@ def sync_farmer(farmer_id):
             return error("Full name is required", 400)
         if not USERNAME.fullmatch(username):
             return error("Username must be 3 to 50 letters, numbers, dots, dashes or underscores", 400)
-        if len(password) < MIN_PASSWORD:
-            return error(f"Password must be at least {MIN_PASSWORD} characters", 400)
+        if password_problem(password):
+            return error(password_problem(password), 400)
 
     connection = get_connection()
     cursor = connection.cursor()

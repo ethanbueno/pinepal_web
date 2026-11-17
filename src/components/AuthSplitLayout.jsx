@@ -1,13 +1,15 @@
 import { SmartphoneIcon } from "lucide-react"
 import logo from "../assets/pinepal-logo.png"
 import ThemeToggle from "./ThemeToggle"
+import AuthPhotoSlideshow from "./AuthPhotoSlideshow"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-// Photo for the right-hand panel on laptops. Drop a pineapple farm photo in src/assets
-// and point this at it (import it, then set AUTH_PHOTO = thatImport). While it is null
-// the panel shows an amber-tinted placeholder with the logo.
-const AUTH_PHOTO = null
+// Eased left-edge fade for the photo half (smoothstep-like stops, so there's no visible band)
+const PHOTO_FADE =
+  "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.03) 2.5%, rgba(0,0,0,0.12) 5%, " +
+  "rgba(0,0,0,0.27) 7.5%, rgba(0,0,0,0.45) 10%, rgba(0,0,0,0.63) 12.5%, rgba(0,0,0,0.79) 15%, " +
+  "rgba(0,0,0,0.91) 17.5%, rgba(0,0,0,0.98) 20%, #000 22%)"
 
 // TODO: point this at the APK or Play Store listing once the app is published.
 const APP_DOWNLOAD_URL = "#"
@@ -21,10 +23,12 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, childr
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-2 lg:gap-6 lg:p-6">
       <div className="flex min-h-screen flex-col px-4 pt-4 pb-8 sm:px-8 lg:min-h-0 lg:px-6 lg:py-0">
-        <header className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <img src={logo} alt="" className="size-10" />
-            <span className="text-lg font-semibold">PinePal</span>
+        {/* Header is pinned at h-10; the bigger logo overflows it (-my-2) and translate-y nudges it
+            down visually, so nothing below moves */}
+        <header className="flex h-10 translate-y-3 items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="" className="-my-2 size-14" />
+            <span className="text-2xl font-semibold tracking-tight">PinePal</span>
           </div>
           <div className="flex items-center gap-2">
             {headerAction}
@@ -79,16 +83,19 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, childr
         </main>
       </div>
 
-      {/* Laptops only: tall photo panel that stays in view while the form column scrolls */}
-      <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] overflow-hidden rounded-3xl border lg:block">
-        {AUTH_PHOTO ? (
-          <img src={AUTH_PHOTO} alt="Pineapple farm" className="size-full object-cover" />
-        ) : (
-          <div className="flex size-full items-center justify-center bg-linear-to-br from-primary/35 via-primary/10 to-muted">
-            <img src={logo} alt="" className="size-40 opacity-90 drop-shadow-sm" />
-          </div>
-        )}
+      {/* Laptops only: the photos fill the whole right half, edge to edge, and fade into the page
+          toward the middle. Negative margins cancel the page padding so nothing on the left moves. */}
+      <aside
+        className="sticky top-0 hidden h-screen overflow-hidden lg:-my-6 lg:-mr-6 lg:-ml-3 lg:block"
+        style={{ maskImage: PHOTO_FADE, WebkitMaskImage: PHOTO_FADE }}
+      >
+        <AuthPhotoSlideshow />
       </aside>
+      {/* Soft amber glow where the photo meets the page, so the seam feels warm instead of washed out */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-y-0 left-1/2 hidden w-72 -translate-x-1/3 bg-linear-to-r from-transparent via-[#f0b323]/15 to-transparent blur-2xl lg:block"
+      />
     </div>
   )
 }

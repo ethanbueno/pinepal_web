@@ -183,3 +183,19 @@
     animation: login-scan 2.8s ease-in-out infinite;
   }
 }
+
+/* Slow push-in on the login/register farm photos (AuthPhotoSlideshow) */
+@keyframes auth-photo-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+.auth-photo-zoom {
+  animation: auth-photo-zoom 9s ease-out forwards;
+}
+
+/* Quick crossfade when switching light/dark (useTheme uses the View Transitions API) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}

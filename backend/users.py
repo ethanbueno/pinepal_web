@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from security import set_password
+from security import password_problem, set_password
 
 from database import get_connection
 from permissions import admin_required
@@ -47,6 +47,8 @@ def read_form(data, creating):
         return None, "Full name, username and password are required" if creating else "Full name and username are required"
     if role not in ROLES:
         return None, "Invalid role"
+    if password and password_problem(password):
+        return None, password_problem(password)
     return {"full_name": full_name, "username": username, "role": role, "password": password}, None
 
 

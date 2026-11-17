@@ -15,8 +15,10 @@ import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
 import ErrorAlert from "../components/ErrorAlert"
 import PasswordInput from "../components/PasswordInput"
+import PasswordChecklist from "../components/PasswordChecklist"
 import Modal from "../components/Modal"
 import { getRoleLabel } from "../utils/roles"
+import { passwordProblem } from "../utils/passwordRules"
 import { formatDate } from "../utils/format"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,7 +26,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const MIN_PASSWORD = 6 // same as MIN_PASSWORD in backend/farmers.py
 const ECHAGUE_ONLY = "Echague only for now"
 
 // The cover: pineapple-leaf greens, drawn with gradients so there is no image to load
@@ -183,8 +184,8 @@ function Profile() {
       return
     }
     if (field === "new_password") {
-      if (text.length < MIN_PASSWORD) {
-        setFormError(`The new password must be at least ${MIN_PASSWORD} characters.`)
+      if (passwordProblem(text)) {
+        setFormError(passwordProblem(text))
         return
       }
       if (text !== confirm) {
@@ -355,7 +356,7 @@ function Profile() {
                   <form onSubmit={handleSave} className="mt-3 flex flex-col gap-3">
                     {item.key === "new_password" ? (
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <Field id="edit-value" label="New password" hint={`At least ${MIN_PASSWORD} characters.`}>
+                        <Field id="edit-value" label="New password">
                           <PasswordInput
                             id="edit-value"
                             autoComplete="new-password"
@@ -374,6 +375,7 @@ function Profile() {
                             required
                           />
                         </Field>
+                        <PasswordChecklist password={value} confirm={confirm} className="sm:col-span-2" />
                       </div>
                     ) : (
                       <Field id="edit-value" label={`New ${item.label.toLowerCase()}`}>

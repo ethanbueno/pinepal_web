@@ -17,9 +17,9 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
 from database import get_connection
-from farmers import MIN_PASSWORD, SELECT, USERNAME, serialize as farm_json
+from farmers import SELECT, USERNAME, serialize as farm_json
 from permissions import role_required
-from security import set_password, stored_password_hash, verify_password
+from security import password_problem, set_password, stored_password_hash, verify_password
 from web_auth import EMAIL_PATTERN
 
 profile = Blueprint("profile", __name__)
@@ -100,8 +100,8 @@ def update_profile():
 
     new_password = data.get("new_password") or ""
     if new_password:
-        if len(new_password) < MIN_PASSWORD:
-            return error(f"The new password must be at least {MIN_PASSWORD} characters")
+        if password_problem(new_password):
+            return error(password_problem(new_password))
 
     if "farm_name" in data:
         farm_name = (data.get("farm_name") or "").strip()
@@ -185,8 +185,8 @@ def change_password():
 
     if not current or not new:
         return error("Enter your current password and a new one")
-    if len(new) < MIN_PASSWORD:
-        return error(f"The new password must be at least {MIN_PASSWORD} characters")
+    if password_problem(new):
+        return error(password_problem(new))
 
     connection = get_connection()
     cursor = connection.cursor()

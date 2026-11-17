@@ -1,3 +1,5 @@
+import re
+
 import bcrypt
 
 # Password hashes live in their own table, user_credentials, split off from users (vertical
@@ -8,6 +10,26 @@ import bcrypt
 LOGIN_SELECT = (
     "SELECT u.*, c.password_hash FROM users u LEFT JOIN user_credentials c ON c.user_id = u.id"
 )
+
+
+# Password rules, the same on the web and mobile sign-up forms. They only apply when a password
+# is set (sign up, add user or farmer, reset, change), so older passwords still sign in.
+MIN_PASSWORD = 8
+MAX_PASSWORD_BYTES = 72  # bcrypt can't hash more than 72 bytes
+SYMBOL = re.compile(r"[^A-Za-z0-9\s]")
+
+
+def password_problem(password):
+    """The first rule a new password breaks, as a message for the user, or None if it's fine."""
+    if len(password) < MIN_PASSWORD:
+        return f"Password must be at least {MIN_PASSWORD} characters"
+    if len(password.encode()) > MAX_PASSWORD_BYTES:
+        return "Password is too long (72 characters at most)"
+    if not re.search(r"[A-Z]", password):
+        return "Password needs at least 1 uppercase letter"
+    if not SYMBOL.search(password):
+        return "Password needs at least 1 special symbol, like ! @ # or $"
+    return None
 
 
 def hash_password(password):

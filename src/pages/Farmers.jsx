@@ -11,6 +11,8 @@ import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
 import EmptyState from "../components/EmptyState"
 import PasswordInput from "../components/PasswordInput"
+import PasswordChecklist from "../components/PasswordChecklist"
+import { passwordProblem } from "../utils/passwordRules"
 import SelectField, { toOptions } from "../components/SelectField"
 import { MUNICIPALITIES, LOCKED_MUNICIPALITY, MAP_CENTER } from "../utils/diseases"
 import { OUTSIDE_TOWN, insideLockedTown } from "../utils/mapArea"
@@ -114,6 +116,11 @@ function Farmers({ embedded = false }) {
       notify(OUTSIDE_TOWN, "error")
       return
     }
+    // a new password has to follow the rules (the server checks it too)
+    if (form.password && passwordProblem(form.password)) {
+      notify(passwordProblem(form.password), "error")
+      return
+    }
     setSaving(true)
     try {
       if (editingId) {
@@ -148,6 +155,10 @@ function Farmers({ embedded = false }) {
 
   const handleSync = async (e) => {
     e.preventDefault()
+    if (syncMode !== "existing" && passwordProblem(syncForm.password)) {
+      notify(passwordProblem(syncForm.password), "error")
+      return
+    }
     setSyncing(true)
     try {
       const data =
@@ -342,6 +353,7 @@ function Farmers({ embedded = false }) {
                 onChange={(e) => handleChange("password", e.target.value)}
                 required={!editingId}
               />
+              <PasswordChecklist password={form.password} className="mt-2" />
             </div>
           </div>
 
@@ -449,9 +461,9 @@ function Farmers({ embedded = false }) {
                     <PasswordInput
                       value={syncForm.password}
                       onChange={(e) => setSyncForm({ ...syncForm, password: e.target.value })}
-                      minLength={6}
                       required
                     />
+                    <PasswordChecklist password={syncForm.password} className="mt-2" />
                   </div>
                 </div>
                 <p className="text-sm mb-4">

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 
-from security import LOGIN_SELECT, set_password, verify_password
+from security import LOGIN_SELECT, password_problem, set_password, verify_password
 
 from database import get_connection
 auth = Blueprint("auth", __name__)
@@ -19,6 +19,9 @@ def register():
         return jsonify({
             "message": "All fields are required"
         }), 400
+
+    if password_problem(password):
+        return jsonify({"message": password_problem(password)}), 400
 
     connection = get_connection()
     cursor = connection.cursor()

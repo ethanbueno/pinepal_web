@@ -10,6 +10,8 @@ import ErrorAlert from "../components/ErrorAlert"
 import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
 import PasswordInput from "../components/PasswordInput"
+import PasswordChecklist from "../components/PasswordChecklist"
+import { passwordProblem } from "../utils/passwordRules"
 import SelectField, { toOptions } from "../components/SelectField"
 import { ROLES, getRoleLabel } from "../utils/roles"
 import { LOCKED_MUNICIPALITY } from "../utils/diseases"
@@ -98,6 +100,11 @@ function Users() {
   const handleSave = async (e) => {
     e.preventDefault()
     setFormError("")
+    // a new password (required when adding, optional when editing) has to follow the rules
+    if (form.password && passwordProblem(form.password)) {
+      setFormError(passwordProblem(form.password))
+      return
+    }
     setSaving(true)
     try {
       if (editingId) {
@@ -258,6 +265,7 @@ function Users() {
                 onChange={(e) => handleChange("password", e.target.value)}
                 required={!editingId}
               />
+              <PasswordChecklist password={form.password} className="mt-2" />
             </div>
           </div>
 
