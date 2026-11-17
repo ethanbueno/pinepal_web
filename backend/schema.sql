@@ -26,6 +26,23 @@ CREATE TABLE IF NOT EXISTS user_credentials (
   CONSTRAINT chk_credentials_bcrypt CHECK (password_hash LIKE '$2_$%')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Forgot password: one row per emailed 6-digit code (password_reset.py). Only a bcrypt hash
+-- of the code is kept. A code is done once used_at is set.
+CREATE TABLE IF NOT EXISTS password_resets (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  user_id int(11) NOT NULL,
+  code_hash varchar(255) NOT NULL,
+  attempts tinyint NOT NULL DEFAULT 0,
+  expires_at datetime NOT NULL,
+  used_at datetime DEFAULT NULL,
+  created_at datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id),
+  KEY idx_password_resets_user (user_id, created_at),
+  CONSTRAINT fk_password_resets_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT chk_password_resets_bcrypt CHECK (code_hash LIKE '$2_$%'),
+  CONSTRAINT chk_password_resets_attempts CHECK (attempts BETWEEN 0 AND 10)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE IF NOT EXISTS diseases (
   id int(11) NOT NULL AUTO_INCREMENT,
   name varchar(150) NOT NULL,

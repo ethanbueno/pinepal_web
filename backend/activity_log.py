@@ -48,6 +48,8 @@ DESCRIPTIONS = {
     "web_auth.login": "Signed in on the web",
     "web_auth.logout": "Signed out",
     "web_auth.register": "Registered an account",
+    "password_reset.forgot_password": "Asked for a password reset code",
+    "password_reset.reset_password": "Reset their password with an emailed code",
     "auth.login": "Signed in (old endpoint)",
     "auth.register": "Registered an account (old endpoint)",
     "users.get_all_users": "Viewed the user list",

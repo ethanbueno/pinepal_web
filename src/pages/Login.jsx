@@ -66,6 +66,11 @@ function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <div className="-mt-1 text-right">
+          <Link to="/forgot-password" className="text-sm text-primary-text underline underline-offset-4">
+            Forgot password?
+          </Link>
+        </div>
         {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
         <Button type="submit" disabled={loading} className="h-10 w-full rounded-[10px] text-[15px] font-medium">
           {loading ? "Signing in..." : "Log in"}
