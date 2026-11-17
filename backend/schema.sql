@@ -35,34 +35,6 @@ CREATE TABLE IF NOT EXISTS diseases (
   UNIQUE KEY name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS scans (
-  id int(11) NOT NULL AUTO_INCREMENT,
-  user_id int(11) NOT NULL,
-  image_url varchar(255) NOT NULL,
-  cultivar varchar(100) DEFAULT NULL,
-  lot_reference varchar(100) DEFAULT NULL,
-  predicted_class varchar(150) NOT NULL,
-  confidence decimal(5,2) DEFAULT NULL,
-  timestamp timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (id),
-  KEY fk_scans_user (user_id),
-  CONSTRAINT fk_scans_user FOREIGN KEY (user_id) REFERENCES users (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE IF NOT EXISTS admin_reviews (
-  review_id int(11) NOT NULL AUTO_INCREMENT,
-  scan_id int(11) NOT NULL,
-  verified_correct tinyint(1) DEFAULT NULL,
-  corrected_label varchar(150) DEFAULT NULL,
-  reviewer_id int(11) NOT NULL,
-  reviewed_at timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (review_id),
-  KEY fk_review_scan (scan_id),
-  KEY fk_review_admin (reviewer_id),
-  CONSTRAINT fk_review_admin FOREIGN KEY (reviewer_id) REFERENCES users (id),
-  CONSTRAINT fk_review_scan FOREIGN KEY (scan_id) REFERENCES scans (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- One row per farmer. user_id is the farmer's login (one row per farmer account), empty for
 -- farmers from the scan data who have no login yet. The farm details start blank at sign up.
 -- Farmers are deactivated (is_active = 0), never deleted, so their scans stay.

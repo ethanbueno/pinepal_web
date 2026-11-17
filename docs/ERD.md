@@ -1,6 +1,6 @@
 # PinePal database: entity relationship diagram
 
-The MySQL database `pinepal_db` (Aiven, MySQL 8.4), as it is live on 2026-11-17.
+The MySQL database `pinepal_db` (Aiven, MySQL 8.4), as it is live on 2026-11-17 (8 tables).
 GitHub draws the diagram below. To open it elsewhere, paste the `mermaid` block into
 [mermaid.live](https://mermaid.live), or reverse-engineer the live database in MySQL Workbench
 (Database > Reverse Engineer).
@@ -16,9 +16,6 @@ erDiagram
     users |o--o{ mobile_scans : "saved by staff (SET NULL)"
     users |o--o{ login_history : "signs in (SET NULL)"
     users |o..o{ audit_logs : "acts (logical, no FK)"
-    users ||--o{ scans : "legacy"
-    scans ||--o{ admin_reviews : "legacy"
-    users ||--o{ admin_reviews : "legacy reviewer"
 
     users {
         int id PK
@@ -113,24 +110,6 @@ erDiagram
         text symptoms
         text treatment_guide
     }
-    scans {
-        int id PK
-        int user_id FK
-        varchar image_url
-        varchar cultivar
-        varchar lot_reference
-        varchar predicted_class
-        decimal confidence
-        timestamp timestamp
-    }
-    admin_reviews {
-        int review_id PK
-        int scan_id FK
-        int reviewer_id FK
-        tinyint verified_correct
-        varchar corrected_label
-        timestamp reviewed_at
-    }
 ```
 
 ## Relationships
@@ -143,7 +122,6 @@ erDiagram
 | `mobile_scans.saved_by` | `users.id` | 1 : many | SET NULL | Which staff account saved a web scan. |
 | `login_history.user_id` | `users.id` | 1 : many | SET NULL | Sign-in history survives account deletion. |
 | `audit_logs.actor_id` | `users.id` | 1 : many | none (logical) | Partitioned tables can't have foreign keys; the log must also outlive deleted accounts. |
-| `scans`, `admin_reviews` | `users`, `scans` | 1 : many | NO ACTION | Legacy tables from the first version; not used by the current app. |
 
 `diseases` and `scan_daily_stats` stand alone. Scan labels are limited to the six model labels
 by CHECK constraints rather than a foreign key, and `scan_daily_stats` is a summary of
@@ -161,7 +139,8 @@ The design is in third normal form apart from these deliberate copies:
 - `scan_daily_stats` is a derived summary table, maintained only by triggers, so dashboard totals
   don't count every scan.
 
-Not shown: `mobile_scans_deleted_outside_echague` and `mobile_scans_municipality_backup`, one-off
-copies made before bulk data clean-ups. They have no keys to other tables and the app can't read them.
+The first version's `scans` and `admin_reviews` tables and two one-off copies made before data
+clean-ups were dropped on 2026-11-17 (`backend/migrate_drop_legacy.py`); their rows are kept in
+the backups made before that.
 
 Definitions: `backend/schema.sql` and the `backend/migrate_*.py` scripts.

@@ -192,13 +192,8 @@ def delete_user(id):
             "error": f"This farmer has {scan_count} scans. Deactivate them on the Farmers page instead."
         }), 409
 
-    # The schema has no ON DELETE CASCADE, so remove dependent rows first.
-    cursor.execute(
-        "DELETE FROM admin_reviews WHERE reviewer_id = %s OR scan_id IN "
-        "(SELECT id FROM scans WHERE user_id = %s)",
-        (id, id)
-    )
-    cursor.execute("DELETE FROM scans WHERE user_id = %s", (id,))
+    # user_credentials goes with it (ON DELETE CASCADE); the farmer row, login history and
+    # staff-saved scans keep their rows with the account cleared (ON DELETE SET NULL)
     cursor.execute("DELETE FROM users WHERE id = %s", (id,))
 
     connection.commit()

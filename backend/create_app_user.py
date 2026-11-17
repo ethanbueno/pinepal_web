@@ -3,8 +3,8 @@
 The API should not connect as the database's admin account (avnadmin on Aiven), which can
 drop tables, remove the audit triggers and create logins. This makes pinepal_app instead:
 
-  users, farmers, mobile_scans, login_history,     SELECT, INSERT, UPDATE, DELETE
-  scans, admin_reviews, diseases                   (read and write rows: DML only)
+  users, user_credentials, farmers, mobile_scans,  SELECT, INSERT, UPDATE, DELETE
+  login_history, diseases                          (read and write rows: DML only)
   audit_logs                                       SELECT, INSERT (add and read, never
                                                    change or delete)
 
@@ -35,8 +35,7 @@ load_dotenv(ENV_FILE, override=True)
 
 APP_USER = "pinepal_app"
 APP_TABLES = [
-    "users", "user_credentials", "farmers", "mobile_scans", "login_history",
-    "scans", "admin_reviews", "diseases",
+    "users", "user_credentials", "farmers", "mobile_scans", "login_history", "diseases",
 ]
 APPEND_ONLY_TABLES = ["audit_logs"]
 # kept up to date by triggers only (migrate_optimization.py); the app just reads them

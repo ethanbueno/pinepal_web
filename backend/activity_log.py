@@ -39,7 +39,6 @@ SKIPPED_ENDPOINTS = {
     "farmers.my_farmer",          # a farmer's own farm
     "mobile_scans.stats",         # dashboard totals, no names
     "mobile_scans.count_scans",   # a number, e.g. the Export page's row count
-    "scans.admin_stats",
     "scans.list_diseases",        # the disease guide
     "mobile_sync.my_scans",       # a phone loading its own scans
 }
