@@ -554,7 +554,7 @@ function AuditLogs() {
               setPage(1)
             }}
           >
-            Reset
+            Clear
           </Button>
         </CardContent>
       </Card>

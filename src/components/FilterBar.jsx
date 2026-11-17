@@ -125,7 +125,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
         )}
 
         <Button variant="outline" onClick={() => onChange(emptyFilters)}>
-          Reset
+          Clear
         </Button>
       </CardContent>
     </Card>

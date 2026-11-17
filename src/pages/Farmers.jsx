@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
 import { PlusIcon, UsersIcon } from "lucide-react"
 import { getFarmers, createFarmer, updateFarmer, setFarmerStatus, syncFarmer } from "../api/farmers"
+import { cachedGet } from "../api/cache"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
 import Modal from "../components/Modal"
@@ -63,13 +64,12 @@ function Farmers({ embedded = false }) {
   useEffect(() => {
     let ignore = false
 
-    getFarmers({ search, municipality })
-      .then((data) => {
-        if (ignore) return
-        setFarmers(data)
-        setError("")
-        setLoading(false)
-      })
+    cachedGet(["farmers", search, municipality], () => getFarmers({ search, municipality }), (data) => {
+      if (ignore) return
+      setFarmers(data)
+      setError("")
+      setLoading(false)
+    })
       .catch((err) => {
         if (ignore) return
         console.error(err)

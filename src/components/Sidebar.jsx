@@ -46,8 +46,8 @@ import { useTheme } from "../hooks/useTheme"
 const staffLinks = [
   { to: "/", label: "Dashboard", icon: LayoutDashboardIcon, end: true },
   { to: "/map", label: "Disease Map", icon: MapIcon },
-  { to: "/scans", label: "Scans", icon: ScanSearchIcon },
-  { to: "/diagnose", label: "Diagnose", icon: StethoscopeIcon },
+  { to: "/scans", label: "History", icon: ScanSearchIcon },
+  { to: "/diagnose", label: "Scan", icon: StethoscopeIcon },
   // admins manage farmers from the Farmers tab on the Users page instead
   { to: "/farmers", label: "Farmers", icon: UsersIcon, notForAdmin: true },
   { to: "/protocols", label: "Guide", icon: FileTextIcon },

@@ -60,7 +60,7 @@ function getBack(from, isFarmer) {
   if (from === "/") return { to: "/", label: "Back to dashboard" }
   if (from === "/map") return { to: "/map", label: "Back to map" }
   if (from?.startsWith("/farmers/")) return { to: from, label: "Back to farmer" }
-  return { to: "/scans", label: "Back to scans" }
+  return { to: "/scans", label: "Back to history" }
 }
 
 function ScanDetail() {

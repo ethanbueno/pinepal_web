@@ -403,8 +403,9 @@ function Diagnose() {
 
           <Label className="mb-1.5 text-muted-foreground">Location (click the map to move the pin)</Label>
           <div className="mb-3">
+            {/* tall enough to pan and zoom comfortably; scales with the window, 360-480px */}
             <MiniMap
-              height={220}
+              height="clamp(360px, 55vh, 480px)"
               center={location ? [location.lat, location.lng] : undefined}
               zoom={location ? 12 : undefined}
               onPick={(lat, lng) => {

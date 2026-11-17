@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { DownloadIcon } from "lucide-react"
 import { countScans, getScans } from "../api/scans"
+import { cachedGet } from "../api/cache"
 import { downloadExport } from "../api/exportData"
 import { useToast } from "../components/toastcontext"
 import ErrorAlert from "../components/ErrorAlert"
@@ -61,16 +62,16 @@ function ExportData() {
   useEffect(() => {
     let ignore = false
 
-    countScans({
+    const params = {
       disease: filters.disease,
       municipality: filters.municipality,
       from: filters.from,
       to: filters.to,
       verified: filters.verifiedOnly ? "yes" : "",
+    }
+    cachedGet(["scanCount", params], () => countScans(params), (total) => {
+      if (!ignore) setRowCount(total)
     })
-      .then((total) => {
-        if (!ignore) setRowCount(total)
-      })
       .catch((err) => console.error(err))
 
     return () => {
@@ -82,7 +83,7 @@ function ExportData() {
   useEffect(() => {
     let ignore = false
 
-    getScans({
+    const params = {
       disease: filters.disease,
       municipality: filters.municipality,
       from: filters.from,
@@ -90,13 +91,13 @@ function ExportData() {
       verified: filters.verifiedOnly ? "yes" : "",
       page,
       per_page: PER_PAGE,
+    }
+    cachedGet(["scans", params], () => getScans(params), (result) => {
+      if (ignore) return
+      setScans(result)
+      setScansError("")
+      setLoadingScans(false)
     })
-      .then((result) => {
-        if (ignore) return
-        setScans(result)
-        setScansError("")
-        setLoadingScans(false)
-      })
       .catch((err) => {
         if (ignore) return
         console.error(err)

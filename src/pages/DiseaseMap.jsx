@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet"
 import { getMapScans } from "../api/scans"
+import { cachedGet } from "../api/cache"
 import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES, getDisease } from "../utils/diseases"
 import { viewBounds, viewMaxBounds } from "../utils/mapArea"
 import IsabelaLayer from "../components/IsabelaLayer"
@@ -38,13 +39,13 @@ function DiseaseMap() {
   useEffect(() => {
     let ignore = false
 
-    getMapScans({ diseases: selected, municipality, ...range })
-      .then((data) => {
-        if (ignore) return
-        setScans(data)
-        setError("")
-        setLoading(false)
-      })
+    const params = { diseases: selected, municipality, ...range }
+    cachedGet(["mapScans", params], () => getMapScans(params), (data) => {
+      if (ignore) return
+      setScans(data)
+      setError("")
+      setLoading(false)
+    })
       .catch((err) => {
         if (ignore) return
         console.error(err)
@@ -74,8 +75,10 @@ function DiseaseMap() {
     () => scans.filter((s) => onlyHealthy || finalLabel(s) !== "No_Disease").map((s) => [s.latitude, s.longitude]),
     [scans, onlyHealthy],
   )
+  // the page fills the window: 100dvh minus the layout's top padding (20px / md 24px) and a bottom gap equal to
+  // the side padding (28px / md 40px), so the margins are even; the map keeps at least 420px on short screens
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 6rem)" }}>
+    <div className="flex h-[calc(100dvh-3rem)] flex-col md:h-[calc(100dvh-4rem)]">
       <PageHeader
         title="Disease Map"
         description={
@@ -149,7 +152,7 @@ function DiseaseMap() {
 
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <Card className="relative isolate z-0 grow min-h-80 py-0">
+      <Card className="relative isolate z-0 min-h-[420px] grow py-0">
         {loading && (
           <div
             aria-busy="true"

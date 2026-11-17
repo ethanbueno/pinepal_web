@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { loginRequest, logoutRequest } from "../api/auth";
+import { clearCache } from "../api/cache";
 
 const AuthContext = createContext(null);
 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     const data = await loginRequest(username, password);
+    clearCache(); // never show the previous account's cached pages
     localStorage.setItem("token", data.access_token);
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
@@ -49,6 +51,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     const token = localStorage.getItem("token");
     if (token) logoutRequest(token);
+    clearCache();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);

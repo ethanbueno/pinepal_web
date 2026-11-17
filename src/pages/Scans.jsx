@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { getScans } from "../api/scans"
+import { cachedGet } from "../api/cache"
 import FilterBar from "../components/FilterBar"
 import { emptyFilters } from "../utils/filters"
 import ScansTable from "../components/ScansTable"
@@ -23,13 +24,13 @@ function Scans() {
   useEffect(() => {
     let ignore = false
 
-    getScans({ ...filters, page, per_page: PER_PAGE })
-      .then((result) => {
-        if (ignore) return
-        setData(result)
-        setError("")
-        setLoading(false)
-      })
+    const params = { ...filters, page, per_page: PER_PAGE }
+    cachedGet(["scans", params], () => getScans(params), (result) => {
+      if (ignore) return
+      setData(result)
+      setError("")
+      setLoading(false)
+    })
       .catch((err) => {
         if (ignore) return
         console.error(err)
@@ -51,7 +52,7 @@ function Scans() {
   return (
     <div>
       <PageHeader
-        title="Scans"
+        title="History"
         description="Every scan synced from the mobile app or saved on the website. Click a row to open it."
       />
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { CheckIcon, SearchXIcon } from "lucide-react"
 import { getStats } from "../api/stats"
+import { cachedGet } from "../api/cache"
 import StatCard from "../components/StatCard"
 import DiseaseBadge from "../components/DiseaseBadge"
 import ErrorAlert from "../components/ErrorAlert"
@@ -163,13 +164,12 @@ function Dashboard() {
   useEffect(() => {
     let ignore = false
 
-    getStats(range)
-      .then((data) => {
-        if (ignore) return
-        setStats(data)
-        setError("")
-        setLoading(false)
-      })
+    cachedGet(["stats", range], () => getStats(range), (data) => {
+      if (ignore) return
+      setStats(data)
+      setError("")
+      setLoading(false)
+    })
       .catch((err) => {
         if (ignore) return
         console.error(err)
