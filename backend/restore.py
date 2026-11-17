@@ -12,6 +12,8 @@ Test restore (the default) never touches the real data. It:
      and shows the live database's counts next to them for reference,
   4. unpacks the photos into backups/restore_test_uploads/ and checks each one.
 This is the recovery drill: run it after making a backup to know the backup really works.
+An encrypted backup (encryption.py) is decrypted first, which needs the same
+DATA_ENCRYPTION_KEY that made it.
 
 --live replaces the real database (DB_NAME) and puts the photos back in uploads/. It asks
 you to type the database name first, and makes a safety backup of the current data before
@@ -32,6 +34,7 @@ import pymysql
 
 import backup
 from backup import BACKUP_DIR, UPLOAD_DIR, admin_connection, log_event
+from encryption import decrypt_bytes
 
 TEST_DATABASE = "pinepal_restore_test"
 TEST_UPLOADS = os.path.join(BACKUP_DIR, "restore_test_uploads")
@@ -45,11 +48,15 @@ def newest_backup():
 
 
 def read_backup(path):
-    """(manifest, database.sql text, {photo name: bytes}), after checking every checksum."""
+    """(manifest, database.sql text, {photo name: bytes}), after decrypting (encrypted backups)
+    and checking every checksum. Backups made before encryption are read as they are."""
     with zipfile.ZipFile(path) as archive:
         manifest = json.loads(archive.read("manifest.json"))
-        sql_bytes = archive.read("database.sql")
-        photos = {name: archive.read(f"uploads/{name}") for name in manifest["photos"]}
+        encrypted = manifest.get("encrypted", False)
+        suffix = ".enc" if encrypted else ""
+        unseal = decrypt_bytes if encrypted else (lambda data: data)
+        sql_bytes = unseal(archive.read("database.sql" + suffix))
+        photos = {name: unseal(archive.read(f"uploads/{name}{suffix}")) for name in manifest["photos"]}
 
     if hashlib.sha256(sql_bytes).hexdigest() != manifest["database_sql_sha256"]:
         raise SystemExit("database.sql does not match its checksum: this backup is damaged.")
@@ -104,7 +111,8 @@ def main():
 
     print(f"Backup: {os.path.basename(path)}")
     manifest, sql, photos = read_backup(path)
-    print(f"  made {manifest['created_at']} from {manifest['database']}, checksums OK "
+    print(f"  made {manifest['created_at']} from {manifest['database']}, "
+          f"{'decrypted, ' if manifest.get('encrypted') else ''}checksums OK "
           f"({len(manifest['tables'])} tables, {len(photos)} photos)")
 
     if args.live:

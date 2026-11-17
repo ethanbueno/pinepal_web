@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS login_history (
   success tinyint(1) NOT NULL,
   reason varchar(30) DEFAULT NULL,
   platform enum('web','mobile') NOT NULL,
-  ip_address varchar(45) DEFAULT NULL,
+  ip_address varchar(255) DEFAULT NULL,  -- encrypted (encryption.py)
   user_agent varchar(255) DEFAULT NULL,
   created_at datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),

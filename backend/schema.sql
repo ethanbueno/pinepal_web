@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS login_history (
   success tinyint(1) NOT NULL,
   reason varchar(30) DEFAULT NULL,
   platform enum('web','mobile') NOT NULL,
-  ip_address varchar(45) DEFAULT NULL,
+  ip_address varchar(255) DEFAULT NULL,  -- encrypted (encryption.py)
   user_agent varchar(255) DEFAULT NULL,
   created_at datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   record_id varchar(64) DEFAULT NULL,
   actor_id int(11) DEFAULT NULL,
   actor_label varchar(150) DEFAULT NULL,
-  ip_address varchar(45) DEFAULT NULL,
+  ip_address varchar(255) DEFAULT NULL,  -- encrypted (encryption.py)
   request_id char(32) DEFAULT NULL,
   summary varchar(255) DEFAULT NULL,
   path varchar(255) DEFAULT NULL,

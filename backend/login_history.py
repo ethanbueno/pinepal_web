@@ -8,13 +8,15 @@ record_logout(...)  called by POST /api/auth/logout. Sign-outs go straight into 
 A database trigger copies each new row into audit_logs (category 'login'), and admins see
 it on the Audit logs page (audit_logs.py, migrate_audit_logs.py).
 
-Passwords are never stored, only the username or email that was typed.
+Passwords are never stored, only the username or email that was typed. The IP address is
+stored encrypted (encryption.py).
 """
 import logging
 
 from flask import g, request
 
 from database import audit_context, get_connection
+from encryption import encrypt_text
 
 log = logging.getLogger(__name__)
 
@@ -25,9 +27,10 @@ DEACTIVATED = "deactivated"
 
 
 def client_ip():
-    """The visitor's address. Behind a proxy (a hosted server) it is in X-Forwarded-For."""
+    """The visitor's address, encrypted for storage (encryption.py). Behind a proxy (a hosted
+    server) it is in X-Forwarded-For."""
     forwarded = request.headers.get("X-Forwarded-For", "")
-    return (forwarded.split(",")[0].strip() or request.remote_addr or "")[:45]
+    return encrypt_text((forwarded.split(",")[0].strip() or request.remote_addr or "")[:45])
 
 
 def record_login(platform, username, user=None, success=False, reason=None):

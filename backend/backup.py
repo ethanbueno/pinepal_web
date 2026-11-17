@@ -12,6 +12,11 @@ The zip holds:
                   SHA-256 checksum of database.sql, so restore.py can tell if the file is
                   damaged and prove that nothing is missing.
 
+Encrypted: with DATA_ENCRYPTION_KEY in .env (encryption.py), database.sql and every photo are
+encrypted inside the zip (database.sql.enc, uploads/<photo>.enc), so a copied or lost backup
+can't be read without the key. Only manifest.json (counts, names, checksums) stays readable.
+Keep the key somewhere apart from the backups, such as a password manager.
+
 It uses the admin login (DB_ADMIN_USER), because only that one can read the table and
 trigger definitions. Each backup is also recorded in the audit logs.
 
@@ -28,6 +33,7 @@ from datetime import datetime, timezone
 import pymysql
 
 from database import connect
+from encryption import cipher, encrypt_bytes
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKUP_DIR = os.path.join(HERE, "backups")
@@ -158,24 +164,33 @@ def main():
         "triggers": trigger_count,
         "database_sql_sha256": sha256(sql_bytes),
         "photos": {name: sha256(data) for name, data in photos},
+        # the checksums are of the readable files; restore.py checks them after decrypting
+        "encrypted": cipher() is not None,
     }
+    encrypted = manifest["encrypted"]
+    if not encrypted:
+        print("WARNING: DATA_ENCRYPTION_KEY is not set, so this backup is NOT encrypted.")
+    suffix = ".enc" if encrypted else ""
+    seal = encrypt_bytes if encrypted else (lambda data: data)
 
     os.makedirs(args.out, exist_ok=True)
     path = os.path.join(args.out, f"pinepal_backup_{created:%Y-%m-%d_%H%M%S}.zip")
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("database.sql", sql_bytes)
+        archive.writestr("database.sql" + suffix, seal(sql_bytes))
         for name, data in photos:
-            archive.writestr(f"uploads/{name}", data)
+            archive.writestr(f"uploads/{name}{suffix}", seal(data))
         archive.writestr("manifest.json", json.dumps(manifest, indent=2))
 
     total_rows = sum(counts.values())
     size_kb = os.path.getsize(path) / 1024
     print(f"Saved {path}")
-    print(f"  {len(counts)} tables, {total_rows} rows, {trigger_count} triggers, {len(photos)} photos, {size_kb:.0f} KB")
+    print(f"  {len(counts)} tables, {total_rows} rows, {trigger_count} triggers, {len(photos)} photos, {size_kb:.0f} KB"
+          + (", encrypted" if encrypted else ", NOT encrypted"))
     for table, n in counts.items():
         print(f"  {table:40} {n:>6} rows")
     print("Copy it somewhere off this laptop too (Google Drive, a USB stick).")
-    log_event("BACKUP", f"Backed up the database and {len(photos)} photos ({os.path.basename(path)})")
+    log_event("BACKUP", f"Backed up the database and {len(photos)} photos"
+              f"{', encrypted' if encrypted else ''} ({os.path.basename(path)})")
 
 
 if __name__ == "__main__":

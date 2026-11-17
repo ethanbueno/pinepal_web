@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   record_id varchar(64) DEFAULT NULL,
   actor_id int(11) DEFAULT NULL,
   actor_label varchar(150) DEFAULT NULL,
-  ip_address varchar(45) DEFAULT NULL,
+  ip_address varchar(255) DEFAULT NULL,  -- encrypted (encryption.py)
   request_id char(32) DEFAULT NULL,
   -- activity: what was done, in words. login: the username or email that was typed
   summary varchar(255) DEFAULT NULL,

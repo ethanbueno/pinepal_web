@@ -23,6 +23,12 @@ This saves `backups/pinepal_backup_YYYY-MM-DD_HHMMSS.zip`. It contains:
 - every scan photo
 - a manifest with row counts and SHA-256 checksums
 
+The database dump and the photos are **encrypted** inside the zip (Fernet: AES-128 plus an
+HMAC-SHA256 signature) with `DATA_ENCRYPTION_KEY` from `.env`, so a lost or copied backup can't
+be read. `restore.py` decrypts them with the same key. Keep a copy of the key apart from the
+backups (a password manager): **a backup can't be restored without it**. If the key isn't set,
+`backup.py` warns and saves an unencrypted backup.
+
 Today a backup is under 1 MB and takes a few seconds. To save it straight to another drive, use `python backup.py --out E:\pinepal-backups`.
 
 ## When and where

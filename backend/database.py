@@ -2,7 +2,11 @@ import pymysql
 import os
 import threading
 import time
+from functools import lru_cache
+
 from dotenv import load_dotenv
+
+from encryption import encrypt_text
 
 # override=True: values in backend/.env win over any DB_* variables already set in Windows
 load_dotenv(override=True)
@@ -137,12 +141,19 @@ def audit_context():
             user_id = int(identity)
 
     forwarded = request.headers.get("X-Forwarded-For", "")
-    ip = (forwarded.split(",")[0].strip() or request.remote_addr or "")[:45] or None
+    ip = _encrypted_ip((forwarded.split(",")[0].strip() or request.remote_addr or "")[:45] or None)
 
     request_id = None if request.method == "GET" else g.get("request_id")
 
     g.audit_context = (user_id, label, ip, request_id)
     return g.audit_context
+
+
+@lru_cache(maxsize=1024)
+def _encrypted_ip(ip):
+    """The IP address as it is stored: encrypted (encryption.py). Kept per address, so a
+    pooled connection whose variables already hold this visitor's IP can skip setting them."""
+    return encrypt_text(ip)
 
 
 def _tag_for_audit(connection):

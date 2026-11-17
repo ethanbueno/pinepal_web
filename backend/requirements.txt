@@ -5,6 +5,7 @@ PyMySQL
 python-dotenv
 Werkzeug
 bcrypt
+cryptography
 
 numpy
 Pillow

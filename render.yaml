@@ -32,3 +32,6 @@ services:
       # Copy the one from backend/.env so existing logins keep working
       - key: JWT_SECRET_KEY
         sync: false
+      # Copy the one from backend/.env: it encrypts and decrypts the stored IP addresses
+      - key: DATA_ENCRYPTION_KEY
+        sync: false

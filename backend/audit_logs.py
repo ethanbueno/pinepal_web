@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 
 from database import get_connection
+from encryption import decrypt_text
 from permissions import admin_required
 
 audit_logs = Blueprint("audit_logs", __name__)
@@ -92,7 +93,7 @@ def to_item(r):
         "actor_username": r["actor_username"],
         "actor_role": r["actor_role"],
         "actor_label": r["actor_label"],  # a phone without an account
-        "ip_address": r["ip_address"],
+        "ip_address": decrypt_text(r["ip_address"]),  # stored encrypted (encryption.py)
         "summary": r["summary"],
         "path": r["path"],
         "status_code": r["status_code"],

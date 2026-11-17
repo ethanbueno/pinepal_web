@@ -18,6 +18,7 @@ mobile app and the dashboard work from anywhere, on Wi-Fi or mobile data.
    | `DB_USER` | Aiven user |
    | `DB_PASSWORD` | Aiven password |
    | `JWT_SECRET_KEY` | the same one as in `.env`, so existing logins keep working |
+   | `DATA_ENCRYPTION_KEY` | the same one as in `.env`, so encrypted IP addresses can be read |
 
    `DB_NAME` (`pinepal_db`), `DB_SSL_CA` and `PYTHON_VERSION` are already set.
 4. In the service: **Environment > Secret Files > Add**, name `ca.pem`, paste the
