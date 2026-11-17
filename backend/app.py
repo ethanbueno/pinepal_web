@@ -21,6 +21,7 @@ from mobile_sync import mobile_sync
 from farmers import farmers
 from my_profile import profile
 from audit_logs import audit_logs
+from password_reset import password_reset
 from activity_log import init_activity_log
 
 load_dotenv()
@@ -45,6 +46,7 @@ app.register_blueprint(mobile_sync)
 app.register_blueprint(farmers)
 app.register_blueprint(profile)
 app.register_blueprint(audit_logs)
+app.register_blueprint(password_reset)
 
 # every request goes into audit_logs (activity_log.py)
 init_activity_log(app)

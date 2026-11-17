@@ -36,6 +36,7 @@ load_dotenv(ENV_FILE, override=True)
 APP_USER = "pinepal_app"
 APP_TABLES = [
     "users", "user_credentials", "farmers", "mobile_scans", "login_history", "diseases",
+    "password_resets",
 ]
 APPEND_ONLY_TABLES = ["audit_logs"]
 # kept up to date by triggers only (migrate_optimization.py); the app just reads them
