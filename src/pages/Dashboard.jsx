@@ -267,7 +267,6 @@ function Dashboard() {
   const total = stats.total_scans
   const healthy = stats.by_disease.find((d) => d.label === "No_Disease")?.count ?? 0
   const diseaseRows = [...stats.by_disease].sort((a, b) => b.count - a.count)
-  const topMunicipalities = stats.by_municipality.slice(0, 5)
 
   return (
     <div className="flex flex-col gap-4">
@@ -361,9 +360,9 @@ function Dashboard() {
             </Card>
           </div>
 
-          {/* the surest and least sure scans, next to where the disease is */}
-          <div className="grid gap-4 xl:grid-cols-3">
-            <Card className="xl:col-span-2">
+          {/* the surest and least sure scans (no municipality ranking: PinePal covers Echague only) */}
+          <div>
+            <Card>
               <CardHeader>
                 <CardTitle className="font-semibold">Scans</CardTitle>
                 <CardDescription>
@@ -405,30 +404,6 @@ function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-semibold">Top municipalities</CardTitle>
-                <CardDescription>Ranked by number of scans with a disease.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                {topMunicipalities.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No municipality data in this range.</p>
-                )}
-                {topMunicipalities.map((row) => {
-                  const rate = share(row.diseased, row.total)
-                  return (
-                    <ShareRow
-                      key={row.municipality ?? "unknown"}
-                      name={row.municipality || "Unknown"}
-                      count={row.diseased}
-                      detail={`of ${row.total} · ${formatPercent(rate)}`}
-                      fraction={rate}
-                      barClass="bg-destructive/70"
-                    />
-                  )
-                })}
-              </CardContent>
-            </Card>
           </div>
         </>
       )}

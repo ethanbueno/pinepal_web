@@ -2,20 +2,18 @@ import { useEffect } from "react"
 import { NavLink, matchPath, useLocation, useNavigate } from "react-router-dom"
 import {
   BookOpenIcon,
+  CameraIcon,
   ChevronsUpDownIcon,
   DownloadIcon,
-  FileTextIcon,
+  HistoryIcon,
   HouseIcon,
-  ImagesIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   MapIcon,
-  ScanSearchIcon,
   ScrollTextIcon,
   SettingsIcon,
   SmartphoneIcon,
   SproutIcon,
-  StethoscopeIcon,
   UserCogIcon,
   UsersIcon,
 } from "lucide-react"
@@ -44,14 +42,15 @@ import logo from "../assets/pinepal-logo.png"
 import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
 import { getRoleLabel } from "../utils/roles"
 
+// Icons match the mobile app's tabs: Home, History (clock), Scan (camera), Guide (open book)
 const staffLinks = [
   { to: "/", label: "Dashboard", icon: LayoutDashboardIcon, end: true },
   { to: "/map", label: "Disease Map", icon: MapIcon },
-  { to: "/scans", label: "History", icon: ScanSearchIcon },
-  { to: "/diagnose", label: "Scan", icon: StethoscopeIcon },
+  { to: "/scans", label: "History", icon: HistoryIcon },
+  { to: "/diagnose", label: "Scan", icon: CameraIcon },
   // admins manage farmers from the Farmers tab on the Users page instead
   { to: "/farmers", label: "Farmers", icon: UsersIcon, notForAdmin: true },
-  { to: "/protocols", label: "Guide", icon: FileTextIcon },
+  { to: "/protocols", label: "Guide", icon: BookOpenIcon },
   { to: "/export", label: "Export", icon: DownloadIcon },
   { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true, alsoActiveOn: "/farmers" },
   { to: "/audit-logs", label: "Audit logs", icon: ScrollTextIcon, adminOnly: true },
@@ -60,8 +59,8 @@ const staffLinks = [
 const farmerLinks = [
   { to: "/", label: "Home", icon: HouseIcon, end: true },
   { to: "/my-farm", label: "My Farm", icon: SproutIcon },
-  { to: "/diagnose", label: "Scan", icon: StethoscopeIcon },
-  { to: "/my-scans", label: "History", icon: ImagesIcon },
+  { to: "/diagnose", label: "Scan", icon: CameraIcon },
+  { to: "/my-scans", label: "History", icon: HistoryIcon },
   { to: "/guides", label: "Guide", icon: BookOpenIcon },
 ]
 
