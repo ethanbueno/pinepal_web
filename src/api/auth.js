@@ -12,15 +12,16 @@ export const registerRequest = ({ full_name, username, email, password, role }) 
 
 export const getMe = () => api.get("/api/auth/me").then((res) => res.data);
 
-// Forgot password (backend/password_reset.py): emails a 6-digit code to the account with
-// this email. Answers the same whether or not the email is registered. Returns { message }.
+// Forgot password (backend/password_reset.py). Returns { mode: "direct", reset_token, username }
+// when the email belongs to an account (404 when it doesn't), or { mode: "code", message } when
+// the server emails a 6-digit code instead (PASSWORD_RESET_EMAIL_CODE=1).
 export const requestResetCode = (email) =>
   api.post("/api/auth/forgot-password", { email }).then((res) => res.data);
 
-// Sets a new password with the emailed code. Returns { message }.
-export const resetPassword = ({ email, code, newPassword }) =>
+// Sets the new password: with the reset_token (direct mode) or the emailed code. Returns { message }.
+export const resetPassword = ({ email, code, resetToken, newPassword }) =>
   api
-    .post("/api/auth/reset-password", { email, code, new_password: newPassword })
+    .post("/api/auth/reset-password", { email, code, reset_token: resetToken, new_password: newPassword })
     .then((res) => res.data);
 
 // Tells the server, so the sign-out shows in the audit logs. Never fails the sign-out.

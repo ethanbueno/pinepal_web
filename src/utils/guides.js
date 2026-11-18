@@ -87,3 +87,9 @@ export const guidePhotos = (protocol) => {
   if (urls.length > 0) return urls
   return protocol.image_url ? [protocol.image_url] : []
 }
+
+// The guide for a model label, opened with /guides?guide=<id> (Guides.jsx)
+export const guideLink = (label) => {
+  const guide = startingGuides.find((g) => g.label === label)
+  return guide ? `/guides?guide=${guide.protocol_id}` : "/guides"
+}

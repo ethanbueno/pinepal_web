@@ -72,7 +72,7 @@ function Heading({ eyebrow, title }) {
   return (
     <div className="mb-4">
       <p className={cn("mb-1 text-xs font-semibold tracking-widest uppercase", ACCENT)}>{eyebrow}</p>
-      <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h2>
+      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
     </div>
   )
 }
@@ -106,12 +106,12 @@ function LearnMore({ open, id }) {
       )}
     >
       <div className="min-h-0 overflow-hidden">
-        <div className="space-y-8 pt-8">
+        <div className="space-y-6 pt-6">
           <section>
             <Heading eyebrow="How it works" title="From photo to treatment in four steps" />
             <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {STEPS.map(({ icon: Icon, title, text }, i) => (
-                <li key={title} className="relative rounded-2xl border bg-card p-5">
+                <li key={title} className="relative rounded-xl bg-card ring-1 ring-foreground/10 p-5">
                   <span className="absolute top-4 right-5 text-4xl font-semibold text-muted-foreground/20 tabular-nums">
                     {String(i + 1).padStart(2, "0")}
                   </span>
@@ -130,7 +130,7 @@ function LearnMore({ open, id }) {
             <Heading eyebrow="Good to know" title="Tips for the best results" />
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {GOOD_TO_KNOW.map(({ icon: Icon, title, text }) => (
-                <li key={title} className="flex gap-3 rounded-2xl border bg-card p-4">
+                <li key={title} className="flex gap-3 rounded-xl bg-card ring-1 ring-foreground/10 p-4">
                   <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15", ACCENT)}>
                     <Icon className="size-4" />
                   </div>
