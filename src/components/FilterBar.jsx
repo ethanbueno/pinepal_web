@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useAuth } from "../context/AuthContext"
 import DatePicker from "./DatePicker"
 import { SlidersHorizontalIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -33,6 +34,7 @@ function Field({ label, children, className }) {
 // The municipality filter is left out while PinePal is locked to one municipality.
 // On phones the filters fold away behind a Filters button, so the list is on the first screen.
 function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKED_MUNICIPALITY }) {
+  const { user } = useAuth()
   const update = (name, value) => onChange({ ...filters, [name]: value })
   const [open, setOpen] = useState(false)
   // how many filters are set, shown on the phone button
@@ -61,7 +63,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
           <Field label="Search" className="grow min-w-32">
             <Input
               type="text"
-              placeholder="Farmer, farm or staff name"
+              placeholder={user?.role === "admin" ? "Farmer, farm or admin name" : "Farmer or farm name"}
               value={filters.search}
               onChange={(e) => update("search", e.target.value)}
             />

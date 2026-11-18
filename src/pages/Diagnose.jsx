@@ -64,6 +64,8 @@ function Diagnose() {
   const notify = useToast()
   const { user } = useAuth()
   const isFarmer = user.role === "farmer"
+  // only admins can save a scan without a farmer (it shows as "Name (Admin)"); officers pick one
+  const isAdmin = user.role === "admin"
 
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState("")
@@ -179,7 +181,7 @@ function Diagnose() {
     }
 
     try {
-      // no farmer chosen: the server saves it under the signed-in staff account
+      // no farmer chosen (admins only): the server saves it under the signed-in admin
       const saved = await createScan({
         ...(farmer ? { farmer_id: farmer.farmer_id, farm_name: farmer.farm_name } : {}),
         municipality: SCAN_MUNICIPALITY,
@@ -383,20 +385,23 @@ function Diagnose() {
               </>
             ) : (
               <>
-                <Label className="mb-1.5 text-muted-foreground">Farmer (optional)</Label>
+                <Label className="mb-1.5 text-muted-foreground">Farmer{isAdmin ? " (optional)" : ""}</Label>
                 <div className="mb-1.5">
-                  {/* empty = no farmer: the scan is saved under the signed-in staff account */}
+                  {/* admins: empty = no farmer, the scan is saved under their own account */}
                   <SelectField
                     value={farmerId}
                     onChange={handleFarmerChange}
                     options={farmerOptions}
-                    allLabel="No farmer (save under my account)"
+                    allLabel={isAdmin ? "No farmer (save under my account)" : undefined}
+                    placeholder="Choose a farmer"
                   />
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">
                   {farmerId
                     ? "The pin starts on this farmer's farm."
-                    : `Saved as yours (${user.full_name}). Click the map to place the pin.`}
+                    : isAdmin
+                      ? `Saved as yours (${user.full_name}, Admin). Click the map to place the pin.`
+                      : "Choose the farmer this scan is for."}
                 </p>
               </>
       )}
@@ -436,7 +441,7 @@ function Diagnose() {
           <Button
             size="lg"
             className="h-10 w-full"
-            disabled={!location || locationOutside || saving}
+            disabled={!location || locationOutside || saving || (!isFarmer && !isAdmin && !farmerId)}
             onClick={handleSave}
           >
             {saving ? "Saving..." : isFarmer ? "Save to History" : "Save scan"}

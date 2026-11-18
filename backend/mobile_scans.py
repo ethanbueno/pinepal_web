@@ -13,7 +13,7 @@ from flask_jwt_extended import get_jwt_identity
 
 from database import get_connection
 from echague_area import OUTSIDE_ECHAGUE, in_echague
-from permissions import farmer_scope, role_required, staff_required
+from permissions import farmer_scope, get_role, role_required, staff_required
 from photo_storage import delete_scan_photo, photo_url
 
 ANY_ROLE = ("admin", "officer", "farmer")
@@ -34,11 +34,29 @@ EXPORT_COLUMNS = [
 
 
 def shown_farmer(row):
-    """Who a scan belongs to, as the tables show it: the farmer ID, or for a scan staff saved
-    without choosing a farmer, the staff member's name."""
+    """Who a scan belongs to, as the tables show it: the farmer ID, or for a scan an admin saved
+    without choosing a farmer, the admin's name."""
     if row.get("farmer_id"):
         return row["farmer_id"]
-    return f"{row.get('saved_by_name') or 'Staff'} (staff)"
+    return f"{row.get('saved_by_name') or 'Admin'} (Admin)"
+
+
+def admin_scans_hidden():
+    """Officers don't see the scans an admin saved without a farmer ("Name (Admin)"): not in
+    lists, exports, the map, the dashboard or by direct link. Admins see everything."""
+    return get_role(get_jwt_identity()) == "officer"
+
+
+def with_scope(args):
+    """The request's filters, limited to what the signed-in user may see: a farmer their own
+    scans, an officer every farmer's scan but not the admins' own."""
+    args = args.copy()
+    own = farmer_scope(get_jwt_identity())
+    if own is not None:
+        args["farmer_id"] = own
+    elif admin_scans_hidden():
+        args["farmers_only"] = "1"
+    return args
 
 
 def serialize(row):
@@ -60,11 +78,7 @@ def serialize(row):
 
 def visible_filters():
     """The query string's filters, limited to the farmer's own scans when a farmer asks."""
-    args = request.args.copy()
-    own = farmer_scope(get_jwt_identity())
-    if own is not None:
-        args["farmer_id"] = own
-    return build_filters(args)
+    return build_filters(with_scope(request.args))
 
 
 def build_filters(args):
@@ -85,6 +99,10 @@ def build_filters(args):
     if args.get("municipality"):
         where.append("municipality = %s")
         params.append(args["municipality"])
+
+    # set by with_scope for officers: no scans saved without a farmer
+    if args.get("farmers_only"):
+        where.append("farmer_id IS NOT NULL")
 
     # present but empty still filters: a farmer without a farm sees no scans, not all of them
     if "farmer_id" in args:
@@ -175,7 +193,7 @@ def count_scans():
 @mobile_scans.route("/api/scans/map", methods=["GET"])
 @staff_required
 def map_scans():
-    where, params = build_filters(request.args)
+    where, params = build_filters(with_scope(request.args))
     rows = query(
         "SELECT scan_uuid, latitude, longitude, predicted_label, verified_label, saved_by_name, "
         f"confidence, scanned_at, farmer_id FROM mobile_scans {where} ORDER BY scanned_at DESC",
@@ -247,7 +265,7 @@ def export_xlsx(rows):
 @staff_required
 def export_scans():
     """The filtered scans as a file: format=csv (default) or format=xlsx."""
-    where, params = build_filters(request.args)
+    where, params = build_filters(with_scope(request.args))
     rows = query(f"SELECT * FROM mobile_scans {where} ORDER BY scanned_at DESC", params)
     headers = {"X-Row-Count": str(len(rows))}
 
@@ -272,6 +290,8 @@ def get_scan(scan_uuid):
     # another farmer's scan looks the same as a missing one
     if not row or (own is not None and row["farmer_id"] != own):
         return not_found()
+    if not row["farmer_id"] and admin_scans_hidden():
+        return not_found()
     return jsonify(serialize(row)), 200
 
 
@@ -280,8 +300,11 @@ def get_scan(scan_uuid):
 def create_scan():
     data = request.get_json(silent=True) or {}
 
-    # No farmer chosen: the scan is saved under the staff member who saved it
+    # No farmer chosen: the scan is saved under the admin who saved it. Only admins can do
+    # that; an officer saves every scan for a farmer.
     farmer_id = (data.get("farmer_id") or "").strip() or None
+    if not farmer_id and admin_scans_hidden():
+        return jsonify({"error": "Choose the farmer this scan is for."}), 400
     required = ["latitude", "longitude", "predicted_label", "confidence", "second_label", "second_confidence"]
     missing = [f for f in required if data.get(f) in (None, "")]
     if missing:
@@ -343,7 +366,7 @@ def verify_scan(scan_uuid):
     cursor = connection.cursor()
     cursor.execute(
         "UPDATE mobile_scans SET verified_label = %s, verified_by = %s, verified_at = %s "
-        "WHERE scan_uuid = %s",
+        "WHERE scan_uuid = %s" + (" AND farmer_id IS NOT NULL" if admin_scans_hidden() else ""),
         (label, data.get("verified_by"), datetime.now().replace(microsecond=0), scan_uuid),
     )
     connection.commit()
@@ -351,7 +374,7 @@ def verify_scan(scan_uuid):
     connection.close()
 
     row = query("SELECT * FROM mobile_scans WHERE scan_uuid = %s", (scan_uuid,), one=True)
-    if not row:
+    if not row or (not row["farmer_id"] and admin_scans_hidden()):
         return not_found()
     return jsonify(serialize(row)), 200
 
@@ -379,7 +402,10 @@ def delete_scan(scan_uuid):
 @mobile_scans.route("/api/stats", methods=["GET"])
 @staff_required
 def stats():
-    where, params = build_filters({"from": request.args.get("from"), "to": request.args.get("to")})
+    hide_admin = admin_scans_hidden()
+    where, params = build_filters(
+        {"from": request.args.get("from"), "to": request.args.get("to"), "farmers_only": "1" if hide_admin else ""}
+    )
 
     # The totals come from scan_daily_stats, the aggregate table (migrate_optimization.py):
     # scans per day, municipality and diagnosis, kept up to date by triggers on mobile_scans.
@@ -413,6 +439,25 @@ def stats():
         params + [LOW_CONFIDENCE] + day_params,
     )
     groups = cursor.fetchall()
+    needs_review = int(groups[0]["needs_review"]) if groups else 0  # the same on every row
+    if hide_admin:
+        # the totals table has no farmer, so for officers the admins' own scans are taken back out
+        # (same keys as its triggers: day, municipality or '', final label)
+        cursor.execute(
+            f"""
+            SELECT DATE_FORMAT(scanned_at, '%%Y-%%m') AS month, COALESCE(municipality, '') AS municipality,
+                   {FINAL} AS label, COUNT(*) AS n
+            FROM mobile_scans
+            WHERE farmer_id IS NULL{" AND scanned_at >= %s" if request.args.get("from") else ""}{" AND scanned_at <= %s" if request.args.get("to") else ""}
+            GROUP BY month, municipality, label
+            """,
+            ([request.args["from"] + " 00:00:00"] if request.args.get("from") else [])
+            + ([request.args["to"] + " 23:59:59"] if request.args.get("to") else []),
+        )
+        minus = {(r["month"], r["municipality"], r["label"]): int(r["n"]) for r in cursor.fetchall()}
+        for g in groups:
+            g["n"] = int(g["n"]) - minus.get((g["month"], g["municipality"], g["label"]), 0)
+        groups = [g for g in groups if g["n"] > 0]
     for g in groups:
         g["municipality"] = g["municipality"] or None  # stored as '' when a scan had none
     # the most and least confident scans in range, both in one round trip
@@ -433,7 +478,6 @@ def stats():
 
     total = sum(int(g["n"]) for g in groups)
     diseased = sum(int(g["n"]) for g in groups if g["label"] != "No_Disease")
-    needs_review = int(groups[0]["needs_review"]) if groups else 0
     latest = max((g["month"] for g in groups), default=None)  # YYYY-MM of the newest scan in range
     this_month = sum(int(g["n"]) for g in groups if g["month"] == latest)
 
