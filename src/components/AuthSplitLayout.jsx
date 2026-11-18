@@ -4,15 +4,13 @@ import ThemeToggle from "./ThemeToggle"
 import AuthPhotoSlideshow from "./AuthPhotoSlideshow"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { APP_DOWNLOAD_URL } from "../config/app"
 
 // Eased left-edge fade for the photo half (smoothstep-like stops, so there's no visible band)
 const PHOTO_FADE =
   "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.03) 2.5%, rgba(0,0,0,0.12) 5%, " +
   "rgba(0,0,0,0.27) 7.5%, rgba(0,0,0,0.45) 10%, rgba(0,0,0,0.63) 12.5%, rgba(0,0,0,0.79) 15%, " +
   "rgba(0,0,0,0.91) 17.5%, rgba(0,0,0,0.98) 20%, #000 22%)"
-
-// Google Drive folder with the latest PinePal.apk (switch to the Play Store listing once it's published).
-const APP_DOWNLOAD_URL = "https://drive.google.com/drive/folders/1C0kV6LxyPJJgpBZnmGJDiV6yS7n9ArIf?usp=drive_link"
 
 // Shared page for Login and Register.
 // Laptops: two columns, the headline + form card + "Download mobile app" on the left, a tall photo panel on the right.
