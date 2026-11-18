@@ -13,14 +13,18 @@ import { Button } from "@/components/ui/button"
 
 const RESEND_SECONDS = 60 // the server sends at most one code a minute (password_reset.py)
 
-// Forgot password in two steps: the email of the account, then the 6-digit code from that
-// email and a new password. The server answers the same whether or not the email is
-// registered, so this page never says which emails have accounts.
+// Forgot password in two steps: the email of the account, then a new password.
+// Direct mode (the server's default for now): a registered email goes straight to the new
+// password. Code mode (PASSWORD_RESET_EMAIL_CODE=1 on the server): the second step also asks
+// for the 6-digit code emailed to that address.
 function ForgotPassword() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const notify = useToast()
-  const [step, setStep] = useState("email") // "email", then "code"
+  const [step, setStep] = useState("email") // "email", then "password"
+  const [mode, setMode] = useState("direct") // "direct" or "code", from the server
+  const [resetToken, setResetToken] = useState("")
+  const [account, setAccount] = useState("")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
@@ -38,9 +42,15 @@ function ForgotPassword() {
     setLoading(true)
     try {
       const result = await requestResetCode(email.trim())
-      setMessage(result.message)
-      setSentAt(Date.now())
-      setStep("code")
+      setMode(result.mode || "code")
+      if (result.mode === "direct") {
+        setResetToken(result.reset_token)
+        setAccount(result.username)
+      } else {
+        setMessage(result.message)
+        setSentAt(Date.now())
+      }
+      setStep("password")
     } catch (error) {
       console.error(error)
       setErrorMessage(error.response?.data?.error || "Could not send the code. Please try again.")
@@ -67,7 +77,11 @@ function ForgotPassword() {
     if (password !== confirm) return setErrorMessage("The two passwords don't match.")
     setLoading(true)
     try {
-      await resetPassword({ email: email.trim(), code: code.trim(), newPassword: password })
+      await resetPassword(
+        mode === "direct"
+          ? { resetToken, newPassword: password }
+          : { email: email.trim(), code: code.trim(), newPassword: password }
+      )
       notify("Password changed. Sign in with your new password.")
       navigate("/login")
     } catch (error) {
@@ -81,7 +95,7 @@ function ForgotPassword() {
   return (
     <AuthSplitLayout
       title="Forgot your password?"
-      tagline="We'll email a 6-digit code to your account's email address. Enter it here with a new password."
+      tagline="Enter the email address on your PinePal account, then choose a new password."
       headerAction={
         <Button
           variant="outline"
@@ -96,9 +110,7 @@ function ForgotPassword() {
     >
       {step === "email" ? (
         <form onSubmit={sendCode} className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Enter the email address of the account you want to recover.
-          </p>
+          <p className="text-sm text-muted-foreground">Enter the email address of the account you want to recover.</p>
           <FloatingInput
             size="compact"
             id="email"
@@ -111,25 +123,34 @@ function ForgotPassword() {
           />
           {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
           <Button type="submit" disabled={loading} className="h-10 w-full rounded-[10px] text-[15px] font-medium">
-            {loading ? "Sending..." : "Send code"}
+            {loading ? "Checking..." : "Continue"}
           </Button>
         </form>
       ) : (
         <form onSubmit={submitNewPassword} className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {message} Check <span className="font-medium text-foreground">{email}</span>, including the spam folder.
-          </p>
-          <FloatingInput
-            size="compact"
-            id="code"
-            label="6-digit code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            required
-          />
+          {mode === "direct" ? (
+            <p className="text-sm text-muted-foreground">
+              Set a new password for <span className="font-medium text-foreground">@{account}</span> ({email}).
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {message} Check <span className="font-medium text-foreground">{email}</span>, including the spam
+                folder.
+              </p>
+              <FloatingInput
+                size="compact"
+                id="code"
+                label="6-digit code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                required
+              />
+            </>
+          )}
           <FloatingInput
             size="compact"
             id="new-password"
@@ -154,7 +175,7 @@ function ForgotPassword() {
           {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
           <Button
             type="submit"
-            disabled={loading || code.length !== 6}
+            disabled={loading || (mode === "code" && code.length !== 6)}
             className="h-10 w-full rounded-[10px] text-[15px] font-medium"
           >
             {loading ? "Saving..." : "Change password"}
@@ -170,14 +191,16 @@ function ForgotPassword() {
             >
               Use another email
             </button>
-            <button
-              type="button"
-              disabled={loading}
-              className="font-medium text-primary-text underline underline-offset-4"
-              onClick={resend}
-            >
-              Send a new code
-            </button>
+            {mode === "code" && (
+              <button
+                type="button"
+                disabled={loading}
+                className="font-medium text-primary-text underline underline-offset-4"
+                onClick={resend}
+              >
+                Send a new code
+              </button>
+            )}
           </div>
         </form>
       )}

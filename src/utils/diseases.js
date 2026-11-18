@@ -8,6 +8,9 @@ export const DISEASES = [
   { label: "No_Disease", name: "No Disease", color: "#16A34A" },
 ];
 
+// the diseases PinePal can find, without "No Disease" (a healthy result)
+export const FOUND_DISEASES = DISEASES.filter((d) => d.label !== "No_Disease");
+
 export const LOW_CONFIDENCE = 0.6;
 // at or above this a scan is in the Dashboard's "Highest confidence" list (HIGH_CONFIDENCE in backend/mobile_scans.py)
 export const HIGH_CONFIDENCE = 0.9;

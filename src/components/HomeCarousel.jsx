@@ -1,48 +1,61 @@
 import { useCallback, useEffect, useState } from "react"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import logo from "../assets/pinepal-logo.png"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const AUTOPLAY_MS = 7000
+const ACCENT = "text-[#8a5f00] dark:text-primary"
 
-// The headline with one word in the welcome card's deep amber, like "early" on the old card
+// The headline with one part in the welcome card's deep amber, like "early" on the old card
 function Highlighted({ text, word }) {
   const at = word ? text.indexOf(word) : -1
   if (at < 0) return text
   return (
     <>
       {text.slice(0, at)}
-      <span className="text-[#8a5f00] dark:text-primary">{word}</span>
+      <span className={ACCENT}>{word}</span>
       {text.slice(at + word.length)}
     </>
   )
 }
 
-// One slide's button: an action (onClick), a page in the app (to) or a link out (href).
+// One slide's button, the dashboard's standard button: an action (onClick) or a link out (href)
 function SlideAction({ action, active }) {
-  const className =
-    "inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-primary-foreground shadow-sm transition hover:brightness-105 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
   const tabIndex = active ? 0 : -1
   if (action.href) {
     return (
-      <a href={action.href} target="_blank" rel="noreferrer" className={className} tabIndex={tabIndex}>
+      <Button
+        size="lg"
+        tabIndex={tabIndex}
+        render={<a href={action.href} target="_blank" rel="noreferrer" />}
+        nativeButton={false}
+      >
         {action.label}
-      </a>
+      </Button>
     )
   }
   return (
-    <button type="button" onClick={action.onClick} className={className} tabIndex={tabIndex}>
+    <Button size="lg" tabIndex={tabIndex} onClick={action.onClick}>
       {action.label}
-    </button>
+    </Button>
   )
 }
 
-// The banner across the top of the farmer Home: photo slides with a headline, a line of
-// text and one button each, arrows on the sides and dots below. It moves on by itself every
-// few seconds, waits while the pointer or keyboard focus is on it, and stays put for people
-// who turn off animations.
+// The banner across the top of the farmer Home. Every slide has the same layout: on the left
+// a label with the PinePal logo, a headline with one part in amber, a line of text and a button.
+// They are pinned (label and headline from the top, the button near the bottom), not centred,
+// so they sit in the same place on every slide however long the headline is;
+// on the right the same slanted picture with amber stripes along the slant. The picture is a
+// photo, or the slide's own content (visual), drawn in the same frame. Arrows on the sides,
+// dots below. It moves on every few seconds, waits while the pointer or keyboard focus is on
+// it, and stays put for people who turn off animations.
 //
-// slides: [{ image, eyebrow, eyebrowIcon, title, highlight (a word of the title), text, action: { label, onClick | href } }]
-// It uses the welcome card's light amber gradient, so it follows light and dark mode.
+// It is styled like the dashboard's cards (rounded-xl, a thin ring, the app's buttons and
+// heading sizes) in the old welcome card's light amber, so it follows light and dark mode.
+//
+// slides: [{ label, title, highlight, text, action: { label, onClick | href },
+//            image  or  visual(active) }]   (active is false while the slide is hidden)
 function HomeCarousel({ slides, label = "Highlights" }) {
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -61,7 +74,7 @@ function HomeCarousel({ slides, label = "Highlights" }) {
     <section
       aria-roledescription="carousel"
       aria-label={label}
-      className="relative h-[360px] overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/15 via-card to-card text-foreground shadow-lg shadow-primary/10 sm:h-[340px]"
+      className="relative h-[300px] overflow-hidden rounded-xl bg-gradient-to-br from-primary/15 via-card to-card text-card-foreground ring-1 ring-foreground/10 sm:h-[310px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -85,35 +98,37 @@ function HomeCarousel({ slides, label = "Highlights" }) {
               active ? "opacity-100" : "pointer-events-none opacity-0"
             )}
           >
-            {/* the photo fills the right side, cut on a slant like the stripes */}
-            <img
-              src={slide.image}
-              alt=""
-              className="absolute inset-y-0 right-0 h-full w-full object-cover sm:w-[62%] sm:[clip-path:polygon(22%_0,100%_0,100%_100%,0_100%)]"
-            />
-            {/* on phones the photo sits behind the text, darkened so the text stays readable */}
-            <div className="absolute inset-0 bg-gradient-to-r from-card via-card/90 to-card/40 sm:hidden" />
+            {/* the picture: the same slanted frame on every slide */}
+            <div className="absolute inset-y-0 right-0 w-full sm:w-[54%] sm:[clip-path:polygon(18%_0,100%_0,100%_100%,0_100%)]">
+              {slide.visual ? (
+                slide.visual(active)
+              ) : (
+                <img src={slide.image} alt="" className="size-full object-cover" />
+              )}
+            </div>
+            {/* phones: the picture sits behind the text, faded so the text stays readable */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-card via-card/90 to-card/50 sm:hidden" />
             {/* amber stripes along the slant */}
-            <div aria-hidden className="absolute inset-y-0 left-[30%] hidden w-[24%] sm:block">
-              <div className="absolute inset-y-0 left-[18%] w-[16%] -skew-x-[14deg] bg-primary/35" />
-              <div className="absolute inset-y-0 left-[38%] w-[10%] -skew-x-[14deg] bg-primary/55" />
-              <div className="absolute inset-y-0 left-[52%] w-[7%] -skew-x-[14deg] bg-primary/80" />
+            <div aria-hidden className="absolute inset-y-0 left-[38%] hidden w-[20%] sm:block">
+              <div className="absolute inset-y-0 left-[16%] w-[16%] -skew-x-[13deg] bg-primary/35" />
+              <div className="absolute inset-y-0 left-[36%] w-[10%] -skew-x-[13deg] bg-primary/55" />
+              <div className="absolute inset-y-0 left-[50%] w-[7%] -skew-x-[13deg] bg-primary/80" />
             </div>
 
-            <div className="relative flex h-full max-w-xl flex-col justify-center px-8 pb-8 sm:px-14 sm:pb-6">
-              {slide.eyebrow && (
-                <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-sm backdrop-blur">
-                  {slide.eyebrowIcon && <img src={slide.eyebrowIcon} alt="" className="size-4" />}
-                  {slide.eyebrow}
-                </p>
-              )}
-              <h2 className="text-3xl leading-[1.1] font-semibold tracking-tight sm:text-4xl">
+            {/* the text, from the top; at most 2 lines each, so it never reaches the button */}
+            <div className="pointer-events-none relative px-12 pt-8 sm:w-[41%] sm:pt-9">
+              <p className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-card/80 px-2.5 py-1 text-xs font-medium ring-1 ring-foreground/10 backdrop-blur">
+                <img src={logo} alt="" className="size-3.5" />
+                {slide.label}
+              </p>
+              <h2 className="line-clamp-2 text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
                 <Highlighted text={slide.title} word={slide.highlight} />
               </h2>
-              <p className="mt-3 max-w-md text-base text-muted-foreground sm:text-lg">{slide.text}</p>
-              <div className="mt-6">
-                <SlideAction action={slide.action} active={active} />
-              </div>
+              <p className="mt-2 line-clamp-2 max-w-md text-sm text-muted-foreground sm:text-base">{slide.text}</p>
+            </div>
+            {/* the button: a fixed spot in the banner, the same on every slide whatever the text */}
+            <div className="absolute bottom-11 left-12">
+              <SlideAction action={slide.action} active={active} />
             </div>
           </div>
         )
@@ -121,24 +136,26 @@ function HomeCarousel({ slides, label = "Highlights" }) {
 
       {count > 1 && (
         <>
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => go(index - 1)}
             aria-label="Previous slide"
-            className="absolute top-1/2 left-0 flex h-12 w-8 -translate-y-1/2 items-center justify-center rounded-r-md border bg-card/90 text-foreground shadow-sm transition hover:bg-card focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="absolute top-1/2 left-2 -translate-y-1/2 bg-card/90"
           >
-            <ChevronLeftIcon className="size-5" />
-          </button>
-          <button
-            type="button"
+            <ChevronLeftIcon />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => go(index + 1)}
             aria-label="Next slide"
-            className="absolute top-1/2 right-0 flex h-12 w-8 -translate-y-1/2 items-center justify-center rounded-l-md border bg-card/90 text-foreground shadow-sm transition hover:bg-card focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="absolute top-1/2 right-2 -translate-y-1/2 bg-card/90"
           >
-            <ChevronRightIcon className="size-5" />
-          </button>
+            <ChevronRightIcon />
+          </Button>
 
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+          <div className="absolute bottom-4 left-12 flex gap-1.5">
             {slides.map((slide, i) => (
               <button
                 key={slide.title}
@@ -147,8 +164,8 @@ function HomeCarousel({ slides, label = "Highlights" }) {
                 aria-label={`Go to slide ${i + 1}: ${slide.title}`}
                 aria-current={i === index}
                 className={cn(
-                  "size-2.5 rounded-full transition focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-                  i === index ? "w-6 bg-primary" : "bg-foreground/20 hover:bg-foreground/40"
+                  "h-1.5 rounded-full transition-all focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                  i === index ? "w-6 bg-primary" : "w-1.5 bg-foreground/25 hover:bg-foreground/40"
                 )}
               />
             ))}

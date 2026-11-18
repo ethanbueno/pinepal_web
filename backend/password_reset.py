@@ -1,5 +1,18 @@
-"""Forgot password: a 6-digit code sent to the account's email, for the web and the mobile app.
+"""Forgot password, for the web and the mobile app. Two ways, chosen in .env:
 
+DIRECT (the default for now)
+POST /api/auth/forgot-password   { "email" }
+    If an account uses that email, answers { "mode": "direct", "reset_token", "username" }
+    and the page goes straight to "New password". No account: 404 "No account uses this
+    email." The reset_token is signed with JWT_SECRET_KEY, works for TOKEN_MINUTES, and stops
+    working once the password changes, so it is used only once.
+POST /api/auth/reset-password    { "reset_token", "new_password" }
+    Sets the new password (the same rules as sign up, security.py).
+
+    WARNING: there is no proof the person owns the email, so anyone who knows an account's
+    email can set its password, admins included. Turn the code on before real use.
+
+EMAILED CODE (PASSWORD_RESET_EMAIL_CODE=1 in .env)
 POST /api/auth/forgot-password   { "email" }
     If an account uses that email, emails it a code. Always answers the same
     ("If an account uses this email, we sent a code"), so the form can't be used to find
@@ -24,16 +37,19 @@ Email goes out through Gmail (mailer.py). Without MAIL_* in .env, a debug run (p
 prints the code in the terminal instead, for testing; a deployed server says email is not set up.
 Errors are { "error": "message" }.
 """
+import hashlib
 import logging
+import os
 import re
 import secrets
 
 from flask import Blueprint, current_app, g, jsonify, request
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 import mailer
 from database import audit_context, get_connection
-from security import hash_password, password_problem, set_password, verify_password
-from web_auth import EMAIL_PATTERN, is_deactivated
+from security import hash_password, password_problem, set_password, stored_password_hash, verify_password
+from web_auth import DEACTIVATED, EMAIL_PATTERN, is_deactivated
 
 password_reset = Blueprint("password_reset", __name__)
 log = logging.getLogger(__name__)
@@ -43,6 +59,68 @@ MAX_ATTEMPTS = 5
 MAX_PER_HOUR = 3
 COOLDOWN_SECONDS = 60
 CODE = re.compile(r"^\d{6}$")
+TOKEN_MINUTES = 10
+
+
+def email_code_on():
+    """True when PASSWORD_RESET_EMAIL_CODE=1: the safe way, with an emailed code."""
+    return os.getenv("PASSWORD_RESET_EMAIL_CODE", "").strip().lower() in ("1", "true", "yes")
+
+
+# ---- direct mode: a signed pass from the email step to the new-password step ----
+
+def _signer():
+    return URLSafeTimedSerializer(current_app.config["JWT_SECRET_KEY"], salt="pinepal-password-reset")
+
+
+def _fingerprint(password_hash):
+    """Changes whenever the password does, so a pass works only until it's used."""
+    return hashlib.sha256((password_hash or "").encode()).hexdigest()[:16]
+
+
+def make_reset_token(user_id):
+    connection = get_connection()
+    cursor = connection.cursor()
+    fingerprint = _fingerprint(stored_password_hash(cursor, user_id))
+    cursor.close()
+    connection.close()
+    return _signer().dumps({"u": user_id, "f": fingerprint})
+
+
+def direct_forgot(email):
+    user, blocked = find_account(email)
+    if not user:
+        return error("No account uses this email.", 404)
+    act_as(user["id"])
+    if blocked:
+        return error(DEACTIVATED, 403)
+    return jsonify({"mode": "direct", "reset_token": make_reset_token(user["id"]),
+                    "username": user["username"]}), 200
+
+
+def direct_reset(token, new_password):
+    try:
+        data = _signer().loads(token, max_age=TOKEN_MINUTES * 60)
+    except SignatureExpired:
+        return error("This reset took too long. Enter your email again.")
+    except BadSignature:
+        return error("This reset link is not valid. Enter your email again.")
+    act_as(data["u"])
+    problem = password_problem(new_password)
+    if problem:
+        return error(problem)
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        if _fingerprint(stored_password_hash(cursor, data["u"])) != data["f"]:
+            return error("This reset was already used. Enter your email again.")
+        set_password(cursor, data["u"], new_password)
+        connection.commit()
+    finally:
+        cursor.close()
+        connection.close()
+    return jsonify({"message": "Your password was changed. Sign in with the new one."}), 200
 
 SENT = "If an account uses this email, we sent it a 6-digit code. It works for 15 minutes."
 WRONG_CODE = "That code is wrong or has expired. Check the email, or request a new code."
@@ -97,6 +175,8 @@ def forgot_password():
     email = ((request.get_json(silent=True) or {}).get("email") or "").strip()
     if len(email) > 150 or not EMAIL_PATTERN.match(email):
         return error("Enter a valid email address")
+    if not email_code_on():
+        return direct_forgot(email)
 
     mail_ready = mailer.is_configured()
     if not mail_ready and not current_app.debug:
@@ -104,7 +184,7 @@ def forgot_password():
 
     user, blocked = find_account(email)
     if not user or blocked:
-        return jsonify({"message": SENT}), 200
+        return jsonify({"mode": "code", "message": SENT}), 200
     act_as(user["id"])
 
     connection = get_connection()
@@ -117,7 +197,7 @@ def forgot_password():
         )
         recent = cursor.fetchone()
         if recent["n"] >= MAX_PER_HOUR or recent["too_soon"]:
-            return jsonify({"message": SENT}), 200  # same answer, nothing sent
+            return jsonify({"mode": "code", "message": SENT}), 200  # same answer, nothing sent
 
         code = f"{secrets.randbelow(1_000_000):06d}"
         # only the newest code works
@@ -139,12 +219,14 @@ def forgot_password():
     else:
         # local testing only (debug run without Gmail set up)
         print(f"* [no email set up] Password reset code for {user['email']}: {code}", flush=True)
-    return jsonify({"message": SENT}), 200
+    return jsonify({"mode": "code", "message": SENT}), 200
 
 
 @password_reset.route("/api/auth/reset-password", methods=["POST"])
 def reset_password():
     data = request.get_json(silent=True) or {}
+    if not email_code_on():
+        return direct_reset(data.get("reset_token") or "", data.get("new_password") or "")
     email = (data.get("email") or "").strip()
     code = (data.get("code") or "").strip()
     new_password = data.get("new_password") or ""
