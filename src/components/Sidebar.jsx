@@ -143,12 +143,12 @@ function AppSidebar({ user, onLogout }) {
       <SidebarFooter className="p-3 pb-4 group-data-[collapsible=icon]:p-2">
         <SidebarMenu className="gap-2">
           {/* the Android app, same link as the login page (admins change it on their Profile page);
-              no border, a soft amber glow instead; collapsed it is just the icon with a tooltip */}
+              no border, a soft amber glow on hover; collapsed it is just the icon with a tooltip */}
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               tooltip="Download mobile app"
-              className="bg-card shadow-[0_0_14px_-2px_color-mix(in_oklab,var(--primary)_45%,transparent)] transition-shadow hover:bg-primary/10 hover:shadow-[0_0_18px_-2px_color-mix(in_oklab,var(--primary)_60%,transparent)] group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
+              className="bg-card transition-shadow hover:bg-primary/10 hover:shadow-[0_0_16px_-2px_color-mix(in_oklab,var(--primary)_55%,transparent)] group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
               render={<a href={appDownloadUrl} target="_blank" rel="noopener noreferrer" />}
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-text">
