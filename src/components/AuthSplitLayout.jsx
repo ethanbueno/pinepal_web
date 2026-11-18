@@ -18,7 +18,8 @@ const PHOTO_FADE =
 // Phones and tablets: one column, no photo panel.
 // headerAction is an extra button shown next to the theme toggle (Register uses it for "Back to login").
 // compact (Register) uses a smaller headline and drops "Download mobile app" so the longer form fits without scrolling.
-function AuthSplitLayout({ title, tagline, headerAction, compact = false, children }) {
+// showDownload={false} drops "Download mobile app" (Forgot password).
+function AuthSplitLayout({ title, tagline, headerAction, compact = false, showDownload = true, children }) {
   const appDownloadUrl = useAppDownloadUrl()
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-2 lg:gap-6 lg:p-6">
@@ -62,7 +63,7 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, childr
               {children}
             </div>
 
-            {!compact && (
+            {!compact && showDownload && (
               <div className="mt-6 flex justify-center">
                 <Button
                   variant="outline"

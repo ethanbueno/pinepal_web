@@ -94,6 +94,7 @@ function ForgotPassword() {
 
   return (
     <AuthSplitLayout
+      showDownload={false}
       title="Forgot your password?"
       tagline="Enter the email address on your PinePal account, then choose a new password."
       headerAction={
