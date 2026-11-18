@@ -1,4 +1,4 @@
-import { MonitorSmartphoneIcon, MoonIcon, PaletteIcon, SmartphoneIcon, SunIcon, UserIcon, XIcon } from "lucide-react"
+import { MonitorSmartphoneIcon, MoonIcon, PaletteIcon, SmartphoneIcon, SunIcon, XIcon } from "lucide-react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { useAuth } from "../../context/AuthContext"
 import { useTheme } from "../../hooks/useTheme"
@@ -60,13 +60,14 @@ function MobileAppSection() {
   )
 }
 
+// The Settings sections. Account is its own window (same look, no section list), opened
+// from the account menu's Account item.
 const SECTIONS = [
-  { key: "account", label: "Account", icon: UserIcon, Content: AccountSection },
   { key: "appearance", label: "Appearance", icon: PaletteIcon, Content: AppearanceSection },
   { key: "mobile-app", label: "Mobile app", icon: SmartphoneIcon, Content: MobileAppSection, adminOnly: true },
 ]
 
-// Settings, opened from the sidebar's account menu: a large window over the page (2rem of
+// Settings (and Account), opened from the sidebar's account menu: a large window over the page (2rem of
 // margin on every side on bigger screens) with the
 // sections on the left and the chosen one on the right. Full screen on phones, where the
 // sections become a row of tabs along the top.
@@ -75,8 +76,11 @@ function SettingsDialog() {
   const { open, section } = useSettingsDialog()
   if (!user) return null
 
+  const isAccount = section === "account"
   const sections = SECTIONS.filter((s) => !s.adminOnly || user.role === "admin")
-  const active = sections.find((s) => s.key === section) ?? sections[0]
+  const active = isAccount
+    ? { key: "account", label: "Account", Content: AccountSection }
+    : (sections.find((s) => s.key === section) ?? sections[0])
   const Content = active.Content
 
   return (
@@ -91,7 +95,9 @@ function SettingsDialog() {
           )}
         >
           <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2 sm:px-6 sm:pt-5">
-            <DialogPrimitive.Title className="text-xl font-semibold tracking-tight">Settings</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="text-xl font-semibold tracking-tight">
+              {isAccount ? "Account" : "Settings"}
+            </DialogPrimitive.Title>
             <DialogPrimitive.Close render={<Button variant="ghost" size="icon-sm" />}>
               <XIcon />
               <span className="sr-only">Close</span>
@@ -99,6 +105,7 @@ function SettingsDialog() {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+            {!isAccount && (
             <nav
               aria-label="Settings sections"
               className="flex shrink-0 gap-1 overflow-x-auto border-b px-4 pb-2 sm:w-52 sm:flex-col sm:overflow-visible sm:border-b-0 sm:px-3 sm:pb-4"
@@ -121,9 +128,12 @@ function SettingsDialog() {
                 </button>
               ))}
             </nav>
+            )}
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-6">
-              <h2 className="pt-3 pb-1 text-base font-semibold text-primary-text sm:pt-1">{active.label}</h2>
+              {!isAccount && (
+                <h2 className="pt-3 pb-1 text-base font-semibold text-primary-text sm:pt-1">{active.label}</h2>
+              )}
               <Content />
             </div>
           </div>

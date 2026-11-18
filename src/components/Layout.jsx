@@ -1,8 +1,10 @@
+import { Suspense } from "react"
 import { Outlet, useNavigate } from "react-router-dom"
 import { ChevronLeftIcon, ChevronRightIcon, MenuIcon } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "./toastcontext"
 import AppSidebar from "./Sidebar"
+import PinePalLoader from "./PinePalLoader"
 import SettingsDialog from "./settings/SettingsDialog"
 import logo from "../assets/pinepal-logo.png"
 import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
@@ -66,7 +68,16 @@ function Layout() {
         {/* same padding on both sides (phones: 16px, the menu button lives in the top bar);
             on desktop the left one also clears the sidebar tab (20px) */}
         <div className="min-w-0 px-4 py-4 md:px-10 md:py-6">
-          <Outlet />
+          {/* while a page's code downloads, the loader shows under the sidebar */}
+          <Suspense
+            fallback={
+              <div className="flex min-h-[60vh] items-center justify-center">
+                <PinePalLoader label="Loading page" />
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -14,6 +14,7 @@ import {
   SettingsIcon,
   SmartphoneIcon,
   UserCogIcon,
+  UserIcon,
   UsersIcon,
 } from "lucide-react"
 import {
@@ -182,8 +183,12 @@ function AppSidebar({ user, onLogout }) {
                   <DropdownMenuLabel className="truncate px-2.5 pt-1.5 pb-1 text-sm font-normal">
                     @{user.username}
                   </DropdownMenuLabel>
-                  {/* Account and the theme are in the Settings window, like Settings on mobile */}
+                  {/* Account opens on its own; Settings holds Appearance (and Mobile app for admins) */}
                   <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={() => openSettings("account")}>
+                    <UserIcon />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={() => openSettings("appearance")}>
                     <SettingsIcon />
                     Settings
                   </DropdownMenuItem>
