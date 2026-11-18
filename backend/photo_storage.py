@@ -25,16 +25,11 @@ UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 CLOUDINARY_FOLDER = "pinepal/scans"
 
 # Profile photos (my_profile.py): kind -> Cloudinary folder, and how Cloudinary resizes the
-# photo as it stores it, so a 12 MP phone photo is kept small. Avatars are cropped square
-# around the face, covers are kept wide (the screens crop them to fit).
+# photo as it stores it, so a 12 MP phone photo is kept small: square, around the face.
 PROFILE_PHOTOS = {
     "avatar": {
         "folder": "pinepal/avatars",
         "transformation": [{"width": 512, "height": 512, "crop": "fill", "gravity": "face"}],
-    },
-    "cover": {
-        "folder": "pinepal/covers",
-        "transformation": [{"width": 1600, "height": 900, "crop": "limit"}],
     },
 }
 OUR_FOLDERS = [CLOUDINARY_FOLDER] + [kind["folder"] for kind in PROFILE_PHOTOS.values()]
@@ -96,8 +91,8 @@ def save_scan_photo(file_storage, scan_uuid):
 
 
 def save_profile_photo(file_storage, kind):
-    """Store a new avatar or cover photo (kind is a PROFILE_PHOTOS key). Returns what goes in
-    users.avatar_url / cover_url: the Cloudinary https URL, or the local file name
+    """Store a new profile photo (kind is a PROFILE_PHOTOS key). Returns what goes in
+    users.avatar_url: the Cloudinary https URL, or the local file name
     (<uuid>.jpg / .png in uploads/). Returns None when the file is not a JPG or PNG, and
     raises PhotoStorageError when Cloudinary fails."""
     extension = photo_type(file_storage)

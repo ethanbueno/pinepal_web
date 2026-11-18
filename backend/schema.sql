@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   name varchar(100) NOT NULL,
   -- a farmer's is kept the same as farmers.municipality (sync_user_municipality in farmers.py)
   municipality varchar(100) NOT NULL DEFAULT '',
-  -- profile photos (Cloudinary URLs, or a file in backend/uploads locally); NULL = none yet
+  -- the profile photo (a Cloudinary URL, or a file in backend/uploads locally); NULL = none yet.
+  -- cover_url is unused (a cover photo was tried and dropped)
   avatar_url varchar(500) NULL,
   cover_url varchar(500) NULL,
   created_at timestamp NOT NULL DEFAULT current_timestamp(),

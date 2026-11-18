@@ -60,63 +60,25 @@ function shownValue(key, profile) {
   return savedValue(key, profile)
 }
 
-// The cover until a photo is chosen: pineapple-leaf greens drawn with gradients, the same as
-// the plain cover on the mobile app's Account tab (_Cover in my_profile_view.dart)
-const COVER =
-  "radial-gradient(120% 140% at 15% 0%, #4d8a3a 0%, transparent 55%)," +
-  "radial-gradient(90% 120% at 85% 10%, #2f7d4f 0%, transparent 60%)," +
-  "repeating-linear-gradient(115deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 26px)," +
-  "repeating-linear-gradient(65deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 34px)," +
-  "linear-gradient(135deg, #1f4d2b 0%, #2f6b35 45%, #173b22 100%)"
-
 const PHOTO_TYPES = ["image/jpeg", "image/png"]
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024 // the server's limit (MAX_CONTENT_LENGTH in app.py)
-const PHOTO_LABEL = { avatar: "Profile photo", cover: "Cover photo" }
 
-// The menu behind a photo's change button: upload a new one, or remove the one there is
-function PhotoMenu({ kind, hasPhoto, busy, onPick, onRemove, trigger, children }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger disabled={busy} render={trigger}>
-        {children}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className="min-w-44 rounded-xl p-1.5">
-        <DropdownMenuItem className="h-9 gap-2.5 rounded-lg px-2.5" onClick={() => onPick(kind)}>
-          <ImageIcon />
-          {hasPhoto ? "Upload new photo" : "Upload photo"}
-        </DropdownMenuItem>
-        {hasPhoto && (
-          <DropdownMenuItem
-            variant="destructive"
-            className="h-9 gap-2.5 rounded-lg px-2.5"
-            onClick={() => onRemove(kind)}
-          >
-            <Trash2Icon />
-            Remove photo
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-// The top of the Account section: the cover photo across the top, the profile photo over its
-// bottom edge and the name beside it. Same layout as the Account screen in the mobile app.
+// The top of the Account section: the profile photo with its change menu (upload a new one,
+// or remove it), the name beside it. Same layout as the Account tab in the mobile app.
 function AccountHeader({ account, onChange }) {
   const { updateUser } = useAuth()
   const notify = useToast()
   const input = useRef(null)
-  const [kind, setKind] = useState(null) // the photo the file picker is for
-  const [busy, setBusy] = useState(null) // the photo being uploaded or removed
+  const [busy, setBusy] = useState(false)
+  const hasPhoto = !!account.avatar_url
 
-  const pick = (which) => {
-    setKind(which)
+  const pick = () => {
     // after the menu has closed, or the browser may ignore the click
     setTimeout(() => input.current?.click(), 0)
   }
 
-  const save = async (which, request, done) => {
-    setBusy(which)
+  const save = async (request, done) => {
+    setBusy(true)
     try {
       const data = await request()
       onChange(data)
@@ -124,16 +86,16 @@ function AccountHeader({ account, onChange }) {
       notify(done)
     } catch (err) {
       console.error(err)
-      notify(err.response?.data?.error || `Could not change your ${PHOTO_LABEL[which].toLowerCase()}.`, "error")
+      notify(err.response?.data?.error || "Could not change your profile photo.", "error")
     } finally {
-      setBusy(null)
+      setBusy(false)
     }
   }
 
   const handleFile = (e) => {
     const file = e.target.files?.[0]
     e.target.value = "" // so the same file can be picked again
-    if (!file || !kind) return
+    if (!file) return
     if (!PHOTO_TYPES.includes(file.type)) {
       notify("Choose a JPG or PNG photo.", "error")
       return
@@ -142,59 +104,31 @@ function AccountHeader({ account, onChange }) {
       notify("That photo is over 10 MB. Choose a smaller one.", "error")
       return
     }
-    save(kind, () => uploadProfilePhoto(kind, file), `${PHOTO_LABEL[kind]} changed.`)
+    save(() => uploadProfilePhoto(file), "Profile photo changed.")
   }
 
-  const remove = (which) => save(which, () => removeProfilePhoto(which), `${PHOTO_LABEL[which]} removed.`)
+  const remove = () => save(removeProfilePhoto, "Profile photo removed.")
 
   return (
-    <div className="pt-2 pb-4">
+    <div className="flex items-center gap-4 pt-2 pb-5">
       <input ref={input} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleFile} />
-
-      {/* the cover photo, or the plain green cover until there is one */}
-      <div className="relative h-36 overflow-hidden rounded-xl border sm:h-48" style={{ background: COVER }}>
-        {account.cover_url && <img src={account.cover_url} alt="" className="size-full object-cover" />}
-        {busy === "cover" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+      <div className="relative shrink-0">
+        <Avatar className="size-20 rounded-full sm:size-24">
+          {hasPhoto && <AvatarImage src={account.avatar_url} alt="" />}
+          <AvatarFallback className="rounded-full bg-primary text-2xl font-semibold text-primary-foreground">
+            {initials(account.full_name)}
+          </AvatarFallback>
+        </Avatar>
+        {busy && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
             <Loader2Icon className="size-6 animate-spin text-white" />
           </div>
         )}
-        <div className="absolute top-3 right-3">
-          <PhotoMenu
-            kind="cover"
-            hasPhoto={!!account.cover_url}
-            busy={!!busy}
-            onPick={pick}
-            onRemove={remove}
-            trigger={<Button variant="outline" size="sm" className="bg-card/90 backdrop-blur-sm" />}
-          >
-            <CameraIcon />
-            Change cover
-          </PhotoMenu>
-        </div>
-      </div>
-
-      <div className="flex items-end gap-4 px-4 sm:px-6">
-        <div className="relative -mt-12 shrink-0 sm:-mt-14">
-          <Avatar className="size-24 rounded-full ring-4 ring-popover sm:size-28">
-            {account.avatar_url && <AvatarImage src={account.avatar_url} alt="" />}
-            <AvatarFallback className="rounded-full bg-primary text-2xl font-semibold text-primary-foreground">
-              {initials(account.full_name)}
-            </AvatarFallback>
-          </Avatar>
-          {busy === "avatar" && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-              <Loader2Icon className="size-6 animate-spin text-white" />
-            </div>
-          )}
-          <div className="absolute right-0 bottom-0">
-            <PhotoMenu
-              kind="avatar"
-              hasPhoto={!!account.avatar_url}
-              busy={!!busy}
-              onPick={pick}
-              onRemove={remove}
-              trigger={
+        <div className="absolute -right-1 -bottom-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={busy}
+              render={
                 <Button
                   variant="outline"
                   size="icon-sm"
@@ -204,14 +138,26 @@ function AccountHeader({ account, onChange }) {
               }
             >
               <CameraIcon />
-            </PhotoMenu>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" sideOffset={6} className="min-w-44 rounded-xl p-1.5">
+              <DropdownMenuItem className="h-9 gap-2.5 rounded-lg px-2.5" onClick={pick}>
+                <ImageIcon />
+                {hasPhoto ? "Upload new photo" : "Upload photo"}
+              </DropdownMenuItem>
+              {hasPhoto && (
+                <DropdownMenuItem variant="destructive" className="h-9 gap-2.5 rounded-lg px-2.5" onClick={remove}>
+                  <Trash2Icon />
+                  Remove photo
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <div className="min-w-0 pb-1">
-          <div className="truncate text-lg font-semibold">{account.full_name}</div>
-          <div className="truncate text-sm text-muted-foreground">
-            @{account.username} · {getRoleLabel(account.role)}
-          </div>
+      </div>
+      <div className="min-w-0">
+        <div className="truncate text-lg font-semibold">{account.full_name}</div>
+        <div className="truncate text-sm text-muted-foreground">
+          @{account.username} · {getRoleLabel(account.role)}
         </div>
       </div>
     </div>
@@ -222,7 +168,7 @@ function Value({ children, muted }) {
   return <span className={"truncate text-sm " + (muted ? "text-muted-foreground" : "")}>{children || "–"}</span>
 }
 
-// Settings > Account: the signed-in user's photos and own details, each changed on its own row.
+// Settings > Account: the signed-in user's photo and own details, each changed on its own row.
 function AccountSection() {
   const { updateUser } = useAuth()
   const notify = useToast()

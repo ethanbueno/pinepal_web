@@ -9,12 +9,12 @@ PUT  /api/profile           Edit profile. Only the fields sent are changed; the 
                             municipality, farm location and account status can only be
                             changed by an admin or officer.
 POST /api/profile/password  change only the password (the mobile app); current_password first
-POST   /api/profile/photo/<kind>  kind is avatar or cover: a new photo, multipart field "photo"
-                                  (JPG or PNG, up to 10 MB). Returns the profile.
-DELETE /api/profile/photo/<kind>  remove it (the screens go back to initials / the plain
-                                  cover). Returns the profile.
-                            The photos go to Cloudinary (photo_storage.py); the users row
-                            keeps the URL in avatar_url / cover_url (migrate_profile_photos.py).
+POST   /api/profile/photo/avatar  a new profile photo, multipart field "photo" (JPG or PNG,
+                                   up to 10 MB). Returns the profile.
+DELETE /api/profile/photo/avatar  remove it (the screens go back to initials). Returns the profile.
+                            The photo goes to Cloudinary (photo_storage.py); the users row keeps
+                            the URL in avatar_url (migrate_profile_photos.py). users.cover_url
+                            is left over from a cover photo that was dropped, and is unused.
 
 Every role can use these, but only for their own account. A phone's device token has no
 account, so it gets 403. Errors are { "error": "message" }.
@@ -58,7 +58,6 @@ def load(cursor, user_id):
             "role": user["role"],
             "municipality": user["municipality"],  # same as the farm's for a farmer
             "avatar_url": photo_url(user.get("avatar_url"), request.host_url) or None,
-            "cover_url": photo_url(user.get("cover_url"), request.host_url) or None,
             "created_at": user["created_at"].isoformat() if user["created_at"] else None,
         },
         "farm": farm,
@@ -212,11 +211,11 @@ def change_password():
 
 
 def photo_column(kind):
-    return f"{kind}_url"  # avatar_url / cover_url; kind is checked against PROFILE_PHOTOS first
+    return f"{kind}_url"  # avatar_url; kind is checked against PROFILE_PHOTOS first
 
 
 def replace_photo(user_id, kind, stored):
-    """Save stored (a URL / file name, or None to remove) as the user's avatar or cover, then
+    """Save stored (a URL / file name, or None to remove) as the user's profile photo, then
     delete the old photo from Cloudinary. Returns the profile."""
     connection = get_connection()
     cursor = connection.cursor()
