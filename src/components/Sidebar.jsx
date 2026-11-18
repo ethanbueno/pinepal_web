@@ -13,7 +13,6 @@ import {
   ScrollTextIcon,
   SettingsIcon,
   SmartphoneIcon,
-  SproutIcon,
   UserCogIcon,
   UsersIcon,
 } from "lucide-react"
@@ -58,7 +57,6 @@ const staffLinks = [
 
 const farmerLinks = [
   { to: "/", label: "Home", icon: HouseIcon, end: true },
-  { to: "/my-farm", label: "My Farm", icon: SproutIcon },
   { to: "/diagnose", label: "Scan", icon: CameraIcon },
   { to: "/my-scans", label: "History", icon: HistoryIcon },
   { to: "/guides", label: "Guide", icon: BookOpenIcon },

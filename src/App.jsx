@@ -4,7 +4,6 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import ForgotPassword from "./pages/ForgotPassword"
-import FarmerHome from "./pages/FarmerHome"
 import Home from "./pages/Home"
 import MyScans from "./pages/MyScans"
 import Guides from "./pages/Guides"
@@ -50,7 +49,8 @@ function App() {
         <Route path="/settings" element={<Settings />} />
 
         {/* farmers only */}
-        <Route path="/my-farm" element={<ProtectedRoute roles={["farmer"]}><FarmerHome /></ProtectedRoute>} />
+        {/* My Farm is part of Home now */}
+        <Route path="/my-farm" element={<Navigate to="/" replace />} />
         <Route path="/my-scans" element={<ProtectedRoute roles={["farmer"]}><MyScans /></ProtectedRoute>} />
         <Route path="/guides" element={<ProtectedRoute roles={["farmer"]}><Guides /></ProtectedRoute>} />
 
