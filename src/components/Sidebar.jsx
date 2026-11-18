@@ -29,7 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -138,7 +138,7 @@ function AppSidebar({ user, onLogout }) {
 
       <SidebarFooter className="p-3 pb-4 group-data-[collapsible=icon]:p-2">
         <SidebarMenu className="gap-2">
-          {/* the Android app, same link as the login page (admins change it on their Profile page);
+          {/* the Android app, same link as the login page (admins change it in Settings > Mobile app);
               no border, a soft amber glow on hover; collapsed it is just the icon with a tooltip */}
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -160,7 +160,8 @@ function AppSidebar({ user, onLogout }) {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
-                <Avatar className="size-8 rounded-lg">
+                <Avatar className="size-8 rounded-lg after:rounded-lg">
+                  {user.avatar_url && <AvatarImage src={user.avatar_url} alt="" className="rounded-lg" />}
                   <AvatarFallback className="rounded-lg">{initials(user.full_name)}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -181,8 +182,8 @@ function AppSidebar({ user, onLogout }) {
                   <DropdownMenuLabel className="truncate px-2.5 pt-1.5 pb-1 text-sm font-normal">
                     @{user.username}
                   </DropdownMenuLabel>
-                  {/* Profile and the theme are in the Settings window, like Settings on mobile */}
-                  <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={() => openSettings("profile")}>
+                  {/* Account and the theme are in the Settings window, like Settings on mobile */}
+                  <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={() => openSettings("account")}>
                     <SettingsIcon />
                     Settings
                   </DropdownMenuItem>

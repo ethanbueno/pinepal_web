@@ -9,6 +9,12 @@ PUT  /api/profile           Edit profile. Only the fields sent are changed; the 
                             municipality, farm location and account status can only be
                             changed by an admin or officer.
 POST /api/profile/password  change only the password (the mobile app); current_password first
+POST   /api/profile/photo/<kind>  kind is avatar or cover: a new photo, multipart field "photo"
+                                  (JPG or PNG, up to 10 MB). Returns the profile.
+DELETE /api/profile/photo/<kind>  remove it (the screens go back to initials / the plain
+                                  cover). Returns the profile.
+                            The photos go to Cloudinary (photo_storage.py); the users row
+                            keeps the URL in avatar_url / cover_url (migrate_profile_photos.py).
 
 Every role can use these, but only for their own account. A phone's device token has no
 account, so it gets 403. Errors are { "error": "message" }.
@@ -19,6 +25,7 @@ from flask_jwt_extended import get_jwt_identity
 from database import get_connection
 from farmers import SELECT, USERNAME, serialize as farm_json
 from permissions import role_required
+from photo_storage import PROFILE_PHOTOS, PhotoStorageError, delete_scan_photo, photo_url, save_profile_photo
 from security import password_problem, set_password, stored_password_hash, verify_password
 from web_auth import EMAIL_PATTERN
 
@@ -33,9 +40,9 @@ def error(message, status=400):
 
 def load(cursor, user_id):
     """The profile as the API sends it: { account, farm } (farm is null for staff)."""
-    cursor.execute(
-        "SELECT id, name, username, email, role, municipality, created_at FROM users WHERE id = %s", (user_id,)
-    )
+    # SELECT * so the profile still loads on a database that migrate_profile_photos.py has
+    # not reached yet (the photos are then just missing). users holds no secrets.
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     farm = None
     if user["role"] == "farmer":
@@ -50,6 +57,8 @@ def load(cursor, user_id):
             "email": user["email"],
             "role": user["role"],
             "municipality": user["municipality"],  # same as the farm's for a farmer
+            "avatar_url": photo_url(user.get("avatar_url"), request.host_url) or None,
+            "cover_url": photo_url(user.get("cover_url"), request.host_url) or None,
             "created_at": user["created_at"].isoformat() if user["created_at"] else None,
         },
         "farm": farm,
@@ -200,3 +209,57 @@ def change_password():
         connection.close()
 
     return jsonify({"message": "Password changed"}), 200
+
+
+def photo_column(kind):
+    return f"{kind}_url"  # avatar_url / cover_url; kind is checked against PROFILE_PHOTOS first
+
+
+def replace_photo(user_id, kind, stored):
+    """Save stored (a URL / file name, or None to remove) as the user's avatar or cover, then
+    delete the old photo from Cloudinary. Returns the profile."""
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        column = photo_column(kind)
+        cursor.execute(f"SELECT {column} FROM users WHERE id = %s", (user_id,))
+        old = cursor.fetchone()[column]
+        cursor.execute(f"UPDATE users SET {column} = %s WHERE id = %s", (stored, user_id))
+        connection.commit()
+        result = load(cursor, user_id)
+    except Exception:
+        connection.rollback()
+        if stored:
+            delete_scan_photo(stored)  # the new photo is not used, so don't leave it on Cloudinary
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+    if old and old != stored:
+        delete_scan_photo(old)
+    return result
+
+
+@profile.route("/api/profile/photo/<kind>", methods=["POST"])
+@role_required(*ANY_ROLE)
+def upload_photo(kind):
+    if kind not in PROFILE_PHOTOS:
+        return error("Unknown photo", 404)
+    file = request.files.get("photo")
+    if not file:
+        return error("Choose a photo")
+    try:
+        stored = save_profile_photo(file, kind)
+    except PhotoStorageError:
+        return error("Could not save the photo. Try again in a moment.", 502)
+    if stored is None:
+        return error("The photo must be a JPG or PNG")
+    return jsonify(replace_photo(get_jwt_identity(), kind, stored)), 200
+
+
+@profile.route("/api/profile/photo/<kind>", methods=["DELETE"])
+@role_required(*ANY_ROLE)
+def remove_photo(kind):
+    if kind not in PROFILE_PHOTOS:
+        return error("Unknown photo", 404)
+    return jsonify(replace_photo(get_jwt_identity(), kind, None)), 200

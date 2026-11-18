@@ -6,6 +6,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from database import get_connection
 from farmers import LOCKED_MUNICIPALITY, add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login, record_logout
+from photo_storage import photo_url
 from security import LOGIN_SELECT, password_problem, set_password, verify_password
 
 # Login for the web dashboard (matches the API contract in CLAUDEweb.md).
@@ -35,6 +36,8 @@ def user_json(row):
         "full_name": row["name"],
         "username": row["username"],
         "role": row["role"],
+        # for the sidebar's user card; .get so sign-in still works before migrate_profile_photos.py
+        "avatar_url": photo_url(row.get("avatar_url"), request.host_url) or None,
     }
 
 

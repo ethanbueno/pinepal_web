@@ -44,8 +44,9 @@ function App() {
         {/* every role: Home shows the dashboard for staff and the welcome page for farmers */}
         <Route path="/" element={<Home />} />
         <Route path="/scans/:uuid" element={<ScanDetail />} />
-        {/* Profile and Settings are a window now; old links open it over the home page */}
-        <Route path="/profile" element={<OpenSettings section="profile" />} />
+        {/* Account and Settings are a window now; old links open it over the home page */}
+        <Route path="/account" element={<OpenSettings section="account" />} />
+        <Route path="/profile" element={<OpenSettings section="account" />} />
         <Route path="/settings" element={<OpenSettings section="appearance" />} />
 
         {/* farmers only */}

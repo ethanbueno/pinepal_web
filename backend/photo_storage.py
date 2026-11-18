@@ -24,6 +24,21 @@ import cloudinary.uploader  # noqa: E402
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 CLOUDINARY_FOLDER = "pinepal/scans"
 
+# Profile photos (my_profile.py): kind -> Cloudinary folder, and how Cloudinary resizes the
+# photo as it stores it, so a 12 MP phone photo is kept small. Avatars are cropped square
+# around the face, covers are kept wide (the screens crop them to fit).
+PROFILE_PHOTOS = {
+    "avatar": {
+        "folder": "pinepal/avatars",
+        "transformation": [{"width": 512, "height": 512, "crop": "fill", "gravity": "face"}],
+    },
+    "cover": {
+        "folder": "pinepal/covers",
+        "transformation": [{"width": 1600, "height": 900, "crop": "limit"}],
+    },
+}
+OUR_FOLDERS = [CLOUDINARY_FOLDER] + [kind["folder"] for kind in PROFILE_PHOTOS.values()]
+
 # The photo is checked by its first bytes, not by the name or type the phone sends
 IMAGE_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png"}
 
@@ -80,6 +95,39 @@ def save_scan_photo(file_storage, scan_uuid):
     return filename
 
 
+def save_profile_photo(file_storage, kind):
+    """Store a new avatar or cover photo (kind is a PROFILE_PHOTOS key). Returns what goes in
+    users.avatar_url / cover_url: the Cloudinary https URL, or the local file name
+    (<uuid>.jpg / .png in uploads/). Returns None when the file is not a JPG or PNG, and
+    raises PhotoStorageError when Cloudinary fails."""
+    extension = photo_type(file_storage)
+    if extension is None:
+        return None
+
+    if using_cloudinary():
+        settings = PROFILE_PHOTOS[kind]
+        try:
+            result = cloudinary.uploader.upload(
+                file_storage.stream,
+                folder=settings["folder"],
+                public_id=uuid.uuid4().hex,
+                resource_type="image",
+                overwrite=False,
+                transformation=settings["transformation"],
+            )
+        except Exception as error:
+            raise PhotoStorageError(str(error)) from error
+        url = result.get("secure_url")
+        if not url:
+            raise PhotoStorageError("Cloudinary returned no URL")
+        return url
+
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    filename = f"{uuid.uuid4()}.{extension}"  # the same shape as a scan photo, so /uploads serves it
+    file_storage.save(os.path.join(UPLOAD_DIR, filename))
+    return filename
+
+
 def photo_url(stored, host_url):
     """The URL an <img> can load for a stored photo, or "" when there is none on the server.
     host_url is request.host_url, used for photos in uploads/."""
@@ -93,7 +141,7 @@ def photo_url(stored, host_url):
 
 def cloudinary_public_id(url):
     """The public_id (pinepal/scans/<id> or <id>) from a Cloudinary delivery URL of a scan
-    photo, or None for any other URL.
+    or profile photo, or None for any other URL.
     e.g. https://res.cloudinary.com/<cloud>/image/upload/v1700000000/pinepal/scans/<id>.jpg"""
     parsed = urlparse(url or "")
     if not parsed.netloc.endswith("cloudinary.com") or "/upload/" not in parsed.path:
@@ -103,13 +151,14 @@ def cloudinary_public_id(url):
     public_id = os.path.splitext(path)[0]
     # Fixed-folder accounts put the folder in the public_id (pinepal/scans/<id>). Accounts in
     # dynamic folder mode may keep it out (just <id>), so accept both, but only our own ids.
-    if re.fullmatch(re.escape(CLOUDINARY_FOLDER) + r"/[0-9a-f]{32}|[0-9a-f]{32}", public_id):
+    folders = "|".join(re.escape(folder) for folder in OUR_FOLDERS)
+    if re.fullmatch(rf"(?:{folders})/[0-9a-f]{{32}}|[0-9a-f]{{32}}", public_id):
         return public_id
     return None
 
 
 def delete_scan_photo(stored):
-    """Best effort: remove a scan's photo from Cloudinary. Never raises. Local files are left
+    """Best effort: remove a scan's (or a profile's) photo from Cloudinary. Never raises. Local files are left
     in uploads/ as before (the backups keep them)."""
     try:
         public_id = cloudinary_public_id(stored) if is_remote(stored) else None

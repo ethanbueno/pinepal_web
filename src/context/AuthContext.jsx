@@ -1,5 +1,5 @@
-import { createContext, useContext, useState } from "react";
-import { loginRequest, logoutRequest } from "../api/auth";
+import { createContext, useContext, useEffect, useState } from "react";
+import { getMe, loginRequest, logoutRequest } from "../api/auth";
 import { clearCache } from "../api/cache";
 
 const AuthContext = createContext(null);
@@ -38,6 +38,27 @@ function loadUser() {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(loadUser);
+  const signedInId = user?.id;
+
+  // The saved user is from the last sign-in, so a photo or name changed since (on the phone,
+  // say) would not show. Fetch the current one once per sign-in and keep it.
+  useEffect(() => {
+    if (!signedInId) return;
+    getMe()
+      .then((me) =>
+        setUser((current) => {
+          if (!current || current.id !== me.id) return current;
+          const next = { ...current, ...me };
+          try {
+            localStorage.setItem("user", JSON.stringify(next));
+          } catch {
+            // storage unavailable
+          }
+          return next;
+        })
+      )
+      .catch(() => null); // offline or signed out meanwhile: keep what is saved
+  }, [signedInId]);
 
   const login = async (username, password) => {
     const data = await loginRequest(username, password);
@@ -57,7 +78,7 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // after the Profile page saves a change, so the sidebar shows the new name right away
+  // after Settings > Account saves a change, so the sidebar shows the new name and photo right away
   const updateUser = (changes) => {
     const next = { ...user, ...changes };
     try {

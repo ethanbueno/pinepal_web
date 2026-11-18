@@ -2,7 +2,7 @@ import { useEffect, useSyncExternalStore } from "react"
 import { getAppDownloadUrl } from "../api/settings"
 import { APP_DOWNLOAD_URL } from "../config/app"
 
-// The mobile app's download link, as an admin last saved it (Profile page), shared by the
+// The mobile app's download link, as an admin last saved it (Settings > Mobile app), shared by the
 // login page and the sidebar. It starts on the built-in link, so the button always works,
 // and is fetched once per page load. setAppDownloadUrl() updates every user of it at once.
 

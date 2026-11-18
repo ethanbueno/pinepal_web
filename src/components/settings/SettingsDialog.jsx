@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext"
 import { useTheme } from "../../hooks/useTheme"
 import { closeSettings, showSettingsSection, useSettingsDialog } from "../../hooks/useSettingsDialog"
 import AppDownloadForm from "../AppDownloadForm"
-import ProfileSection from "./ProfileSection"
+import AccountSection from "./AccountSection"
 import SettingsRow from "./SettingsRow"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -61,7 +61,7 @@ function MobileAppSection() {
 }
 
 const SECTIONS = [
-  { key: "profile", label: "Profile", icon: UserIcon, Content: ProfileSection },
+  { key: "account", label: "Account", icon: UserIcon, Content: AccountSection },
   { key: "appearance", label: "Appearance", icon: PaletteIcon, Content: AppearanceSection },
   { key: "mobile-app", label: "Mobile app", icon: SmartphoneIcon, Content: MobileAppSection, adminOnly: true },
 ]
