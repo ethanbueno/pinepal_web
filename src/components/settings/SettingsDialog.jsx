@@ -1,9 +1,12 @@
-import { MonitorSmartphoneIcon, MoonIcon, PaletteIcon, SmartphoneIcon, SunIcon, XIcon } from "lucide-react"
+import { useState } from "react"
+import { DatabaseBackupIcon, DownloadIcon, MonitorSmartphoneIcon, MoonIcon, PaletteIcon, SmartphoneIcon, SunIcon, XIcon } from "lucide-react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { useAuth } from "../../context/AuthContext"
 import { useTheme } from "../../hooks/useTheme"
 import { closeSettings, showSettingsSection, useSettingsDialog } from "../../hooks/useSettingsDialog"
 import AppDownloadForm from "../AppDownloadForm"
+import { useToast } from "../toastcontext"
+import { downloadBackup } from "../../api/backup"
 import AccountSection from "./AccountSection"
 import SettingsRow from "./SettingsRow"
 import { Button } from "@/components/ui/button"
@@ -62,9 +65,52 @@ function MobileAppSection() {
 
 // The Settings sections. Account is its own window (same look, no section list), opened
 // from the account menu's Account item.
+// Admins only: download an encrypted copy of the whole database (backend/admin_backup.py).
+// Restoring one stays a script (backend/restore.py).
+function BackupSection() {
+  const notify = useToast()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleBackup = async () => {
+    setBusy(true)
+    setError("")
+    try {
+      await downloadBackup()
+      notify("Backup downloaded.")
+    } catch (err) {
+      console.error(err)
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="divide-y">
+      <SettingsRow
+        label="Database backup"
+        hint="Every table and the photos on the server, in one encrypted .zip. Keep it somewhere safe, like Google Drive."
+      >
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <Button onClick={handleBackup} disabled={busy}>
+            <DownloadIcon />
+            {busy ? "Preparing backup..." : "Download backup"}
+          </Button>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+      </SettingsRow>
+      <SettingsRow label="Restoring" hint="Restoring replaces the database, so it is done by hand with restore.py and the encryption key.">
+        <span className="text-sm text-muted-foreground">See BACKUP_AND_RECOVERY.md</span>
+      </SettingsRow>
+    </div>
+  )
+}
+
 const SECTIONS = [
   { key: "appearance", label: "Appearance", icon: PaletteIcon, Content: AppearanceSection },
   { key: "mobile-app", label: "Mobile app", icon: SmartphoneIcon, Content: MobileAppSection, adminOnly: true },
+  { key: "backup", label: "Backup", icon: DatabaseBackupIcon, Content: BackupSection, adminOnly: true },
 ]
 
 // Settings (and Account), opened from the sidebar's account menu: a large window over the page (at most

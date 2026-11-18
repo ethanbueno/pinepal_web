@@ -31,6 +31,8 @@ backups (a password manager): **a backup can't be restored without it**. If the 
 
 Today a backup is under 1 MB and takes a few seconds. To save it straight to another drive, use `python backup.py --out E:\pinepal-backups`.
 
+From the web, an admin can also open **Settings > Backup** and click **Download backup**. It makes the same encrypted zip and downloads it to their computer; nothing is kept on the server (Render's disk is wiped on restart). It needs `DATA_ENCRYPTION_KEY` and the database admin login (`DB_ADMIN_USER` / `DB_ADMIN_PASSWORD`, or `DB_USER` being the admin) set on the server, and it is recorded in the audit logs. Restoring is never done from the web.
+
 ## When and where
 
 | When | Why |

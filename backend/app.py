@@ -23,6 +23,7 @@ from my_profile import profile
 from audit_logs import audit_logs
 from password_reset import password_reset
 from app_settings import app_settings
+from admin_backup import admin_backup
 from activity_log import init_activity_log
 
 load_dotenv()
@@ -35,7 +36,7 @@ app.config["JWT_SECRET_KEY"] = os.getenv(
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB uploads
 
 jwt = JWTManager(app)
-CORS(app)
+CORS(app, expose_headers=["Content-Disposition", "X-Row-Count"])  # read by the web app (file names, row counts)
 
 app.register_blueprint(auth)
 app.register_blueprint(users)
@@ -49,6 +50,7 @@ app.register_blueprint(profile)
 app.register_blueprint(audit_logs)
 app.register_blueprint(password_reset)
 app.register_blueprint(app_settings)
+app.register_blueprint(admin_backup)
 
 # every request goes into audit_logs (activity_log.py)
 init_activity_log(app)

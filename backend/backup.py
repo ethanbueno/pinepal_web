@@ -20,11 +20,14 @@ Keep the key somewhere apart from the backups, such as a password manager.
 It uses the admin login (DB_ADMIN_USER), because only that one can read the table and
 trigger definitions. Each backup is also recorded in the audit logs.
 
+Admins can also download one from the web: Settings > Backup (admin_backup.py).
+
 Restore with restore.py. The plan for when and how is in BACKUP_AND_RECOVERY.md.
 """
 import argparse
 import getpass
 import hashlib
+import io
 import json
 import os
 import zipfile
@@ -134,14 +137,11 @@ def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Back up the PinePal database and scan photos.")
-    parser.add_argument("--out", default=BACKUP_DIR, help="folder to save the zip in (default: backups/)")
-    args = parser.parse_args()
-
+def make_backup():
+    """Build the backup zip in memory. Returns (zip bytes, file name, summary for the audit log,
+    details for printing). Used by main() and by the admin's Back up button (admin_backup.py)."""
     database = os.getenv("DB_NAME")
     connection = admin_connection(database)
-    print(f"Reading {database}...")
     sql, counts, trigger_count = dump_database(connection)
     cursor = connection.cursor()
     cursor.execute("SELECT VERSION()")
@@ -168,29 +168,47 @@ def main():
         "encrypted": cipher() is not None,
     }
     encrypted = manifest["encrypted"]
-    if not encrypted:
-        print("WARNING: DATA_ENCRYPTION_KEY is not set, so this backup is NOT encrypted.")
     suffix = ".enc" if encrypted else ""
     seal = encrypt_bytes if encrypted else (lambda data: data)
 
-    os.makedirs(args.out, exist_ok=True)
-    path = os.path.join(args.out, f"pinepal_backup_{created:%Y-%m-%d_%H%M%S}.zip")
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("database.sql" + suffix, seal(sql_bytes))
         for name, data in photos:
             archive.writestr(f"uploads/{name}{suffix}", seal(data))
         archive.writestr("manifest.json", json.dumps(manifest, indent=2))
 
-    total_rows = sum(counts.values())
-    size_kb = os.path.getsize(path) / 1024
+    filename = f"pinepal_backup_{created:%Y-%m-%d_%H%M%S}.zip"
+    summary = (f"Backed up the database and {len(photos)} photos"
+               f"{', encrypted' if encrypted else ''} ({filename})")
+    details = {"counts": counts, "triggers": trigger_count, "photos": len(photos), "encrypted": encrypted}
+    return buffer.getvalue(), filename, summary, details
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Back up the PinePal database and scan photos.")
+    parser.add_argument("--out", default=BACKUP_DIR, help="folder to save the zip in (default: backups/)")
+    args = parser.parse_args()
+
+    print(f"Reading {os.getenv('DB_NAME')}...")
+    data, filename, summary, details = make_backup()
+    if not details["encrypted"]:
+        print("WARNING: DATA_ENCRYPTION_KEY is not set, so this backup is NOT encrypted.")
+
+    os.makedirs(args.out, exist_ok=True)
+    path = os.path.join(args.out, filename)
+    with open(path, "wb") as f:
+        f.write(data)
+
+    counts = details["counts"]
     print(f"Saved {path}")
-    print(f"  {len(counts)} tables, {total_rows} rows, {trigger_count} triggers, {len(photos)} photos, {size_kb:.0f} KB"
-          + (", encrypted" if encrypted else ", NOT encrypted"))
+    print(f"  {len(counts)} tables, {sum(counts.values())} rows, {details['triggers']} triggers, "
+          f"{details['photos']} photos, {len(data) / 1024:.0f} KB"
+          + (", encrypted" if details["encrypted"] else ", NOT encrypted"))
     for table, n in counts.items():
         print(f"  {table:40} {n:>6} rows")
     print("Copy it somewhere off this laptop too (Google Drive, a USB stick).")
-    log_event("BACKUP", f"Backed up the database and {len(photos)} photos"
-              f"{', encrypted' if encrypted else ''} ({os.path.basename(path)})")
+    log_event("BACKUP", summary)
 
 
 if __name__ == "__main__":
