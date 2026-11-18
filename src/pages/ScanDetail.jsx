@@ -253,7 +253,7 @@ function ScanDetail() {
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   {scan.verified_label && (
                     <span>
-                      AI:{" "}
+                      Predicted:{" "}
                       <span className="font-medium text-foreground">
                         {predictedDisease?.name || scan.predicted_label}
                       </span>{" "}
