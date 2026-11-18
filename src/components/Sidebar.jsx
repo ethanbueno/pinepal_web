@@ -43,7 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import logo from "../assets/pinepal-logo.png"
-import { APP_DOWNLOAD_URL } from "../config/app"
+import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
 import { getRoleLabel } from "../utils/roles"
 import { useTheme } from "../hooks/useTheme"
 
@@ -81,6 +81,7 @@ function AppSidebar({ user, onLogout }) {
   const navigate = useNavigate()
   const { dark, toggleTheme } = useTheme()
   const { isMobile, setOpenMobile } = useSidebar()
+  const appDownloadUrl = useAppDownloadUrl()
 
   // on phones the sidebar is a drawer over the page: close it once a link is followed,
   // so the new page does not load and re-render underneath it
@@ -141,13 +142,14 @@ function AppSidebar({ user, onLogout }) {
 
       <SidebarFooter className="p-3 pb-4 group-data-[collapsible=icon]:p-2">
         <SidebarMenu className="gap-2">
-          {/* the Android app, same link as the login page; collapsed it is just the icon with a tooltip */}
+          {/* the Android app, same link as the login page (admins change it on their Profile page);
+              no border, a soft amber glow instead; collapsed it is just the icon with a tooltip */}
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               tooltip="Download mobile app"
-              className="border bg-card shadow-xs hover:bg-primary/10 group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
-              render={<a href={APP_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" />}
+              className="bg-card shadow-[0_0_14px_-2px_color-mix(in_oklab,var(--primary)_45%,transparent)] transition-shadow hover:bg-primary/10 hover:shadow-[0_0_18px_-2px_color-mix(in_oklab,var(--primary)_60%,transparent)] group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
+              render={<a href={appDownloadUrl} target="_blank" rel="noopener noreferrer" />}
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-text">
                 <SmartphoneIcon className="size-4" />

@@ -4,7 +4,7 @@ import ThemeToggle from "./ThemeToggle"
 import AuthPhotoSlideshow from "./AuthPhotoSlideshow"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { APP_DOWNLOAD_URL } from "../config/app"
+import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
 
 // Eased left-edge fade for the photo half (smoothstep-like stops, so there's no visible band)
 const PHOTO_FADE =
@@ -18,6 +18,7 @@ const PHOTO_FADE =
 // headerAction is an extra button shown next to the theme toggle (Register uses it for "Back to login").
 // compact (Register) uses a smaller headline and drops "Download mobile app" so the longer form fits without scrolling.
 function AuthSplitLayout({ title, tagline, headerAction, compact = false, children }) {
+  const appDownloadUrl = useAppDownloadUrl()
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-2 lg:gap-6 lg:p-6">
       <div className="flex min-h-screen flex-col px-4 pt-4 pb-8 sm:px-8 lg:min-h-0 lg:px-6 lg:py-0">
@@ -66,7 +67,7 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, childr
                 <Button
                   variant="outline"
                   className="h-10 rounded-[10px] px-4 text-[15px]"
-                  render={<a href={APP_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" />}
+                  render={<a href={appDownloadUrl} target="_blank" rel="noopener noreferrer" />}
                   nativeButton={false}
                 >
                   <SmartphoneIcon /> Download mobile app

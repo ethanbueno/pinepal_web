@@ -41,6 +41,7 @@ SKIPPED_ENDPOINTS = {
     "mobile_scans.count_scans",   # a number, e.g. the Export page's row count
     "scans.list_diseases",        # the disease guide
     "mobile_sync.my_scans",       # a phone loading its own scans
+    "app_settings.get_app_download",  # the public mobile app link
 }
 
 # what each endpoint does, in words; {name} is filled from the URL

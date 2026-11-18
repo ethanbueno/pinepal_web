@@ -108,6 +108,18 @@ CREATE TABLE IF NOT EXISTS mobile_scans (
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Settings admins change from the web, one row each (app_settings.py): for now the mobile
+-- app's download link (app_download_url).
+CREATE TABLE IF NOT EXISTS app_settings (
+  setting_key varchar(64) NOT NULL,
+  setting_value text DEFAULT NULL,
+  updated_by int(11) DEFAULT NULL,
+  updated_at datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (setting_key),
+  KEY fk_app_settings_user (updated_by),
+  CONSTRAINT fk_app_settings_user FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- Every sign-in attempt on the web and the mobile app (login_history.py). A trigger copies
 -- each row into audit_logs. Only the typed username is kept, never the password.
 CREATE TABLE IF NOT EXISTS login_history (
