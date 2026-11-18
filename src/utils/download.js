@@ -15,11 +15,8 @@ export function directDownloadUrl(url) {
     : url
 }
 
-// <a> attributes for a Download button: a direct download stays on this page (the browser
-// just saves the file), anything else opens in a new tab.
+// <a> attributes for a Download button: always a new tab, so PinePal stays open in its own
+// tab (for a direct download the browser saves the file and closes that tab again)
 export function downloadLinkProps(url) {
-  const direct = directDownloadUrl(url)
-  return direct !== url
-    ? { href: direct }
-    : { href: url, target: "_blank", rel: "noopener noreferrer" }
+  return { href: directDownloadUrl(url), target: "_blank", rel: "noopener noreferrer" }
 }
