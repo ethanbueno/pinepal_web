@@ -9,8 +9,9 @@ POST /api/mobile/scans   upload one scan (form data, with the photo as the "imag
                          The web Diagnose page uses it too when a farmer saves a scan.
                          Safe to repeat: sending the same scan_uuid again updates the notes
                          and the farmer's feedback instead of making a duplicate.
-GET  /api/mobile/scans   the farmer's own scans, for the Online view of the app's dashboard.
-                         Only what the charts and map need; the label is the one to count
+GET  /api/mobile/scans   the farmer's own scans, for the Online view of the app's dashboard
+                         and for History (scans from the web or another phone, and the
+                         officer's verification of each). "label" is the one to count
                          (officer's correction, then the farmer's, then the model's).
 
 Scans are synced by a farmer account or by a phone's device token. Each farmer account has
@@ -30,7 +31,7 @@ from echague_area import OUTSIDE_ECHAGUE, in_echague
 from farmers import add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
 from mobile_scans import LABELS
-from photo_storage import PhotoStorageError, is_remote, save_scan_photo
+from photo_storage import PhotoStorageError, is_remote, photo_url, save_scan_photo
 from security import LOGIN_SELECT, verify_password
 from web_auth import DEACTIVATED, is_deactivated, user_json
 
@@ -337,7 +338,10 @@ def my_scans():
         cursor.execute(
             """
             SELECT scan_uuid, scanned_at, latitude, longitude,
-                   COALESCE(verified_label, farmer_label, predicted_label) AS label
+                   COALESCE(verified_label, farmer_label, predicted_label) AS label,
+                   predicted_label, confidence, second_label, second_confidence,
+                   image_source, image_path, municipality, farm_name, notes,
+                   verified_label, verified_by, verified_at, farmer_feedback, farmer_label
             FROM mobile_scans
             WHERE farmer_id = %s
             ORDER BY scanned_at DESC
@@ -349,14 +353,32 @@ def my_scans():
         cursor.close()
         connection.close()
 
+    def number(value):
+        # DECIMAL columns come back as Decimal, which JSON cannot hold
+        return float(value) if value is not None else None
+
     scans = [
         {
             "scan_uuid": row["scan_uuid"],
             "label": row["label"],
             "scanned_at": row["scanned_at"].isoformat(),
-            # DECIMAL columns come back as Decimal, which JSON cannot hold
             "latitude": float(row["latitude"]),
             "longitude": float(row["longitude"]),
+            # the rest is for History in the app (added later, so older apps ignore it)
+            "predicted_label": row["predicted_label"],
+            "confidence": number(row["confidence"]),
+            "second_label": row["second_label"],
+            "second_confidence": number(row["second_confidence"]),
+            "image_source": row["image_source"],
+            "image_url": photo_url(row["image_path"], request.host_url),
+            "municipality": row["municipality"],
+            "farm_name": row["farm_name"],
+            "notes": row["notes"],
+            "verified_label": row["verified_label"],
+            "verified_by": row["verified_by"],
+            "verified_at": row["verified_at"].isoformat() if row["verified_at"] else None,
+            "farmer_feedback": row["farmer_feedback"],
+            "farmer_label": row["farmer_label"],
         }
         for row in rows
     ]
