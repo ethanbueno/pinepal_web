@@ -135,7 +135,7 @@ function PhotoSlot({ url, name, label, onChange }) {
       ) : (
         <div className="flex size-28 shrink-0 flex-col items-center justify-center gap-1 rounded-lg bg-muted text-center text-muted-foreground ring-1 ring-foreground/10">
           <ImageIcon className="size-5" />
-          <span className="text-[10px] leading-tight">Photo coming soon</span>
+          <span className="text-[10px] leading-tight">No photo</span>
         </div>
       )}
       {/* a label styled as a button opens the hidden file picker */}

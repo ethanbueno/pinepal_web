@@ -190,7 +190,7 @@ const PHOTO_SLOTS = 5
 // The reference photos in the guide header: the main photo, then four smaller ones to its right
 // (wrapping on narrow screens). A photo is a button that opens the dialog at that photo, where
 // Prev/Next or the Left/Right arrow keys go through the photos that loaded (Escape or a click
-// outside closes it). A missing photo, or one that fails to load, shows a "Photo coming soon" box.
+// outside closes it). A missing photo, or one that fails to load, is left out (no empty box).
 function ReferencePhotos({ urls, name }) {
   const [broken, setBroken] = useState(() => new Set())
   const [openIndex, setOpenIndex] = useState(null)
@@ -221,37 +221,28 @@ function ReferencePhotos({ urls, name }) {
 
   return (
     <>
-      <div className="mb-3 flex flex-wrap gap-2">
-        {slots.map((url, i) => {
-          const size = i === 0 ? "h-32 w-48 sm:h-36 sm:w-56" : "h-32 w-24 sm:h-36 sm:w-28"
-          const box = "block shrink-0 overflow-hidden rounded-lg ring-1 ring-foreground/10 " + size
-          if (!url || broken.has(url)) {
+      {total > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {loaded.map((url, i) => {
+            const size = i === 0 ? "h-32 w-48 sm:h-36 sm:w-56" : "h-32 w-24 sm:h-36 sm:w-28"
+            const box = "block shrink-0 overflow-hidden rounded-lg ring-1 ring-foreground/10 " + size
             return (
-              <div
-                key={i}
-                className={box + " flex flex-col items-center justify-center gap-1 bg-muted p-1 text-center text-muted-foreground"}
+              <button
+                key={url}
+                type="button"
+                aria-label={`View larger photo ${i + 1}`}
+                onClick={() => setOpenIndex(i)}
+                className={box + " relative cursor-zoom-in focus-visible:outline-2 focus-visible:outline-primary"}
               >
-                <ImageIcon className="size-5" />
-                <span className="text-[10px] leading-tight">Photo coming soon</span>
-              </div>
+                <img src={url} alt={name} className="size-full object-cover" onError={() => markBroken(url)} />
+                <span className="absolute right-1 bottom-1 rounded-md bg-black/60 p-0.5 text-white">
+                  <ZoomInIcon className="size-3.5" />
+                </span>
+              </button>
             )
-          }
-          return (
-            <button
-              key={i}
-              type="button"
-              aria-label={`View larger photo ${i + 1}`}
-              onClick={() => setOpenIndex(loaded.indexOf(url))}
-              className={box + " relative cursor-zoom-in focus-visible:outline-2 focus-visible:outline-primary"}
-            >
-              <img src={url} alt={name} className="size-full object-cover" onError={() => markBroken(url)} />
-              <span className="absolute right-1 bottom-1 rounded-md bg-black/60 p-0.5 text-white">
-                <ZoomInIcon className="size-3.5" />
-              </span>
-            </button>
-          )
-        })}
-      </div>
+          })}
+        </div>
+      )}
       <Dialog open={current !== null} onOpenChange={(open) => !open && setOpenIndex(null)}>
         <DialogContent className="max-h-[calc(100%-2rem)] gap-3 p-4 sm:max-w-4xl" onKeyDown={onKeyDown}>
           {current !== null && (
