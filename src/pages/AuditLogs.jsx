@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import DatePicker from "../components/DatePicker"
 import { Link } from "react-router-dom"
 import { ChevronRightIcon, GlobeIcon, ScrollTextIcon, SmartphoneIcon } from "lucide-react"
 import { getAuditLogs } from "../api/auditLogs"
@@ -512,21 +513,19 @@ function AuditLogs() {
             />
           </Field>
           <Field label="From">
-            <Input
-              type="date"
+            <DatePicker
               className="w-full sm:w-38"
               value={filters.from}
               max={filters.to || undefined}
-              onChange={(e) => changeFilter("from", e.target.value)}
+              onChange={(value) => changeFilter("from", value)}
             />
           </Field>
           <Field label="To">
-            <Input
-              type="date"
+            <DatePicker
               className="w-full sm:w-38"
               value={filters.to}
               min={filters.from || undefined}
-              onChange={(e) => changeFilter("to", e.target.value)}
+              onChange={(value) => changeFilter("to", value)}
             />
           </Field>
           <Field label="Result">

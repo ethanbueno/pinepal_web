@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import DatePicker from "../components/DatePicker"
 import { Link } from "react-router-dom"
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet"
 import { getMapScans } from "../api/scans"
@@ -14,7 +15,6 @@ import SelectField, { toOptions } from "../components/SelectField"
 import { formatDate, formatPercent, scanImage } from "../utils/format"
 import { Card, CardContent } from "@/components/ui/card"
 import { Toggle } from "@/components/ui/toggle"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import PinePalLoader from "../components/PinePalLoader"
 
@@ -142,11 +142,11 @@ function DiseaseMap() {
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
               <Label className="text-muted-foreground">From</Label>
-              <Input type="date" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
+              <DatePicker value={range.from} onChange={(value) => setRange({ ...range, from: value })} />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
               <Label className="text-muted-foreground">To</Label>
-              <Input type="date" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} />
+              <DatePicker value={range.to} onChange={(value) => setRange({ ...range, to: value })} />
             </div>
           </div>
         </CardContent>

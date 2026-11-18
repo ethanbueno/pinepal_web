@@ -21,7 +21,8 @@ function SelectField({ value, onChange, options, allLabel, placeholder, disabled
       <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false}>
+      {/* opens with the chosen option sitting right over the field, like a native picker */}
+      <SelectContent>
         {items.map((item) => (
           <SelectItem key={item.value} value={item.value}>
             {item.label}

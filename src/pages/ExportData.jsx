@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import DatePicker from "../components/DatePicker"
 import { DownloadIcon } from "lucide-react"
 import { countScans, getScans } from "../api/scans"
 import { cachedGet } from "../api/cache"
@@ -16,7 +17,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 // the municipality starts at (and stays on) the temporary lock, like the Disease Map
@@ -162,11 +162,11 @@ function ExportData() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-muted-foreground">From</Label>
-              <Input type="date" value={filters.from} onChange={(e) => update("from", e.target.value)} />
+              <DatePicker value={filters.from} onChange={(value) => update("from", value)} />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-muted-foreground">To</Label>
-              <Input type="date" value={filters.to} onChange={(e) => update("to", e.target.value)} />
+              <DatePicker value={filters.to} onChange={(value) => update("to", value)} />
             </div>
           </div>
 

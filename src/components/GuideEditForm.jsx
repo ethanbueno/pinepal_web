@@ -1,4 +1,5 @@
 import { useState } from "react"
+import DatePicker from "./DatePicker"
 import { ImageIcon, PlusIcon, Trash2Icon, UploadIcon } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -352,7 +353,7 @@ function GuideEditForm({ open, protocol, onSave, onClose }) {
           <FormSection title="Review">
             <div className="sm:w-1/2">
               <Label className="mb-1.5">Last reviewed</Label>
-              <Input type="date" value={form.reviewed} onChange={(e) => set("reviewed", e.target.value)} />
+              <DatePicker placeholder="Pick a date" value={form.reviewed} onChange={(value) => set("reviewed", value)} />
             </div>
           </FormSection>
 

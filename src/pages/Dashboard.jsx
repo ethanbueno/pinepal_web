@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import DatePicker from "../components/DatePicker"
+import SelectField from "../components/SelectField"
 import { Link, useNavigate } from "react-router-dom"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { CheckIcon, SearchXIcon } from "lucide-react"
@@ -10,11 +12,9 @@ import ErrorAlert from "../components/ErrorAlert"
 import { DISEASES, HIGH_CONFIDENCE, LOW_CONFIDENCE, getDisease } from "../utils/diseases"
 import { formatDate, formatPercent } from "../utils/format"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import LoadingBlocks from "../components/LoadingBlocks"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 import {
   ChartContainer,
@@ -41,10 +41,10 @@ function monthCardTitle(latestMonth) {
 // quick date ranges, counted back from today ("all" = no limit)
 // (short is the label on phones, where the full ones don't fit in one row)
 const PRESETS = [
-  { value: "3m", label: "Last 3 months", short: "3M", months: 3 },
-  { value: "6m", label: "Last 6 months", short: "6M", months: 6 },
-  { value: "12m", label: "Last 12 months", short: "12M", months: 12 },
-  { value: "all", label: "All time", short: "All", months: 0 },
+  { value: "3m", label: "Last 3 months", months: 3 },
+  { value: "6m", label: "Last 6 months", months: 6 },
+  { value: "12m", label: "Last 12 months", months: 12 },
+  { value: "all", label: "All time", months: 0 },
 ]
 
 const pad = (n) => String(n).padStart(2, "0")
@@ -202,42 +202,34 @@ function Dashboard() {
         </p>
       </div>
       <div className="flex flex-wrap items-end gap-3">
-        <ToggleGroup
-          variant="outline"
-          spacing={0}
-          value={[preset]}
-          onValueChange={(value) => value[0] && choosePreset(value[0])}
-          className="w-full sm:w-fit"
-        >
-          {PRESETS.map((p) => (
-            <ToggleGroupItem
-              key={p.value}
-              value={p.value}
-              aria-label={p.label}
-              className="flex-1 px-3 whitespace-nowrap sm:flex-none"
-            >
-              <span className="sm:hidden">{p.short}</span>
-              <span className="hidden sm:inline">{p.label}</span>
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <div className="w-full sm:w-44">
+          <Label className="mb-1.5 text-muted-foreground">Range</Label>
+          <SelectField
+            value={preset}
+            onChange={(value) => value !== "custom" && choosePreset(value)}
+            options={[
+              ...PRESETS.map((p) => ({ value: p.value, label: p.label })),
+              // shown once dates are picked by hand
+              ...(preset === "custom" ? [{ value: "custom", label: "Custom range" }] : []),
+            ]}
+          />
+        </div>
         <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
           <div className="min-w-0">
             <Label htmlFor="from-date" className="mb-1.5 text-muted-foreground">
               From
             </Label>
-            <Input
+            <DatePicker
               id="from-date"
-              type="date"
               value={range.from}
-              onChange={(e) => changeDate("from", e.target.value)}
+              onChange={(value) => changeDate("from", value)}
             />
           </div>
           <div className="min-w-0">
             <Label htmlFor="to-date" className="mb-1.5 text-muted-foreground">
               To
             </Label>
-            <Input id="to-date" type="date" value={range.to} onChange={(e) => changeDate("to", e.target.value)} />
+            <DatePicker id="to-date" value={range.to} onChange={(value) => changeDate("to", value)} />
           </div>
         </div>
       </div>

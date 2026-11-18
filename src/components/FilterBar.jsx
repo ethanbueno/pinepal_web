@@ -1,4 +1,5 @@
 import { useState } from "react"
+import DatePicker from "./DatePicker"
 import { SlidersHorizontalIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -90,11 +91,11 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
         )}
 
         <Field label="From">
-          <Input type="date" value={filters.from} onChange={(e) => update("from", e.target.value)} />
+          <DatePicker value={filters.from} onChange={(value) => update("from", value)} />
         </Field>
 
         <Field label="To">
-          <Input type="date" value={filters.to} onChange={(e) => update("to", e.target.value)} />
+          <DatePicker value={filters.to} onChange={(value) => update("to", value)} />
         </Field>
 
         {extra && (
