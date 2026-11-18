@@ -100,7 +100,7 @@ const SOURCES_SHOWN = 4
 function PhotoCredits({ credits }) {
   return (
     <div className="text-xs text-muted-foreground">
-      <p className="font-semibold">Photo credits</p>
+      <p className="font-semibold">Photo Credits</p>
       <ul className="mt-0.5 flex flex-col gap-0.5">
         {credits.map((credit, i) => (
           <li key={i}>
@@ -150,7 +150,7 @@ function SourceList({ sources, photoCredits = [] }) {
           onClick={() => setShowAll(!showAll)}
           className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary-text hover:underline"
         >
-          {showAll ? "Show fewer" : `Show all ${sources.length} sources`}
+          {showAll ? "Show Fewer" : `Show all ${sources.length} sources`}
           <ChevronDownIcon className={"size-3.5 transition-transform " + (showAll ? "rotate-180" : "")} />
         </button>
       )}
@@ -282,8 +282,8 @@ function ReferencePhotos({ urls, name }) {
 }
 
 // the remediation guide for one disease class, laid out like the mobile Disease Guide:
-// "Identify" (about, symptoms, look-alikes), then "What to do" (steps in an amber box, prevention),
-// then "Help and sources".
+// "Identify" (about, symptoms, look-alikes), then "What to Do" (steps in an amber box, prevention),
+// then "Help and Sources".
 // wide = it has a whole page (Guides, Scan detail): on big screens Identify and What to do sit in
 // two columns, with help and sources in a row under them.
 function ProtocolCard({ protocol, wide = false }) {
@@ -308,12 +308,12 @@ function ProtocolCard({ protocol, wide = false }) {
   const healthy = protocol.checks?.length > 0
 
   const checks = healthy && (
-    <Section icon={ClipboardCheckIcon} title="Check the plant yourself" highlight>
+    <Section icon={ClipboardCheckIcon} title="Check the Plant Yourself" highlight>
       <BulletList items={protocol.checks} />
     </Section>
   )
   const lookAlikes = hasLookAlikes && (
-    <Section icon={ArrowLeftRightIcon} title="Could also be">
+    <Section icon={ArrowLeftRightIcon} title="Could Also Be">
       <BulletList items={protocol.look_alikes} />
     </Section>
   )
@@ -337,15 +337,15 @@ function ProtocolCard({ protocol, wide = false }) {
 
   const act = (
     <div className="flex flex-col gap-4">
-      <GroupLabel>{healthy ? "Keep watching" : "What to do"}</GroupLabel>
+      <GroupLabel>{healthy ? "Keep Watching" : "What to Do"}</GroupLabel>
       {healthy && lookAlikes}
       {protocol.scan_tips?.length > 0 && (
-        <Section icon={CameraIcon} title="Scanning tips">
+        <Section icon={CameraIcon} title="Scanning Tips">
           <BulletList items={protocol.scan_tips} />
         </Section>
       )}
       {steps.length > 0 && (
-        <Section icon={StethoscopeIcon} title="Immediate action" highlight>
+        <Section icon={StethoscopeIcon} title="Immediate Action" highlight>
           {/* numbered, because the order of the steps matters */}
           <ol className="flex list-none flex-col gap-1.5">
             {steps.map((step, i) => (
@@ -367,10 +367,10 @@ function ProtocolCard({ protocol, wide = false }) {
 
   const side = hasSide && (
     <div className="flex flex-col gap-4">
-      <GroupLabel>Help and sources</GroupLabel>
+      <GroupLabel>Help and Sources</GroupLabel>
       <div className={"grid gap-4 " + (hasHelp && hasSources ? "lg:grid-cols-2 lg:gap-8" : "")}>
         {hasHelp && (
-          <Section icon={LifeBuoyIcon} title="Get help">
+          <Section icon={LifeBuoyIcon} title="Get Help">
             <BulletList items={protocol.get_help} />
           </Section>
         )}

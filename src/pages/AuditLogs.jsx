@@ -25,15 +25,15 @@ const emptyFilters = { search: "", action: "", user: "", from: "", to: "", resul
 
 // the action filter (ACTIONS in backend/audit_logs.py)
 const ACTIONS = [
-  { value: "login_success", label: "Signed in" },
-  { value: "login_failed", label: "Failed sign-in" },
-  { value: "logout", label: "Signed out" },
+  { value: "login_success", label: "Signed In" },
+  { value: "login_failed", label: "Failed Sign-In" },
+  { value: "logout", label: "Signed Out" },
   { value: "view", label: "Viewed" },
   { value: "export", label: "Exported" },
   { value: "create", label: "Created" },
   { value: "update", label: "Updated" },
   { value: "delete", label: "Deleted" },
-  { value: "data", label: "Data changes only" },
+  { value: "data", label: "Data Changes Only" },
 ]
 const RESULTS = [
   { value: "success", label: "Successful" },
@@ -41,7 +41,7 @@ const RESULTS = [
 ]
 const PLATFORMS = [
   { value: "web", label: "Web" },
-  { value: "mobile", label: "Mobile app" },
+  { value: "mobile", label: "Mobile App" },
 ]
 
 const TABLE_LABELS = { users: "Account", farmers: "Farmer", mobile_scans: "Scan" }
@@ -88,10 +88,10 @@ const FIELDS = {
   password: "Password",
   farmer_id: "Farmer ID",
   user_id: "Account ID",
-  full_name: "Full name",
+  full_name: "Full Name",
   farm_name: "Farm",
-  farm_latitude: "Farm latitude",
-  farm_longitude: "Farm longitude",
+  farm_latitude: "Farm Latitude",
+  farm_longitude: "Farm Longitude",
   farm_size_ha: "Farm size (ha)",
   is_active: "Active",
   scan_uuid: "Scan ID",
@@ -102,8 +102,8 @@ const FIELDS = {
   scanned_at: "Scanned (device time)",
   predicted_label: "Prediction",
   confidence: "Confidence",
-  second_label: "Second guess",
-  second_confidence: "Second confidence",
+  second_label: "Second Guess",
+  second_confidence: "Second Confidence",
   image_source: "Image source",
   verified_label: "Verified as",
   verified_by: "Verified by",
@@ -222,10 +222,10 @@ function EventBadge({ item }) {
   if (item.category === "login")
     badge =
       item.action === "LOGOUT"
-        ? { label: "Signed out", className: GRAY }
+        ? { label: "Signed Out", className: GRAY }
         : failed(item)
-          ? { label: "Failed sign-in", className: RED }
-          : { label: "Signed in", className: GREEN }
+          ? { label: "Failed Sign-In", className: RED }
+          : { label: "Signed In", className: GREEN }
   else if (item.category === "data") badge = DATA_BADGES[item.action]
   else if (isExport(item)) badge = { label: "Exported", className: VIOLET }
   else badge = METHOD_BADGES[item.action] || { label: item.action, className: GRAY }
@@ -290,7 +290,7 @@ function Where({ item }) {
       {item.platform && (
         <span className="flex items-center gap-1.5 whitespace-nowrap">
           <PlatformIcon className="size-3.5 text-muted-foreground" />
-          {device || (item.platform === "mobile" ? "Mobile app" : "Web")}
+          {device || (item.platform === "mobile" ? "Mobile App" : "Web")}
         </span>
       )}
       {item.ip_address && <div className="text-xs text-muted-foreground tabular-nums">{item.ip_address}</div>}
@@ -373,7 +373,7 @@ function Details({ item }) {
             )}
           </DetailRow>
         )}
-        {item.platform && <DetailRow label="Source">{item.platform === "mobile" ? "Mobile app" : "Web"}</DetailRow>}
+        {item.platform && <DetailRow label="Source">{item.platform === "mobile" ? "Mobile App" : "Web"}</DetailRow>}
         {device && <DetailRow label="Device">{device}</DetailRow>}
         {item.ip_address && <DetailRow label="IP address">{item.ip_address}</DetailRow>}
         {item.path && (
@@ -481,7 +481,7 @@ function AuditLogs() {
   return (
     <div>
       <PageHeader
-        title="Audit logs"
+        title="Audit Logs"
         description="Everything that happens in PinePal: every action, sign-in and sign-out, and every change to accounts, farmers and scans. Entries can't be edited or deleted."
       />
 
@@ -506,7 +506,7 @@ function AuditLogs() {
           <Field label="Action">
             <SelectField
               className="w-full sm:w-40"
-              allLabel="All actions"
+              allLabel="All Actions"
               value={filters.action}
               onChange={(v) => changeFilter("action", v)}
               options={ACTIONS}
@@ -531,7 +531,7 @@ function AuditLogs() {
           <Field label="Result">
             <SelectField
               className="w-full sm:w-32"
-              allLabel="All results"
+              allLabel="All Results"
               value={filters.result}
               onChange={(v) => changeFilter("result", v)}
               options={RESULTS}
@@ -540,7 +540,7 @@ function AuditLogs() {
           <Field label="Source">
             <SelectField
               className="w-full sm:w-32"
-              allLabel="Web and app"
+              allLabel="Web and App"
               value={filters.platform}
               onChange={(v) => changeFilter("platform", v)}
               options={PLATFORMS}
@@ -563,7 +563,7 @@ function AuditLogs() {
       {loading ? (
         <LoadingBlocks rows={8} height="h-10" label="Loading the audit logs" />
       ) : !error && data.items.length === 0 ? (
-        <EmptyState icon={ScrollTextIcon} title="Nothing to show" text="Nothing matches these filters yet." />
+        <EmptyState icon={ScrollTextIcon} title="Nothing to Show" text="Nothing matches these filters yet." />
       ) : (
         !error && (
           <>
@@ -624,7 +624,7 @@ function AuditLogs() {
         )
       )}
 
-      <Modal open={!!selected} title="Audit log details" onClose={() => setSelected(null)}>
+      <Modal open={!!selected} title="Audit Log Details" onClose={() => setSelected(null)}>
         {selected && <Details item={selected} />}
       </Modal>
     </div>

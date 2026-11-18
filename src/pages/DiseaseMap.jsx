@@ -20,7 +20,7 @@ import PinePalLoader from "../components/PinePalLoader"
 // How the scans are drawn: a dot per scan, colored by disease, or a heat map of where disease is
 const VIEWS = [
   { value: "dots", label: "Dots" },
-  { value: "heat", label: "Heat map" },
+  { value: "heat", label: "Heat Map" },
 ]
 
 // A heat map color scale, from few diseased scans to many
@@ -95,7 +95,7 @@ function DiseaseMap() {
             <MultiSelectField
               value={selected}
               onChange={setSelected}
-              allLabel="All diseases"
+              allLabel="All Diseases"
               options={DISEASES.map((d) => ({ value: d.label, label: d.name, color: d.color }))}
             />
           </div>
@@ -175,7 +175,7 @@ function DiseaseMap() {
                         state={{ from: "/map" }}
                         className="text-xs font-semibold underline underline-offset-4"
                       >
-                        View details
+                        View Details
                       </Link>
                     </div>
                   </Popup>

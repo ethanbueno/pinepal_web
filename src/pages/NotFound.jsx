@@ -5,9 +5,9 @@ import { buttonVariants } from "@/components/ui/button"
 
 function NotFound() {
   return (
-    <EmptyState icon={MapPinOffIcon} title="Page not found" text="That page does not exist.">
+    <EmptyState icon={MapPinOffIcon} title="Page Not Found" text="That page does not exist.">
       <Link to="/" className={buttonVariants({ variant: "outline" })}>
-        Go to the home page
+        Go to the Home Page
       </Link>
     </EmptyState>
   )

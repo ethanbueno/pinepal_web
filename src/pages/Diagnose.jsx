@@ -298,7 +298,7 @@ function Diagnose() {
                 {/* opens the file picker straight away; the new photo replaces this one */}
                 <label className="mt-4 flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary text-sm font-medium text-primary-foreground">
                   <ImagePlusIcon className="size-4" />
-                  Choose another photo
+                  Choose Another Photo
                   <input
                     type="file"
                     accept="image/jpeg,image/png"
@@ -312,7 +312,7 @@ function Diagnose() {
               </>
             ) : !result ? (
               <>
-                <div className="text-xl font-semibold tracking-tight">Photo ready</div>
+                <div className="text-xl font-semibold tracking-tight">Photo Ready</div>
                 <div className="mb-4 text-sm text-muted-foreground">Source: Web upload</div>
 
                 {error && <ErrorAlert>{error}</ErrorAlert>}
@@ -321,7 +321,7 @@ function Diagnose() {
                   {diagnosing ? "Analyzing..." : "Analyze Photo"}
                 </Button>
                 <Button variant="outline" size="lg" className="mt-2 h-10 w-full" onClick={reset}>
-                  Choose another
+                  Choose Another
                 </Button>
               </>
             ) : (
@@ -355,11 +355,11 @@ function Diagnose() {
                 </div>
 
                 <Button variant="outline" size="lg" className="mt-4 h-10 w-full" onClick={reset}>
-                  Scan another
+                  Scan Another
                 </Button>
                 {!showSave && (
                   <Button size="lg" className="mt-2 h-10 w-full" onClick={() => setShowSave(true)}>
-                    Save as scan
+                    Save as Scan
                   </Button>
                 )}
               </>
@@ -372,7 +372,7 @@ function Diagnose() {
       {result && !notPineapple && showSave && (
         <Card>
           <CardHeader>
-            <CardTitle className="font-semibold">Save as scan</CardTitle>
+            <CardTitle className="font-semibold">Save as Scan</CardTitle>
           </CardHeader>
           <CardContent>
             {isFarmer ? (
@@ -444,7 +444,7 @@ function Diagnose() {
             disabled={!location || locationOutside || saving || (!isFarmer && !isAdmin && !farmerId)}
             onClick={handleSave}
           >
-            {saving ? "Saving..." : isFarmer ? "Save to History" : "Save scan"}
+            {saving ? "Saving..." : isFarmer ? "Save to History" : "Save Scan"}
           </Button>
         </CardContent>
       </Card>
@@ -454,7 +454,7 @@ function Diagnose() {
 
       {/* right column: the remediation guide for the result */}
       {result && notPineapple ? (
-        <EmptyState icon={ImageOffIcon} title="No diagnosis" text="No diagnosis for this photo. Try another photo of the pineapple." />
+        <EmptyState icon={ImageOffIcon} title="No Diagnosis" text="No diagnosis for this photo. Try another photo of the pineapple." />
       ) : result ? (
         <div className="flex flex-col gap-4">
           {/* the server has no guides yet, so use the same guide as the mobile app */}
@@ -463,7 +463,7 @@ function Diagnose() {
       ) : (
         <EmptyState
           icon={ClipboardListIcon}
-          title="Nothing analyzed yet"
+          title="Nothing Analyzed Yet"
           text="The remediation guide and save options will appear here after the photo is analyzed."
         />
       )}

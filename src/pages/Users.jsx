@@ -171,7 +171,7 @@ function Users() {
         {tab.role !== "farmer" && (
           <Button onClick={openAdd}>
             <PlusIcon />
-            Add {tab.role === "admin" ? "admin" : "officer"}
+            Add {tab.role === "admin" ? "Admin" : "Officer"}
           </Button>
         )}
       </div>
@@ -233,11 +233,11 @@ function Users() {
         </>
       )}
 
-      <Modal open={showForm} title={editingId ? "Edit user" : "Add user"} onClose={() => setShowForm(false)}>
+      <Modal open={showForm} title={editingId ? "Edit User" : "Add User"} onClose={() => setShowForm(false)}>
         <form onSubmit={handleSave}>
           <div className="mb-4 grid gap-4">
             <div>
-              <Label className="mb-1.5">Full name</Label>
+              <Label className="mb-1.5">Full Name</Label>
               <Input value={form.full_name} onChange={(e) => handleChange("full_name", e.target.value)} required />
             </div>
             <div>
@@ -284,7 +284,7 @@ function Users() {
 
       <ConfirmModal
         open={deleteTarget !== null}
-        title="Delete user?"
+        title="Delete User?"
         message={`Are you sure you want to delete @${deleteTarget?.username}? This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}

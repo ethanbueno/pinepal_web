@@ -95,7 +95,7 @@ function ForgotPassword() {
   return (
     <AuthSplitLayout
       showDownload={false}
-      title="Forgot your password?"
+      title="Forgot Your Password?"
       tagline="Enter the email address on your PinePal account, then choose a new password."
       headerAction={
         <Button
@@ -155,7 +155,7 @@ function ForgotPassword() {
           <FloatingInput
             size="compact"
             id="new-password"
-            label="New password"
+            label="New Password"
             type="password"
             autoComplete="new-password"
             value={password}
@@ -165,7 +165,7 @@ function ForgotPassword() {
           <FloatingInput
             size="compact"
             id="confirm-password"
-            label="Confirm new password"
+            label="Confirm New Password"
             type="password"
             autoComplete="new-password"
             value={confirm}
@@ -179,7 +179,7 @@ function ForgotPassword() {
             disabled={loading || (mode === "code" && code.length !== 6)}
             className="h-10 w-full rounded-[10px] text-[15px] font-medium"
           >
-            {loading ? "Saving..." : "Change password"}
+            {loading ? "Saving..." : "Change Password"}
           </Button>
           <div className="flex justify-between text-sm">
             <button
@@ -190,7 +190,7 @@ function ForgotPassword() {
                 setErrorMessage("")
               }}
             >
-              Use another email
+              Use Another Email
             </button>
             {mode === "code" && (
               <button
@@ -199,7 +199,7 @@ function ForgotPassword() {
                 className="font-medium text-primary-text underline underline-offset-4"
                 onClick={resend}
               >
-                Send a new code
+                Send a New Code
               </button>
             )}
           </div>

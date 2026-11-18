@@ -34,12 +34,12 @@ const initials = (name = "") =>
 // else stays as it is. secure = a sign-in detail, which needs the current password first
 // (the server checks it too, backend/my_profile.py).
 const EDITABLE = {
-  full_name: { label: "Full name", secure: false },
+  full_name: { label: "Full Name", secure: false },
   username: { label: "Username", secure: true },
   email: { label: "Email", secure: true },
   new_password: { label: "Password", secure: true },
-  farm_name: { label: "Farm name", secure: false },
-  farm_size_ha: { label: "Farm size", secure: false },
+  farm_name: { label: "Farm Name", secure: false },
+  farm_size_ha: { label: "Farm Size", secure: false },
 }
 
 // The saved value of a field, as the form starts with it ("" for the password)
@@ -142,12 +142,12 @@ function AccountHeader({ account, onChange }) {
             <DropdownMenuContent align="start" sideOffset={6} className="min-w-44 rounded-xl p-1.5">
               <DropdownMenuItem className="h-9 gap-2.5 rounded-lg px-2.5" onClick={pick}>
                 <ImageIcon />
-                {hasPhoto ? "Upload new photo" : "Upload photo"}
+                {hasPhoto ? "Upload New Photo" : "Upload Photo"}
               </DropdownMenuItem>
               {hasPhoto && (
                 <DropdownMenuItem variant="destructive" className="h-9 gap-2.5 rounded-lg px-2.5" onClick={remove}>
                   <Trash2Icon />
-                  Remove photo
+                  Remove Photo
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -344,7 +344,7 @@ function AccountSection() {
           <SettingsRow label="Farmer ID">
             <Value>{farm.farmer_id}</Value>
           </SettingsRow>
-          <SettingsRow label="Farm location" hint="From your synced scans.">
+          <SettingsRow label="Farm Location" hint="From your synced scans.">
             <Value>{location}</Value>
           </SettingsRow>
         </>

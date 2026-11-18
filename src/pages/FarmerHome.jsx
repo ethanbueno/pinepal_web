@@ -105,7 +105,7 @@ function FarmerHome() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-semibold">My scans by disease</CardTitle>
+            <CardTitle className="font-semibold">My Scans by Disease</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {DISEASES.map((d) => (
@@ -133,7 +133,7 @@ function FarmerHome() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-semibold">Where I scanned</CardTitle>
+            <CardTitle className="font-semibold">Where I Scanned</CardTitle>
           </CardHeader>
           {/* grows to the height of the card next to it, never shorter than 16rem */}
           <CardContent className="relative min-h-64 flex-1">
@@ -152,13 +152,13 @@ function FarmerHome() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-semibold">Latest scans</CardTitle>
+          <CardTitle className="font-semibold">Latest Scans</CardTitle>
           <CardAction>
             <Link
               to="/my-scans"
               className="rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
-              See all history
+              See All History
             </Link>
           </CardAction>
         </CardHeader>

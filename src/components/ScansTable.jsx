@@ -30,7 +30,7 @@ function ScansTable({
     return (
       <EmptyState
         icon={ScanSearchIcon}
-        title="No scans to show"
+        title="No Scans to Show"
         text="No scans match these filters yet. Scans synced from the mobile app will appear here."
       />
     )

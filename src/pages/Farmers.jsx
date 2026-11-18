@@ -141,7 +141,7 @@ function Farmers({ embedded = false }) {
   }
 
   // deactivate instead of delete, so old scans keep their farmer
-  // "Sync now" for a farmer with no account (a phone that synced before signing in, or a
+  // "Sync Now" for a farmer with no account (a phone that synced before signing in, or a
   // farmer from the scan data): connect it to an existing farmer login, which moves its
   // scans into that account's farmer ID, or sign up a new account that keeps this farmer ID
   const openSync = (farmer) => {
@@ -222,14 +222,14 @@ function Farmers({ embedded = false }) {
         </div>
         <SelectField
           className="w-full sm:w-48"
-          allLabel="All municipalities"
+          allLabel="All Municipalities"
           value={municipality}
           onChange={setMunicipality}
           options={toOptions(MUNICIPALITIES)}
         />
         <Button className="sm:ml-auto" onClick={openAdd}>
           <PlusIcon />
-          Add farmer
+          Add Farmer
         </Button>
       </div>
 
@@ -238,7 +238,7 @@ function Farmers({ embedded = false }) {
       {loading ? (
         <LoadingBlocks rows={6} height="h-10" label="Loading farmers" />
       ) : farmers.length === 0 ? (
-        <EmptyState icon={UsersIcon} title="No farmers found" text="Try another name or municipality, or add a farmer." />
+        <EmptyState icon={UsersIcon} title="No Farmers Found" text="Try another name or municipality, or add a farmer." />
       ) : (
         <Card className="py-0">
           <Table>
@@ -273,7 +273,7 @@ function Farmers({ embedded = false }) {
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-2">
                       {!f.has_account && (
-                        <Button size="sm" onClick={() => openSync(f)}>Sync now</Button>
+                        <Button size="sm" onClick={() => openSync(f)}>Sync Now</Button>
                       )}
                       <Button size="sm" variant="outline" onClick={() => openEdit(f)}>
                         Edit
@@ -295,15 +295,15 @@ function Farmers({ embedded = false }) {
         </Card>
       )}
 
-      <Modal open={showForm} title={editingId ? "Edit farmer" : "Add farmer"} onClose={() => setShowForm(false)}>
+      <Modal open={showForm} title={editingId ? "Edit Farmer" : "Add Farmer"} onClose={() => setShowForm(false)}>
         <form onSubmit={handleSave}>
           <div className="grid gap-3 sm:grid-cols-2 mb-3">
             <div>
-              <Label className="mb-1.5">Full name</Label>
+              <Label className="mb-1.5">Full Name</Label>
               <Input value={form.full_name} onChange={(e) => handleChange("full_name", e.target.value)} required />
             </div>
             <div>
-              <Label className="mb-1.5">Farm name</Label>
+              <Label className="mb-1.5">Farm Name</Label>
               <Input value={form.farm_name} onChange={(e) => handleChange("farm_name", e.target.value)} required />
             </div>
             <div>
@@ -392,20 +392,20 @@ function Farmers({ embedded = false }) {
                 variant={syncMode === "existing" ? "default" : "outline"}
                 onClick={() => setSyncMode("existing")}
               >
-                Existing account
+                Existing Account
               </Button>
               <Button
                 type="button"
                 variant={syncMode === "new" ? "default" : "outline"}
                 onClick={() => setSyncMode("new")}
               >
-                New account
+                New Account
               </Button>
             </div>
 
             {syncMode === "existing" ? (
               <>
-                <Label className="mb-1.5">Farmer account</Label>
+                <Label className="mb-1.5">Farmer Account</Label>
                 <div className="mb-3">
                   <SelectField
                     value={syncForm.username}
@@ -429,7 +429,7 @@ function Farmers({ embedded = false }) {
               <>
                 <div className="grid gap-3 sm:grid-cols-2 mb-3">
                   <div>
-                    <Label className="mb-1.5">Full name</Label>
+                    <Label className="mb-1.5">Full Name</Label>
                     <Input
                       value={syncForm.full_name}
                       onChange={(e) => setSyncForm({ ...syncForm, full_name: e.target.value })}
@@ -464,7 +464,7 @@ function Farmers({ embedded = false }) {
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setSyncTarget(null)}>Cancel</Button>
               <Button type="submit" disabled={syncing || (syncMode === "existing" && !syncForm.username)}>
-                {syncing ? "Syncing..." : "Sync now"}
+                {syncing ? "Syncing..." : "Sync Now"}
               </Button>
             </div>
           </form>

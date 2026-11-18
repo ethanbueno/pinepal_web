@@ -18,7 +18,7 @@ const confidenceOptions = [
 ]
 const verifiedOptions = [
   { value: "yes", label: "Verified" },
-  { value: "no", label: "Not verified" },
+  { value: "no", label: "Not Verified" },
 ]
 
 function Field({ label, children, className }) {
@@ -73,7 +73,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
         <Field label="Disease">
           <SelectField
             className="w-full sm:w-44"
-            allLabel="All diseases"
+            allLabel="All Diseases"
             value={filters.disease}
             onChange={(v) => update("disease", v)}
             options={diseaseOptions}
@@ -84,7 +84,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
           <Field label="Municipality">
             <SelectField
               className="w-full sm:w-48"
-              allLabel="All municipalities"
+              allLabel="All Municipalities"
               value={filters.municipality}
               onChange={(v) => update("municipality", v)}
               options={toOptions(MUNICIPALITIES)}

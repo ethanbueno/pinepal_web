@@ -65,7 +65,7 @@ function Register() {
   return (
     <AuthSplitLayout
       compact
-      title="Create your account"
+      title="Create Your Account"
       tagline="Scan your pineapples, keep a history of every diagnosis, and get treatment steps for your farm."
       headerAction={
         // back to the login page, next to the theme toggle
@@ -81,11 +81,11 @@ function Register() {
       }
     >
       <form onSubmit={handleRegister} className="space-y-5">
-        <FormSection number={1} title="Your details">
+        <FormSection number={1} title="Your Details">
           <FloatingInput
             size="compact"
             id="full-name"
-            label="Full name"
+            label="Full Name"
             autoComplete="name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -128,7 +128,7 @@ function Register() {
           <FloatingInput
             size="compact"
             id="confirm-password"
-            label="Confirm password"
+            label="Confirm Password"
             type="password"
             autoComplete="new-password"
             value={passwordConfirmation}
@@ -143,7 +143,7 @@ function Register() {
           {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
 
           <Button type="submit" disabled={loading} className="h-10 w-full rounded-[10px] text-[15px] font-medium">
-            {loading ? "Creating account..." : "Create account"}
+            {loading ? "Creating account..." : "Create Account"}
           </Button>
         </div>
       </form>
@@ -151,7 +151,7 @@ function Register() {
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link to="/login" className="font-medium text-primary-text underline underline-offset-4">
-          Log in
+          Log In
         </Link>
       </p>
     </AuthSplitLayout>

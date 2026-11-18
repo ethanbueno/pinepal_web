@@ -54,7 +54,7 @@ function AppearanceSection() {
 function MobileAppSection() {
   return (
     <div className="divide-y">
-      <SettingsRow label="Download link" hint="Download mobile app on the login page and in the sidebar, for everyone.">
+      <SettingsRow label="Download Link" hint="Download mobile app on the login page and in the sidebar, for everyone.">
         <div className="w-full sm:max-w-sm">
           <AppDownloadForm />
         </div>
@@ -89,13 +89,13 @@ function BackupSection() {
   return (
     <div className="divide-y">
       <SettingsRow
-        label="Database backup"
+        label="Database Backup"
         hint="Every table and the photos on the server, in one encrypted .zip. Keep it somewhere safe, like Google Drive."
       >
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <Button onClick={handleBackup} disabled={busy}>
             <DownloadIcon />
-            {busy ? "Preparing backup..." : "Download backup"}
+            {busy ? "Preparing backup..." : "Download Backup"}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
@@ -109,7 +109,7 @@ function BackupSection() {
 
 const SECTIONS = [
   { key: "appearance", label: "Appearance", icon: PaletteIcon, Content: AppearanceSection },
-  { key: "mobile-app", label: "Mobile app", icon: SmartphoneIcon, Content: MobileAppSection, adminOnly: true },
+  { key: "mobile-app", label: "Mobile App", icon: SmartphoneIcon, Content: MobileAppSection, adminOnly: true },
   { key: "backup", label: "Backup", icon: DatabaseBackupIcon, Content: BackupSection, adminOnly: true },
 ]
 

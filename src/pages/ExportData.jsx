@@ -139,7 +139,7 @@ function ExportData() {
             <div className="flex w-full flex-col gap-1.5 sm:w-44">
               <Label className="text-muted-foreground">Disease</Label>
               <SelectField
-                allLabel="All diseases"
+                allLabel="All Diseases"
                 value={filters.disease}
                 onChange={(v) => update("disease", v)}
                 options={diseaseOptions}
@@ -148,7 +148,7 @@ function ExportData() {
             <div className="flex w-full flex-col gap-1.5 sm:w-40">
               <Label className="text-muted-foreground">Municipality</Label>
               <SelectField
-                allLabel={LOCKED_MUNICIPALITY ? undefined : "All municipalities"}
+                allLabel={LOCKED_MUNICIPALITY ? undefined : "All Municipalities"}
                 value={filters.municipality}
                 onChange={(v) => update("municipality", v)}
                 options={toOptions(LOCKED_MUNICIPALITY ? [LOCKED_MUNICIPALITY] : MUNICIPALITIES)}
@@ -179,7 +179,7 @@ function ExportData() {
                 checked={filters.verifiedOnly}
                 onCheckedChange={(checked) => update("verifiedOnly", checked)}
               />
-              Verified only
+              Verified Only
             </Label>
 
             <div className="flex w-full items-center justify-between gap-3 sm:ml-auto sm:w-auto">
@@ -207,7 +207,7 @@ function ExportData() {
           <>
             <Card>
               <CardHeader>
-                <CardTitle className="font-semibold">Scans in the export</CardTitle>
+                <CardTitle className="font-semibold">Scans in the Export</CardTitle>
               </CardHeader>
               <CardContent className="px-0">
                 <ScansTable scans={scans.items} bare emptyText="No scans match these filters." />

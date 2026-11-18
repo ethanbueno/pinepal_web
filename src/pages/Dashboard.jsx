@@ -41,10 +41,10 @@ function monthCardTitle(latestMonth) {
 // quick date ranges, counted back from today ("all" = no limit)
 // (short is the label on phones, where the full ones don't fit in one row)
 const PRESETS = [
-  { value: "3m", label: "Last 3 months", months: 3 },
-  { value: "6m", label: "Last 6 months", months: 6 },
-  { value: "12m", label: "Last 12 months", months: 12 },
-  { value: "all", label: "All time", months: 0 },
+  { value: "3m", label: "Last 3 Months", months: 3 },
+  { value: "6m", label: "Last 6 Months", months: 6 },
+  { value: "12m", label: "Last 12 Months", months: 12 },
+  { value: "all", label: "All Time", months: 0 },
 ]
 
 const pad = (n) => String(n).padStart(2, "0")
@@ -210,7 +210,7 @@ function Dashboard() {
             options={[
               ...PRESETS.map((p) => ({ value: p.value, label: p.label })),
               // shown once dates are picked by hand
-              ...(preset === "custom" ? [{ value: "custom", label: "Custom range" }] : []),
+              ...(preset === "custom" ? [{ value: "custom", label: "Custom Range" }] : []),
             ]}
           />
         </div>
@@ -301,7 +301,7 @@ function Dashboard() {
           <div className="grid gap-4 xl:grid-cols-3">
             <Card className="xl:col-span-2">
               <CardHeader>
-                <CardTitle className="font-semibold">Cases per month</CardTitle>
+                <CardTitle className="font-semibold">Cases per Month</CardTitle>
                 <CardDescription>Scans by diagnosis, month by month.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -329,7 +329,7 @@ function Dashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="font-semibold">Disease breakdown</CardTitle>
+                <CardTitle className="font-semibold">Disease Breakdown</CardTitle>
                 <CardDescription>Share of all scans in this range.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
@@ -362,7 +362,7 @@ function Dashboard() {
                 </CardDescription>
                 <CardAction>
                   <Link to="/scans" className={linkClass}>
-                    View all scans
+                    View All Scans
                   </Link>
                 </CardAction>
               </CardHeader>
@@ -379,14 +379,14 @@ function Dashboard() {
                     </TableRow>
                   </TableHeader>
                   <ScanGroup
-                    title="Highest confidence"
+                    title="Highest Confidence"
                     note={`${percent(HIGH_CONFIDENCE)} confidence and above, most confident first.`}
                     scans={stats.highest_confidence}
                     emptyText={`No scans at ${percent(HIGH_CONFIDENCE)} confidence or above in this range.`}
                     showVerified={false}
                   />
                   <ScanGroup
-                    title="Lowest confidence"
+                    title="Lowest Confidence"
                     note={`Under ${percent(LOW_CONFIDENCE)} confidence, least confident first. Red rows are not verified yet.`}
                     scans={stats.lowest_confidence}
                     emptyText={`No scans under ${percent(LOW_CONFIDENCE)} confidence in this range.`}

@@ -14,11 +14,11 @@ const PHOTO_FADE =
   "rgba(0,0,0,0.91) 17.5%, rgba(0,0,0,0.98) 20%, #000 22%)"
 
 // Shared page for Login and Register.
-// Laptops: two columns, the headline + form card + "Download mobile app" on the left, a tall photo panel on the right.
+// Laptops: two columns, the headline + form card + "Download Mobile App" on the left, a tall photo panel on the right.
 // Phones and tablets: one column, no photo panel.
-// headerAction is an extra button shown next to the theme toggle (Register uses it for "Back to login").
-// compact (Register) uses a smaller headline and drops "Download mobile app" so the longer form fits without scrolling.
-// showDownload={false} drops "Download mobile app" (Forgot password).
+// headerAction is an extra button shown next to the theme toggle (Register uses it for "Back to Login").
+// compact (Register) uses a smaller headline and drops "Download Mobile App" so the longer form fits without scrolling.
+// showDownload={false} drops "Download Mobile App" (Forgot password).
 function AuthSplitLayout({ title, tagline, headerAction, compact = false, showDownload = true, children }) {
   const appDownloadUrl = useAppDownloadUrl()
   return (
@@ -71,7 +71,7 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, showDo
                   render={<a {...downloadLinkProps(appDownloadUrl)} />}
                   nativeButton={false}
                 >
-                  <SmartphoneIcon /> Download mobile app
+                  <SmartphoneIcon /> Download Mobile App
                 </Button>
               </div>
             )}

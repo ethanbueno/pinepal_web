@@ -23,22 +23,22 @@ import { Button } from "@/components/ui/button"
 const FEATURES = [
   {
     icon: ScanLineIcon,
-    title: "Scan and diagnose",
+    title: "Scan and Diagnose",
     text: "Take a photo of a pineapple. PinePal's model tells you which disease it sees and how sure it is.",
   },
   {
     icon: BookOpenIcon,
-    title: "Know what to do",
+    title: "Know What to Do",
     text: "Every diagnosis comes with care steps to treat the disease and keep it from spreading.",
   },
   {
     icon: MapPinIcon,
-    title: "See where it spreads",
+    title: "See Where It Spreads",
     text: "Each scan is placed on a map, so outbreaks show up early and officers know where to go.",
   },
   {
     icon: WifiOffIcon,
-    title: "Works in the field",
+    title: "Works in the Field",
     text: "The mobile app scans without internet and syncs your scans once you are back online.",
   },
 ]
@@ -71,7 +71,7 @@ const STEPS = [
 const AUDIENCES = [
   {
     icon: SmartphoneIcon,
-    title: "For farmers",
+    title: "For Farmers",
     points: [
       "Check a fruit in seconds, right in the field",
       "Keep a history of every scan on your farm",
@@ -80,7 +80,7 @@ const AUDIENCES = [
   },
   {
     icon: UsersIcon,
-    title: "For agricultural officers",
+    title: "For Agricultural Officers",
     points: [
       "A dashboard of cases, month by month",
       "A disease map with dots or a heat map",
@@ -162,7 +162,7 @@ function Landing() {
         <section className="border-t">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.3fr] lg:items-center">
             <div>
-              <h2 className={sectionTitle}>What it can detect</h2>
+              <h2 className={sectionTitle}>What It Can Detect</h2>
               <p className="mt-3 text-muted-foreground">
                 PinePal recognizes {DISEASES.length - 1} common pineapple problems, and tells healthy fruit apart from
                 diseased fruit. When it isn't sure, the scan is flagged so an officer can check it.
@@ -182,7 +182,7 @@ function Landing() {
         {/* how it works */}
         <section className="border-t bg-muted/40">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-            <h2 className={sectionTitle}>How it works</h2>
+            <h2 className={sectionTitle}>How It Works</h2>
             <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STEPS.map((s, i) => (
                 <li key={s.title} className="relative rounded-2xl border bg-card p-5 shadow-sm">

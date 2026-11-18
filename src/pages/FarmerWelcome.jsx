@@ -18,7 +18,7 @@ const scrollTo = (id) => {
 }
 
 // Farmer Home, laid out like a product site: a sliding banner across the top (one slide shows
-// the diseases PinePal recognises as photo tiles, each opening its guide), "Learn more"
+// the diseases PinePal recognises as photo tiles, each opening its guide), "Learn More"
 // opening how PinePal works right under it, and the farmer's own farm below (FarmerHome).
 function FarmerWelcome() {
   const { user } = useAuth()
@@ -31,42 +31,42 @@ function FarmerWelcome() {
     {
       image: rowsPhoto,
       label: `Welcome, ${firstName}`,
-      title: "Catch pineapple diseases early",
+      title: "Catch Pineapple Diseases Early",
       highlight: "early",
       text: "Scan a fruit and get the diagnosis and what to do next in seconds.",
-      action: { label: learnMore ? "Show less" : "Learn more", onClick: () => setLearnMore((open) => !open) },
+      action: { label: learnMore ? "Show Less" : "Learn More", onClick: () => setLearnMore((open) => !open) },
     },
     {
       label: "What PinePal recognises",
       title: `${FOUND_DISEASES.length} diseases, one photo away`,
       highlight: `${FOUND_DISEASES.length} diseases`,
       text: "Tap a disease to see what it looks like and how to treat it.",
-      action: { label: "Read the guides", onClick: () => navigate("/guides") },
+      action: { label: "Read the Guides", onClick: () => navigate("/guides") },
       visual: (active) => <DiseaseTiles focusable={active} />,
     },
     {
       image: mistyPhoto,
-      label: "In the field",
-      title: "Works even without signal",
+      label: "In the Field",
+      title: "Works Even Without Signal",
       highlight: "without signal",
       text: "Scan offline on your phone. Results upload by themselves when you're back online.",
-      action: { label: "Get the mobile app", href: downloadUrl },
+      action: { label: "Get the Mobile App", href: downloadUrl },
     },
     {
       image: handpickedPhoto,
       label: "Treatment",
-      title: "Know what to do next",
+      title: "Know What to Do Next",
       highlight: "what to do",
       text: "Step-by-step treatment and prevention for every disease PinePal finds.",
-      action: { label: "Read the guides", onClick: () => navigate("/guides") },
+      action: { label: "Read the Guides", onClick: () => navigate("/guides") },
     },
     {
       image: sunlitPhoto,
-      label: "Your farm",
-      title: "Your farm at a glance",
+      label: "Your Farm",
+      title: "Your Farm at a Glance",
       highlight: "at a glance",
       text: "Scan totals, a map of where you scanned, and your latest results.",
-      action: { label: "See my farm", onClick: () => scrollTo("my-farm") },
+      action: { label: "See My Farm", onClick: () => scrollTo("my-farm") },
     },
   ]
 

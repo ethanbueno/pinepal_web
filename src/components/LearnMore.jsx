@@ -16,22 +16,22 @@ import { cn } from "@/lib/utils"
 const STEPS = [
   {
     icon: CameraIcon,
-    title: "Take a photo",
+    title: "Take a Photo",
     text: "Open the PinePal mobile app and point the camera at the fruit.",
   },
   {
     icon: ScanSearchIcon,
-    title: "Get a diagnosis",
+    title: "Get a Diagnosis",
     text: "The app checks the photo right on your phone, even without internet, and names the disease with a confidence score.",
   },
   {
     icon: ClipboardListIcon,
-    title: "Follow the treatment",
+    title: "Follow the Treatment",
     text: "Every result comes with step-by-step treatment and prevention advice for that disease.",
   },
   {
     icon: MapIcon,
-    title: "Track your farm",
+    title: "Track Your Farm",
     text: "Your scans sync to your account once you're online. Agricultural officers use them to spot outbreaks early.",
   },
 ]
@@ -41,12 +41,12 @@ const pct = (value) => `${Math.round(value * 100)}%`
 const GOOD_TO_KNOW = [
   {
     icon: SunIcon,
-    title: "Getting a good photo",
+    title: "Getting a Good Photo",
     text: "Use daylight, keep the whole fruit in the frame, and hold the phone steady. One fruit per photo.",
   },
   {
     icon: GaugeIcon,
-    title: "What the confidence score means",
+    title: "What the Confidence Score Means",
     text: `${pct(HIGH_CONFIDENCE)} or more: the app is sure. ${pct(LOW_CONFIDENCE)} to ${pct(HIGH_CONFIDENCE)}: likely right. Below ${pct(LOW_CONFIDENCE)}: unsure, so take another photo and an agricultural officer will review it.`,
   },
   {
@@ -61,7 +61,7 @@ const GOOD_TO_KNOW = [
   },
   {
     icon: ShieldCheckIcon,
-    title: "Who sees your scans",
+    title: "Who Sees Your Scans",
     text: "Only you and PinePal's agricultural officers and admins. Officers may check a result and correct it.",
   },
 ]
@@ -78,7 +78,7 @@ function Heading({ eyebrow, title }) {
 }
 
 // What a farmer needs to know about PinePal. On the Home page it sits right under the welcome
-// card, hidden until "Learn more" is pressed, and opens with a short slide.
+// card, hidden until "Learn More" is pressed, and opens with a short slide.
 function LearnMore({ open, id }) {
   const ref = useRef(null)
 
@@ -108,7 +108,7 @@ function LearnMore({ open, id }) {
       <div className="min-h-0 overflow-hidden">
         <div className="space-y-6 pt-6">
           <section>
-            <Heading eyebrow="How it works" title="From photo to treatment in four steps" />
+            <Heading eyebrow="How It Works" title="From photo to treatment in four steps" />
             <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {STEPS.map(({ icon: Icon, title, text }, i) => (
                 <li key={title} className="relative rounded-xl bg-card ring-1 ring-foreground/10 p-5">
@@ -127,7 +127,7 @@ function LearnMore({ open, id }) {
 
 
           <section>
-            <Heading eyebrow="Good to know" title="Tips for the best results" />
+            <Heading eyebrow="Good to Know" title="Tips for the Best Results" />
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {GOOD_TO_KNOW.map(({ icon: Icon, title, text }) => (
                 <li key={title} className="flex gap-3 rounded-xl bg-card ring-1 ring-foreground/10 p-4">

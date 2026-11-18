@@ -19,12 +19,12 @@ const PHOTO_SLOTS = 5
 // The list fields, edited as one item per line
 const LIST_FIELDS = [
   ["symptoms", "Symptoms", "One symptom per line."],
-  ["look_alikes", "Could also be", "One look-alike per line."],
-  ["immediate_action", "Immediate action", "One step per line. They are numbered in this order."],
+  ["look_alikes", "Could Also Be", "One look-alike per line."],
+  ["immediate_action", "Immediate Action", "One step per line. They are numbered in this order."],
   ["prevention", "Prevention", "One measure per line."],
-  ["checks", "Check the plant yourself", "One check per line. Only the healthy guide uses this."],
-  ["scan_tips", "Scanning tips", "One tip per line."],
-  ["get_help", "Get help", "One office or contact per line."],
+  ["checks", "Check the Plant Yourself", "One check per line. Only the healthy guide uses this."],
+  ["scan_tips", "Scanning Tips", "One tip per line."],
+  ["get_help", "Get Help", "One office or contact per line."],
 ]
 
 const toLines = (items) => (items || []).join("\n")
@@ -171,7 +171,7 @@ function PhotosField({ urls, name, onChange }) {
             key={i}
             url={url}
             name={name}
-            label={i === 0 ? "Main photo" : `Photo ${i + 1}`}
+            label={i === 0 ? "Main Photo" : `Photo ${i + 1}`}
             onChange={(v) => setSlot(i, v)}
           />
         ))}
@@ -236,7 +236,7 @@ function SourcesField({ sources, onChange }) {
       <div>
         <Button type="button" variant="outline" size="sm" onClick={add}>
           <PlusIcon />
-          Add source
+          Add Source
         </Button>
       </div>
     </div>
@@ -285,7 +285,7 @@ function GuideEditForm({ open, protocol, onSave, onClose }) {
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-h-[calc(100%-2rem)] overflow-y-auto p-5 sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">{protocol ? "Edit guide" : "Add guide"}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{protocol ? "Edit Guide" : "Add Guide"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -301,7 +301,7 @@ function GuideEditForm({ open, protocol, onSave, onClose }) {
               />
             </div>
             <div>
-              <Label className="mb-1.5">Display name</Label>
+              <Label className="mb-1.5">Display Name</Label>
               <Input
                 value={form.display_name}
                 placeholder={getDisease(form.label)?.name}
@@ -310,7 +310,7 @@ function GuideEditForm({ open, protocol, onSave, onClose }) {
               />
             </div>
             <div>
-              <Label className="mb-1.5">Scientific name</Label>
+              <Label className="mb-1.5">Scientific Name</Label>
               <Input value={form.scientific_name} onChange={(e) => set("scientific_name", e.target.value)} />
             </div>
             <div>
@@ -352,7 +352,7 @@ function GuideEditForm({ open, protocol, onSave, onClose }) {
 
           <FormSection title="Review">
             <div className="sm:w-1/2">
-              <Label className="mb-1.5">Last reviewed</Label>
+              <Label className="mb-1.5">Last Reviewed</Label>
               <DatePicker placeholder="Pick a date" value={form.reviewed} onChange={(value) => set("reviewed", value)} />
             </div>
           </FormSection>

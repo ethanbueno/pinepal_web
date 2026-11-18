@@ -36,7 +36,7 @@ function Guides() {
     return (
       <div className="w-full">
         <div className="mb-3">
-          <BackButton to="/guides">All guides</BackButton>
+          <BackButton to="/guides">All Guides</BackButton>
         </div>
         <ProtocolCard protocol={selected} wide />
       </div>

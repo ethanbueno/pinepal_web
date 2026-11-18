@@ -65,7 +65,7 @@ function FarmerDetail() {
     return (
       <div className="flex flex-col items-start gap-4">
         <ErrorAlert className="">{error}</ErrorAlert>
-        <BackButton to={backTo}>Back to farmers</BackButton>
+        <BackButton to={backTo}>Back to Farmers</BackButton>
       </div>
     )
   }
@@ -86,7 +86,7 @@ function FarmerDetail() {
   return (
     <div>
       <div className="mb-4">
-        <BackButton to={backTo}>Back to farmers</BackButton>
+        <BackButton to={backTo}>Back to Farmers</BackButton>
       </div>
       <PageHeader
         title={farmer.full_name}
@@ -97,13 +97,13 @@ function FarmerDetail() {
       <div className="mb-4 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-semibold">Farmer details</CardTitle>
+            <CardTitle className="font-semibold">Farmer Details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <Info label="Farm">{farmer.farm_name || "–"}</Info>
               <Info label="Municipality">{farmer.municipality}</Info>
-              <Info label="Farm size">{farmer.farm_size_ha ? `${farmer.farm_size_ha} ha` : "-"}</Info>
+              <Info label="Farm Size">{farmer.farm_size_ha ? `${farmer.farm_size_ha} ha` : "-"}</Info>
               <Info label="Username">{farmer.username ? `@${farmer.username}` : "No login yet"}</Info>
               <Info label="Registered">{formatDate(farmer.registered_at)}</Info>
               <Info label="Status">
@@ -133,7 +133,7 @@ function FarmerDetail() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-semibold">Where they scanned</CardTitle>
+            <CardTitle className="font-semibold">Where They Scanned</CardTitle>
           </CardHeader>
           {/* grows to the height of the card next to it, never shorter than 16rem */}
           <CardContent className="relative min-h-64 flex-1">

@@ -39,7 +39,7 @@ export const verifyScan = (uuid, verifiedLabel, verifiedBy) =>
 
 export const deleteScan = (uuid) => api.delete("/api/scans/" + uuid).then(() => null);
 
-// used by the Diagnose page ("Save as scan")
+// used by the Diagnose page ("Save as Scan")
 export const createScan = (data) => api.post("/api/scans", data).then((res) => res.data);
 
 // A farmer saving from the Diagnose page: the same upload the mobile app uses, so the

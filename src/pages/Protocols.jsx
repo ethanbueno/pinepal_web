@@ -108,7 +108,7 @@ function Protocols() {
       )}
       <ConfirmModal
         open={deleteTarget !== null}
-        title="Delete guide?"
+        title="Delete Guide?"
         message={`Are you sure you want to delete the guide for ${deleteTarget?.display_name}? The app will have no remediation guide for it. This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
@@ -121,7 +121,7 @@ function Protocols() {
     return (
       <div className="w-full">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <BackButton to="/protocols">All guides</BackButton>
+          <BackButton to="/protocols">All Guides</BackButton>
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -134,7 +134,7 @@ function Protocols() {
             </Button>
             <Button size="sm" onClick={() => setEditor({ protocol: selected })}>
               <PencilIcon />
-              Edit guide
+              Edit Guide
             </Button>
           </div>
         </div>
@@ -153,7 +153,7 @@ function Protocols() {
         action={
           <Button onClick={() => setEditor({ protocol: null })}>
             <PlusIcon />
-            Add guide
+            Add Guide
           </Button>
         }
       />
@@ -164,7 +164,7 @@ function Protocols() {
         <ErrorAlert>{error}</ErrorAlert>
       ) : protocols.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">
-          No guides yet. Click "Add guide" to create the first remediation guide.
+          No guides yet. Click "Add Guide" to create the first remediation guide.
         </p>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">

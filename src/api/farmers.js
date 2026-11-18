@@ -20,7 +20,7 @@ export const createFarmer = (data) => api.post("/api/farmers", data).then((res) 
 export const updateFarmer = (id, data) =>
   api.put("/api/farmers/" + encodeURIComponent(id), data).then((res) => res.data);
 
-// "Sync now" for a farmer with no account. data: { username } for an existing farmer
+// "Sync Now" for a farmer with no account. data: { username } for an existing farmer
 // account, or { full_name, username, password } for a new one. Returns the farmer the
 // account ends up with; merged_from is set when this farmer's scans moved into it.
 export const syncFarmer = (id, data) =>

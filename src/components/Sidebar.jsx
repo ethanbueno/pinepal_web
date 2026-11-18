@@ -57,7 +57,7 @@ const staffLinks = [
   { to: "/protocols", label: "Guide", icon: BookOpenIcon },
   { to: "/export", label: "Export", icon: DownloadIcon },
   { to: "/users", label: "Users", icon: UserCogIcon, adminOnly: true, alsoActiveOn: "/farmers" },
-  { to: "/audit-logs", label: "Audit logs", icon: ScrollTextIcon, adminOnly: true },
+  { to: "/audit-logs", label: "Audit Logs", icon: ScrollTextIcon, adminOnly: true },
 ]
 
 const farmerLinks = [
@@ -144,7 +144,7 @@ function AppSidebar({ user, onLogout }) {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip="Download mobile app"
+              tooltip="Download Mobile App"
               className="bg-card transition-shadow hover:bg-primary/10 hover:shadow-[0_0_16px_-2px_color-mix(in_oklab,var(--primary)_55%,transparent)] group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
               render={<a {...downloadLinkProps(appDownloadUrl)} />}
             >
@@ -152,7 +152,7 @@ function AppSidebar({ user, onLogout }) {
                 <SmartphoneIcon className="size-4" />
               </span>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">Download mobile app</span>
+                <span className="truncate font-medium">Download Mobile App</span>
                 <span className="truncate text-xs text-muted-foreground">Android APK</span>
               </div>
               <DownloadIcon className="ml-auto size-4 text-muted-foreground" />
@@ -196,7 +196,7 @@ function AppSidebar({ user, onLogout }) {
                 <DropdownMenuSeparator className="my-1.5" />
                 <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={onLogout}>
                   <LogOutIcon />
-                  Log out
+                  Log Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

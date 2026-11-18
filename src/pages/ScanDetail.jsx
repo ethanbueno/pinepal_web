@@ -56,11 +56,11 @@ function PhotoFallback({ color, missing }) {
 
 // Where the "back" button goes, based on the page the user came from.
 function getBack(from, isFarmer) {
-  if (isFarmer) return { to: "/my-scans", label: "Back to my scans" }
-  if (from === "/") return { to: "/", label: "Back to dashboard" }
-  if (from === "/map") return { to: "/map", label: "Back to map" }
-  if (from?.startsWith("/farmers/")) return { to: from, label: "Back to farmer" }
-  return { to: "/scans", label: "Back to history" }
+  if (isFarmer) return { to: "/my-scans", label: "Back to My Scans" }
+  if (from === "/") return { to: "/", label: "Back to Dashboard" }
+  if (from === "/map") return { to: "/map", label: "Back to Map" }
+  if (from?.startsWith("/farmers/")) return { to: from, label: "Back to Farmer" }
+  return { to: "/scans", label: "Back to History" }
 }
 
 function ScanDetail() {
@@ -165,14 +165,14 @@ function ScanDetail() {
         <BackButton to={back.to}>{back.label}</BackButton>
       </div>
       <PageHeader
-        title="Scan detail"
+        title="Scan Detail"
         description={`${scan.farm_name || scan.farmer_name} · ${formatDateTime(scan.scanned_at)}`}
       />
 
       {/* Big screens: two columns. On the left, a large photo and map;
           on the right, the diagnosis with verifying, the scan's details, then the care
           guide. Phones and tablets stack them. */}
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
           <Card className="relative aspect-square gap-0 overflow-hidden py-0">
               {showPhoto ? (
@@ -198,7 +198,7 @@ function ScanDetail() {
               )}
           </Card>
 
-          <div className="aspect-square sm:aspect-auto sm:h-full xl:aspect-auto xl:h-[22rem]">
+          <div className="aspect-square sm:aspect-auto sm:h-full xl:aspect-auto xl:h-[19rem]">
             <MiniMap
               height="100%"
               center={[scan.latitude, scan.longitude]}
@@ -235,7 +235,7 @@ function ScanDetail() {
                   ) : (
                     <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                       <ClockIcon className="size-3.5" />
-                      Not verified
+                      Not Verified
                     </span>
                   )}
                 </div>
@@ -330,14 +330,14 @@ function ScanDetail() {
             onClick={() => setShowDelete(true)}
           >
             <Trash2Icon />
-            {deleting ? "Deleting..." : "Delete scan"}
+            {deleting ? "Deleting..." : "Delete Scan"}
           </Button>
         </div>
       )}
 
       <ConfirmModal
         open={showDelete}
-        title="Delete scan?"
+        title="Delete Scan?"
         message={`Are you sure you want to delete the ${formatDate(scan.scanned_at)} scan from ${scan.farm_name || scan.farmer_name}? This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setShowDelete(false)}

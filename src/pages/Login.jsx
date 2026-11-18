@@ -42,14 +42,14 @@ function Login() {
   }
   return (
     <AuthSplitLayout
-      title="Log into PinePal"
+      title="Log Into PinePal"
       tagline="Scan a pineapple, get the diagnosis and treatment steps, and see where outbreaks are happening across Echague, Isabela."
     >
       <form onSubmit={handleLogin} className="space-y-4">
         <FloatingInput
           size="compact"
           id="username"
-          label="Username or email"
+          label="Username or Email"
           type="text"
           autoComplete="username"
           value={username}
@@ -73,14 +73,14 @@ function Login() {
         </div>
         {errorMessage && <ErrorAlert>{errorMessage}</ErrorAlert>}
         <Button type="submit" disabled={loading} className="h-10 w-full rounded-[10px] text-[15px] font-medium">
-          {loading ? "Signing in..." : "Log in"}
+          {loading ? "Signing in..." : "Log In"}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         New to PinePal?{" "}
         <Link to="/register" className="font-medium text-primary-text underline underline-offset-4">
-          Create an account
+          Create an Account
         </Link>
       </p>
     </AuthSplitLayout>
