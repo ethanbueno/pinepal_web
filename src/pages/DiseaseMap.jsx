@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react"
 import DatePicker from "../components/DatePicker"
 import MultiSelectField from "../components/MultiSelectField"
 import { Link } from "react-router-dom"
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } from "react-leaflet"
+import L from "leaflet"
+import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
 import { getMapScans } from "../api/scans"
 import { cachedGet } from "../api/cache"
 import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES, getDisease } from "../utils/diseases"
@@ -22,24 +23,27 @@ const VIEWS = [
   { value: "dots", label: "Dots" },
 ]
 
-// The heat scale, from few diseased scans to many (the same colors as the mobile heat map)
-const HEAT_STOPS = ["#2563EB", "#16A34A", "#EAB308", "#F97316", "#DC2626"]
-const HEAT_SCALE = `linear-gradient(to right, ${HEAT_STOPS.join(", ")})`
+// The heat scale: the share of diseased scans around a scan, in fixed 10% bands from green (all
+// healthy) through yellow and orange to red (all diseased). Fixed, so a color always means the
+// same thing, whatever the zoom, filters or dates. Same bands on the mobile app.
+const RATE_STOPS = ["#16A34A", "#84CC16", "#EAB308", "#F97316", "#DC2626"]
 
-// a color on the heat scale, t from 0 (blue) to 1 (red)
-function heatColor(t) {
-  const x = Math.min(Math.max(t, 0), 1) * (HEAT_STOPS.length - 1)
-  const i = Math.min(Math.floor(x), HEAT_STOPS.length - 2)
+function mix(t) {
+  const x = Math.min(Math.max(t, 0), 1) * (RATE_STOPS.length - 1)
+  const i = Math.min(Math.floor(x), RATE_STOPS.length - 2)
   const f = x - i
-  const a = HEAT_STOPS[i].match(/\w\w/g).map((h) => parseInt(h, 16))
-  const b = HEAT_STOPS[i + 1].match(/\w\w/g).map((h) => parseInt(h, 16))
+  const a = RATE_STOPS[i].match(/\w\w/g).map((h) => parseInt(h, 16))
+  const b = RATE_STOPS[i + 1].match(/\w\w/g).map((h) => parseInt(h, 16))
   return "#" + a.map((v, k) => Math.round(v + (b[k] - v) * f).toString(16).padStart(2, "0")).join("")
 }
 
-// Scans whose dots would be closer than this on screen are one place on the heat map, so
-// zoomed out the dots merge into bigger ones and zoomed in they split up again
-const PLACE_PIXELS = 36
-const PLACE_SCANS_LISTED = 5
+// band 0 = under 10% diseased ... band 9 = 90% and over
+const RATE_BANDS = Array.from({ length: 10 }, (_, i) => mix((i + 0.5) / 10))
+const rateColor = (rate) => RATE_BANDS[Math.min(9, Math.floor(rate * 10))]
+
+// A scan's glow takes its color from the scans around it: those whose dots are within this
+// distance on screen (so zoomed out it shows the area, zoomed in the spot)
+const NEARBY_PIXELS = 45
 
 // One scan on the map: its photo, diagnosis, confidence, date and farmer, and a link to it
 function ScanPopup({ scan, disease }) {
@@ -61,112 +65,63 @@ function ScanPopup({ scan, disease }) {
   )
 }
 
-// The heat map: nearby scans grouped into places, regrouped whenever the zoom changes. A place's
-// dot is bigger the more scans it has, and goes from blue to red the more diseased scans it has
-// (healthy ones when only No Disease is picked). Each dot opens a list of what was found there.
-function HeatDots({ scans, finalLabel, onlyHealthy }) {
+// The heat map: every scan is its own dot (in its disease color) with a soft glow under it. A
+// glow is colored by the share of diseased scans around it (fixed 10% bands, green to red), and
+// overlapping glows add up, so busy diseased areas glow strongest. Each dot opens that scan.
+function HeatDots({ scans, finalLabel }) {
   const map = useMap()
   const [zoom, setZoom] = useState(() => map.getZoom())
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) })
 
-  const places = useMemo(() => {
-    const groups = [] // { x, y, scans } in map pixels at this zoom
-    for (const scan of scans) {
-      const p = map.project([scan.latitude, scan.longitude], zoom)
-      const near = groups.find((g) => Math.hypot(g.x - p.x, g.y - p.y) < PLACE_PIXELS)
-      if (near) {
-        near.scans.push(scan)
-        // the group's center follows its scans
-        near.x += (p.x - near.x) / near.scans.length
-        near.y += (p.y - near.y) / near.scans.length
-      } else {
-        groups.push({ x: p.x, y: p.y, scans: [scan] })
-      }
-    }
-    const list = groups.map((g) => ({
-      center: map.unproject([g.x, g.y], zoom),
-      scans: [...g.scans].sort((a, b) => b.scanned_at.localeCompare(a.scanned_at)),
-      counted: g.scans.filter((s) => onlyHealthy || finalLabel(s) !== "No_Disease").length,
+  const points = useMemo(() => {
+    const projected = scans.map((scan) => ({
+      scan,
+      p: map.project([scan.latitude, scan.longitude], zoom),
+      diseased: finalLabel(scan) !== "No_Disease",
     }))
-    const maxCounted = Math.max(1, ...list.map((p) => p.counted))
-    const maxScans = Math.max(1, ...list.map((p) => p.scans.length))
-    return list
-      .map((p) => ({
-        ...p,
-        key: p.scans[0].scan_uuid,
-        color: heatColor(p.counted / maxCounted),
-        radius: 8 + 16 * Math.sqrt(p.scans.length / maxScans),
-      }))
-      .sort((a, b) => b.radius - a.radius) // big ones first, so small ones stay clickable on top
-  }, [scans, zoom, map, finalLabel, onlyHealthy])
+    return projected.map(({ scan, p }) => {
+      const near = projected.filter((o) => Math.hypot(o.p.x - p.x, o.p.y - p.y) < NEARBY_PIXELS)
+      return {
+        scan,
+        glow: rateColor(near.filter((o) => o.diseased).length / near.length),
+        dot: getDisease(finalLabel(scan)).color,
+      }
+    })
+  }, [scans, zoom, map, finalLabel])
 
-  return places.map((place) => (
-    <CircleMarker
-      key={place.key}
-      center={place.center}
-      radius={place.radius}
-      pathOptions={{ color: "#ffffff", weight: 2, fillColor: place.color, fillOpacity: 0.85 }}
-    >
-      {/* maxHeight: a place with many scans scrolls inside its popup instead of running off the map */}
-      <Popup maxHeight={place.scans.length === 1 ? undefined : 280}>
-        {/* one scan: the same card as on the Dots view; several: what they were, to open one */}
-        {place.scans.length === 1 ? (
-          <ScanPopup scan={place.scans[0]} disease={getDisease(finalLabel(place.scans[0]))} />
-        ) : (
-          <PlacePopup place={place} finalLabel={finalLabel} onlyHealthy={onlyHealthy} />
-        )}
-      </Popup>
-    </CircleMarker>
-  ))
-}
-
-// What a heat map dot holds: how many scans, what they were, and the latest few to open
-function PlacePopup({ place, finalLabel, onlyHealthy }) {
-  const counts = DISEASES.map((d) => ({
-    ...d,
-    n: place.scans.filter((s) => finalLabel(s) === d.label).length,
-  })).filter((d) => d.n > 0)
-  const total = place.scans.length
   return (
-    <div className="w-56">
-      <div className="font-semibold">
-        {total} {total === 1 ? "scan" : "scans"} here
-      </div>
-      <div className="mb-2 text-xs">
-        {place.counted} {onlyHealthy ? "healthy" : "with a disease"}
-      </div>
-      <div className="mb-2 flex flex-col gap-0.5">
-        {counts.map((d) => (
-          <div key={d.label} className="flex items-center gap-1.5 text-xs">
-            <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
-            <span className="grow">{d.name}</span>
-            <span className="font-medium tabular-nums">{d.n}</span>
-          </div>
-        ))}
-      </div>
-      <div className="border-t pt-1.5 text-xs">
-        {/* the latest scans, each like a small Dots card: photo, diagnosis, confidence, date */}
-        {place.scans.slice(0, PLACE_SCANS_LISTED).map((scan) => (
-          <Link
-            key={scan.scan_uuid}
-            to={"/scans/" + scan.scan_uuid}
-            state={{ from: "/map" }}
-            className="flex items-center gap-2 rounded-md py-1 text-inherit! no-underline hover:bg-black/5"
-          >
-            <img src={scanImage(scan)} alt="" className="size-9 shrink-0 rounded object-cover" />
-            <span className="min-w-0 grow">
-              <span className="block truncate font-semibold">{getDisease(finalLabel(scan))?.name}</span>
-              <span className="block">
-                {formatPercent(scan.confidence)} · {formatDate(scan.scanned_at)}
-              </span>
-            </span>
-          </Link>
-        ))}
-        {total > PLACE_SCANS_LISTED && (
-          <div className="pt-0.5 text-muted-foreground">and {total - PLACE_SCANS_LISTED} more</div>
-        )}
-      </div>
-    </div>
+    <>
+      {/* the glows: under every dot and not clickable */}
+      {points.map(({ scan, glow }) => (
+        <Marker
+          key={"glow-" + scan.scan_uuid}
+          position={[scan.latitude, scan.longitude]}
+          interactive={false}
+          keyboard={false}
+          zIndexOffset={-1000}
+          icon={L.divIcon({
+            className: "",
+            iconSize: [90, 90],
+            html: `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle, ${glow}38 0%, ${glow}1f 25%, ${glow}0b 50%, ${glow}00 70%)"></div>`,
+          })}
+        />
+      ))}
+      {points.map(({ scan, dot }) => (
+        <Marker
+          key={scan.scan_uuid}
+          position={[scan.latitude, scan.longitude]}
+          icon={L.divIcon({
+            className: "",
+            iconSize: [12, 12],
+            html: `<div style="width:100%;height:100%;border-radius:50%;background:${dot};border:1px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)"></div>`,
+          })}
+        >
+          <Popup>
+            <ScanPopup scan={scan} disease={getDisease(finalLabel(scan))} />
+          </Popup>
+        </Marker>
+      ))}
+    </>
   )
 }
 
@@ -205,8 +160,6 @@ function DiseaseMap() {
   const finalLabel = (scan) => scan.verified_label || scan.predicted_label
   const countOf = (label) => scans.filter((s) => finalLabel(s) === label).length
 
-  // The heat map is about disease, so healthy scans only count when No Disease is picked on its own
-  const onlyHealthy = selected.length === 1 && selected[0] === "No_Disease"
   // Desktop: the page fills the window, 100dvh minus the layout's top padding (24px) and a bottom gap
   // equal to the side padding (40px), so the margins are even; the map keeps at least 420px.
   // Phones: the page scrolls normally and the map is 60% of the screen, so there is always some page
@@ -218,7 +171,7 @@ function DiseaseMap() {
         description={
           (view === "dots"
             ? "Where each scan was taken, colored by diagnosis. Click a dot for details."
-            : "Where disease is most common: a bigger dot means more scans there, a redder one more with a disease. Click a dot to see them.") +
+            : "Every scan is a dot; the glow around it goes from green to red the more scans nearby have a disease. Click a dot to open the scan.") +
           (LOCKED_MUNICIPALITY ? ` Temporarily locked to ${LOCKED_MUNICIPALITY}.` : "")
         }
       />
@@ -284,7 +237,7 @@ function DiseaseMap() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <IsabelaLayer selected={municipality} onSelect={setMunicipality} scans={scans} />
-          {view === "heat" && <HeatDots scans={scans} finalLabel={finalLabel} onlyHealthy={onlyHealthy} />}
+          {view === "heat" && <HeatDots scans={scans} finalLabel={finalLabel} />}
           {view === "dots" &&
             scans.map((scan) => {
               const disease = getDisease(finalLabel(scan))
@@ -312,12 +265,19 @@ function DiseaseMap() {
             <div className="mb-1 font-semibold">Legend</div>
             {view === "heat" && (
               <div className="mb-2 flex flex-col gap-1">
-                <div className="h-2 w-40 rounded-full" style={{ background: HEAT_SCALE }} />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Fewer</span>
-                  <span>More {onlyHealthy ? "healthy" : "diseased"}</span>
+                <div className="text-xs font-medium">Glow: scans with a disease nearby</div>
+                {/* the 10% bands, the same as on the map */}
+                <div className="flex w-44 overflow-hidden rounded-sm">
+                  {RATE_BANDS.map((color) => (
+                    <span key={color} className="h-2.5 flex-1" style={{ backgroundColor: color }} />
+                  ))}
                 </div>
-                <div className="text-xs text-muted-foreground">Bigger dot = more scans there</div>
+                <div className="flex w-44 justify-between text-xs text-muted-foreground tabular-nums">
+                  <span>0%</span>
+                  <span>50%</span>
+                  <span>100%</span>
+                </div>
+                <div className="text-xs text-muted-foreground">Dots: each scan, in its disease color</div>
               </div>
             )}
             {DISEASES.map((d) => (
