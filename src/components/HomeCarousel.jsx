@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import logo from "../assets/pinepal-logo.png"
+import { downloadLinkProps } from "../utils/download"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -28,7 +29,7 @@ function SlideAction({ action, active }) {
       <Button
         size="lg"
         tabIndex={tabIndex}
-        render={<a href={action.href} target="_blank" rel="noreferrer" />}
+        render={<a {...downloadLinkProps(action.href)} />}
         nativeButton={false}
       >
         {action.label}

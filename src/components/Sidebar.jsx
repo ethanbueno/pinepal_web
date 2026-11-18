@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import logo from "../assets/pinepal-logo.png"
 import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
+import { downloadLinkProps } from "../utils/download"
 import { getRoleLabel } from "../utils/roles"
 
 // Icons match the mobile app's tabs: Home, History (clock), Scan (camera), Guide (open book)
@@ -142,7 +143,7 @@ function AppSidebar({ user, onLogout }) {
               size="lg"
               tooltip="Download mobile app"
               className="bg-card transition-shadow hover:bg-primary/10 hover:shadow-[0_0_16px_-2px_color-mix(in_oklab,var(--primary)_55%,transparent)] group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
-              render={<a href={appDownloadUrl} target="_blank" rel="noopener noreferrer" />}
+              render={<a {...downloadLinkProps(appDownloadUrl)} />}
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-text">
                 <SmartphoneIcon className="size-4" />

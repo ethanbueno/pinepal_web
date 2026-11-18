@@ -5,6 +5,7 @@ import AuthPhotoSlideshow from "./AuthPhotoSlideshow"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
+import { downloadLinkProps } from "../utils/download"
 
 // Eased left-edge fade for the photo half (smoothstep-like stops, so there's no visible band)
 const PHOTO_FADE =
@@ -67,7 +68,7 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, childr
                 <Button
                   variant="outline"
                   className="h-10 rounded-[10px] px-4 text-[15px]"
-                  render={<a href={appDownloadUrl} target="_blank" rel="noopener noreferrer" />}
+                  render={<a {...downloadLinkProps(appDownloadUrl)} />}
                   nativeButton={false}
                 >
                   <SmartphoneIcon /> Download mobile app
