@@ -17,17 +17,17 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import PinePalLoader from "../components/PinePalLoader"
 
-// How the scans are drawn: a dot per scan, colored by disease, or a heat map of where disease is
+// How the scans are drawn: a heat map of where disease is, or a dot per scan, colored by disease
 const VIEWS = [
-  { value: "dots", label: "Dots" },
   { value: "heat", label: "Heat Map" },
+  { value: "dots", label: "Dots" },
 ]
 
 // A heat map color scale, from few diseased scans to many
 const HEAT_SCALE = "linear-gradient(to right, #2563EB, #16A34A, #EAB308, #F97316, #DC2626)"
 
 function DiseaseMap() {
-  const [view, setView] = useState("dots")
+  const [view, setView] = useState("heat") // opens on the heat map; Dots shows each scan
   const [selected, setSelected] = useState([]) // empty = show all diseases
   const [municipality, setMunicipality] = useState(LOCKED_MUNICIPALITY)
   const [range, setRange] = useState({ from: "", to: "" })

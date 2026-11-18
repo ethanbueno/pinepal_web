@@ -1,6 +1,6 @@
 # PinePal database: entity relationship diagram
 
-The MySQL database `pinepal_db` (Aiven, MySQL 8.4), as it is live on 2026-11-17 (8 tables).
+The MySQL database `pinepal_db` (Aiven, MySQL 8.4), as it is live on 2026-11-19 (10 tables, 16 triggers).
 GitHub draws the diagram below. To open it elsewhere, paste the `mermaid` block into
 [mermaid.live](https://mermaid.live), or reverse-engineer the live database in MySQL Workbench
 (Database > Reverse Engineer).
@@ -16,6 +16,8 @@ erDiagram
     users |o--o{ mobile_scans : "saved by staff (SET NULL)"
     users |o--o{ login_history : "signs in (SET NULL)"
     users |o..o{ audit_logs : "acts (logical, no FK)"
+    users ||--o{ password_resets : "resets password (CASCADE)"
+    users |o--o{ app_settings : "last changed by (SET NULL)"
 
     users {
         int id PK
@@ -24,6 +26,8 @@ erDiagram
         enum role "admin, officer, farmer"
         varchar name
         varchar municipality
+        varchar avatar_url "profile photo (Cloudinary)"
+        varchar cover_url "cover photo (Cloudinary)"
         timestamp created_at
     }
     user_credentials {
@@ -45,8 +49,8 @@ erDiagram
     }
     mobile_scans {
         varchar scan_uuid PK "made on the phone"
-        varchar farmer_id FK "null for a staff scan"
-        int saved_by FK "staff account"
+        varchar farmer_id FK "null for an admin's own scan"
+        int saved_by FK "staff account that saved it"
         varchar saved_by_name
         varchar farm_name "where the scan was taken"
         varchar municipality
@@ -110,6 +114,21 @@ erDiagram
         text symptoms
         text treatment_guide
     }
+    password_resets {
+        int id PK
+        int user_id FK
+        varchar code_hash "bcrypt of the emailed code"
+        tinyint attempts "0 to 10"
+        datetime expires_at
+        datetime used_at
+        datetime created_at
+    }
+    app_settings {
+        varchar setting_key PK "e.g. app_download_url"
+        text setting_value
+        int updated_by FK
+        datetime updated_at
+    }
 ```
 
 ## Relationships
@@ -122,10 +141,28 @@ erDiagram
 | `mobile_scans.saved_by` | `users.id` | 1 : many | SET NULL | Which staff account saved a web scan. |
 | `login_history.user_id` | `users.id` | 1 : many | SET NULL | Sign-in history survives account deletion. |
 | `audit_logs.actor_id` | `users.id` | 1 : many | none (logical) | Partitioned tables can't have foreign keys; the log must also outlive deleted accounts. |
+| `password_resets.user_id` | `users.id` | 1 : many | CASCADE | The emailed reset codes (hashed) for Forgot password; they go with the account. |
+| `app_settings.updated_by` | `users.id` | 1 : many | SET NULL | Which admin last changed a setting, such as the mobile app's download link. |
 
-`diseases` and `scan_daily_stats` stand alone. Scan labels are limited to the six model labels
+`diseases` and `scan_daily_stats` stand alone. A scan with no `farmer_id` is one an admin saved
+for no farmer (shown as "Name (Admin)"); officers never see those. Scan labels are limited to the six model labels
 by CHECK constraints rather than a foreign key, and `scan_daily_stats` is a summary of
 `mobile_scans` kept up to date by triggers. The staff Dashboard reads its totals from it.
+
+## Triggers
+
+| Trigger | On | What it does |
+| --- | --- | --- |
+| `trg_audit_users_insert` / `_update` / `_delete` | `users` | Writes the change (old and new values) to `audit_logs`. |
+| `trg_audit_farmers_insert` / `_update` / `_delete` | `farmers` | Same, for farmers. |
+| `trg_audit_mobile_scans_insert` / `_update` / `_delete` | `mobile_scans` | Same, for scans. |
+| `trg_audit_user_credentials_update` | `user_credentials` | Logs that a password changed (never the hash). |
+| `trg_audit_login_history_insert` | `login_history` | Copies each sign-in attempt into `audit_logs` as a login row. |
+| `trg_stats_mobile_scans_insert` / `_update` / `_delete` | `mobile_scans` | Keeps the per-day totals in `scan_daily_stats` up to date. |
+| `trg_audit_logs_no_update` / `_no_delete` | `audit_logs` | Refuse any change or delete, so the log can only grow. |
+
+Backups made from the web (Settings > Backup) and by `backup.py` are logged in `audit_logs` too,
+as activity rows with the action `BACKUP`.
 
 ## Normalization notes
 
