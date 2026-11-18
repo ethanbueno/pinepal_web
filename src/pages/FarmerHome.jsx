@@ -7,7 +7,6 @@ import StatCard from "../components/StatCard"
 import ScansTable from "../components/ScansTable"
 import MiniMap from "../components/MiniMap"
 import ErrorAlert from "../components/ErrorAlert"
-import PageHeader from "../components/PageHeader"
 import LoadingBlocks from "../components/LoadingBlocks"
 import EmptyState from "../components/EmptyState"
 import { UnlinkIcon } from "lucide-react"
@@ -15,6 +14,8 @@ import { DISEASES, getDisease } from "../utils/diseases"
 import { formatDate } from "../utils/format"
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+// The farmer's farm at a glance: totals, scans by disease, a map and the latest scans.
+// Shown on Home under the welcome banner (FarmerWelcome), so it has no "Welcome" title of its own.
 function FarmerHome() {
   const { user } = useAuth()
   const [farmer, setFarmer] = useState(null)
@@ -57,7 +58,6 @@ function FarmerHome() {
   if (!farmer) {
     return (
       <div>
-        <PageHeader title="My Farm" />
         <EmptyState
           icon={UnlinkIcon}
           title="Not linked to a farm yet"
@@ -81,14 +81,14 @@ function FarmerHome() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="My Farm"
-        description={
-          farmer.farm_name
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight">My Farm</h2>
+        <p className="text-sm text-muted-foreground">
+          {farmer.farm_name
             ? `${farmer.farm_name} · ${farmer.municipality}${farmer.farm_size_ha ? ` · ${farmer.farm_size_ha} ha` : ""}`
-            : "Your farm details are filled in from your first synced scan."
-        }
-      />
+            : "Your farm details are filled in from your first synced scan."}
+        </p>
+      </div>
 
       {/* every card has a note, so the three line up */}
       <div className="grid gap-4 sm:grid-cols-3">

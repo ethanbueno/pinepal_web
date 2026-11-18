@@ -14,7 +14,6 @@ import {
   ScrollTextIcon,
   SettingsIcon,
   SmartphoneIcon,
-  SproutIcon,
   StethoscopeIcon,
   UserCogIcon,
   UsersIcon,
@@ -59,7 +58,6 @@ const staffLinks = [
 
 const farmerLinks = [
   { to: "/", label: "Home", icon: HouseIcon, end: true },
-  { to: "/my-farm", label: "My Farm", icon: SproutIcon },
   { to: "/diagnose", label: "Scan", icon: StethoscopeIcon },
   { to: "/my-scans", label: "History", icon: ImagesIcon },
   { to: "/guides", label: "Guide", icon: BookOpenIcon },
