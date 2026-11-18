@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { NavLink, matchPath, useLocation, useNavigate } from "react-router-dom"
 import {
   BookOpenIcon,
@@ -31,6 +32,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -78,6 +80,13 @@ function AppSidebar({ user, onLogout }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { dark, toggleTheme } = useTheme()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  // on phones the sidebar is a drawer over the page: close it once a link is followed,
+  // so the new page does not load and re-render underneath it
+  useEffect(() => {
+    setOpenMobile(false)
+  }, [pathname, setOpenMobile])
 
   // farmers get their own short menu, officers don't see admin-only links,
   // admins don't see links that live under another page for them
@@ -162,7 +171,12 @@ function AppSidebar({ user, onLogout }) {
                 </div>
                 <ChevronsUpDownIcon className="ml-auto size-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="end" className="min-w-56">
+              {/* in the phone drawer there is no room to the right, so it opens upward, as wide as the button */}
+              <DropdownMenuContent
+                side={isMobile ? "top" : "right"}
+                align={isMobile ? "start" : "end"}
+                className="min-w-56"
+              >
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <UserIcon />
                   My profile

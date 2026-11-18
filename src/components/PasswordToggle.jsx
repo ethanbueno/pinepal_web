@@ -12,7 +12,7 @@ function PasswordToggle({ shown, onToggle, className }) {
       aria-pressed={shown}
       title={shown ? "Hide password" : "Show password"}
       className={cn(
-        "absolute top-1/2 right-1.5 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+        "absolute top-1/2 right-1 flex size-9 -translate-y-1/2 md:right-1.5 md:size-7 items-center justify-center rounded-md text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
     >

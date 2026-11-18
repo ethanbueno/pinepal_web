@@ -45,7 +45,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="-my-1 flex items-center justify-between gap-2 px-(--card-spacing) text-sm font-medium sm:hidden"
+        className="-my-3 flex min-h-11 items-center justify-between gap-2 px-(--card-spacing) text-sm font-medium sm:hidden"
       >
         <span className="flex items-center gap-2">
           <SlidersHorizontalIcon className="size-4" /> Filters

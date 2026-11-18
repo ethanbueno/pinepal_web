@@ -9,7 +9,7 @@ function PasswordInput({ className, ...props }) {
   const [shown, setShown] = useState(false)
   return (
     <div className="relative">
-      <Input {...props} type={shown ? "text" : "password"} className={cn("pr-9", className)} />
+      <Input {...props} type={shown ? "text" : "password"} className={cn("pr-11 md:pr-9", className)} />
       <PasswordToggle shown={shown} onToggle={() => setShown(!shown)} className="size-6" />
     </div>
   )

@@ -75,10 +75,12 @@ function DiseaseMap() {
     () => scans.filter((s) => onlyHealthy || finalLabel(s) !== "No_Disease").map((s) => [s.latitude, s.longitude]),
     [scans, onlyHealthy],
   )
-  // the page fills the window: 100dvh minus the layout's top padding (20px / md 24px) and a bottom gap equal to
-  // the side padding (28px / md 40px), so the margins are even; the map keeps at least 420px on short screens
+  // Desktop: the page fills the window, 100dvh minus the layout's top padding (24px) and a bottom gap
+  // equal to the side padding (40px), so the margins are even; the map keeps at least 420px.
+  // Phones: the page scrolls normally and the map is 60% of the screen, so there is always some page
+  // above or below it to scroll with (a full-screen map would catch every swipe).
   return (
-    <div className="flex h-[calc(100dvh-3rem)] flex-col md:h-[calc(100dvh-4rem)]">
+    <div className="flex flex-col md:h-[calc(100dvh-4rem)]">
       <PageHeader
         title="Disease Map"
         description={
@@ -152,7 +154,7 @@ function DiseaseMap() {
 
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <Card className="relative isolate z-0 min-h-[420px] grow py-0">
+      <Card className="relative isolate z-0 h-[60dvh] min-h-80 grow py-0 md:h-auto md:min-h-[420px]">
         {loading && (
           <div
             aria-busy="true"
