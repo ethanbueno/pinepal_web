@@ -37,12 +37,11 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import logo from "../assets/pinepal-logo.png"
 import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
-import { SETTINGS_SHORTCUT, openSettings } from "../hooks/useSettingsDialog"
+import { openSettings } from "../hooks/useSettingsDialog"
 import { downloadLinkProps } from "../utils/download"
 import { getRoleLabel } from "../utils/roles"
 
@@ -186,7 +185,6 @@ function AppSidebar({ user, onLogout }) {
                   <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={() => openSettings("profile")}>
                     <SettingsIcon />
                     Settings
-                    <DropdownMenuShortcut>{SETTINGS_SHORTCUT}</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="my-1.5" />

@@ -11,18 +11,6 @@ function set(next) {
   listeners.forEach((listener) => listener())
 }
 
-// Ctrl+, (Cmd+, on a Mac) opens Settings from anywhere, as in most apps
-const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
-export const SETTINGS_SHORTCUT = isMac ? "⌘," : "Ctrl+,"
-if (typeof window !== "undefined") {
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "," && (isMac ? e.metaKey : e.ctrlKey) && !e.altKey && !e.shiftKey) {
-      e.preventDefault()
-      openSettings()
-    }
-  })
-}
-
 export const openSettings = (section = "profile") => set({ open: true, section })
 export const closeSettings = () => set({ open: false })
 export const showSettingsSection = (section) => set({ section })
