@@ -63,7 +63,7 @@ Other backend scripts (run from `backend/`):
 | `python migrate_farmers.py` | creates the `farmers` table and fills it from the scans |
 | `python migrate_farmer_feedback.py` | adds the farmer-feedback columns to the scans table |
 | `python migrate_audit_logs.py` | creates the `audit_logs` table and its triggers: every request, sign-in attempt and change to users, farmers and scans shows on the admin Audit logs page |
-| `python migrate_optimization.py` | `CHECK` rules (domain constraints), indexes for the app's filters, password hashes moved to `user_credentials` (vertical partitioning), `audit_logs` split by month (horizontal partitioning), and the `scan_daily_stats` totals kept by triggers. Run it again now and then to add the next months' partitions |
+| `python migrate_optimization.py` | `CHECK` rules (domain constraints), indexes for the app's filters, password hashes moved to `user_credentials` (vertical partitioning), `audit_logs` split by month (horizontal partitioning), and the `scan_daily_stats` totals kept by triggers (the staff Dashboard reads its totals from them). Run it again now and then to add the next months' partitions |
 | `python explain_indexes.py` | shows MySQL using those indexes and reading only one month's partition (a read-only demo) |
 | `python backup.py` | saves the whole database (tables, rows, triggers) and every scan photo in `backups/pinepal_backup_<date>.zip` |
 | `python restore.py` | restores the newest backup into a test database and proves every table, trigger and photo came back (`--live` restores into the real database). See [BACKUP_AND_RECOVERY.md](backend/BACKUP_AND_RECOVERY.md) |

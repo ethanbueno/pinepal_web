@@ -376,24 +376,40 @@ def delete_scan(scan_uuid):
 def stats():
     where, params = build_filters({"from": request.args.get("from"), "to": request.args.get("to")})
 
-    # Every number on the dashboard comes from ONE grouped query, added up here in Python,
-    # plus one query for the highest and lowest confidence scans. Each query to a hosted database
-    # is a round trip over the internet, so two queries on one connection load much faster than seven.
+    # The totals come from scan_daily_stats, the aggregate table (migrate_optimization.py):
+    # scans per day, municipality and diagnosis, kept up to date by triggers on mobile_scans.
+    # So the dashboard adds up a few small rows instead of counting every scan. The same date
+    # filter works on it, because it is kept per day. "Needs review" depends on each scan's
+    # confidence, which the totals don't keep, so it is counted from mobile_scans in the same
+    # query. A second query gets the highest and lowest confidence scans. Each query to a hosted
+    # database is a round trip over the internet, so two on one connection load fast.
+    day_where, day_params = [], []
+    if request.args.get("from"):
+        day_where.append("s.day >= %s")
+        day_params.append(request.args["from"])
+    if request.args.get("to"):
+        day_where.append("s.day <= %s")
+        day_params.append(request.args["to"])
+    day_clause = ("WHERE " + " AND ".join(day_where)) if day_where else ""
+    review_where = where + (" AND " if where else "WHERE ") + "verified_label IS NULL AND confidence < %s"
+
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute(
         f"""
-        SELECT DATE_FORMAT(scanned_at, '%%Y-%%m') AS month,
-               municipality,
-               {FINAL} AS label,
-               (verified_label IS NULL AND confidence < %s) AS needs_review,
-               COUNT(*) AS n
-        FROM mobile_scans {where}
-        GROUP BY month, municipality, label, needs_review
+        SELECT DATE_FORMAT(s.day, '%%Y-%%m') AS month,
+               s.municipality,
+               s.label,
+               SUM(s.scans) AS n,
+               (SELECT COUNT(*) FROM mobile_scans {review_where}) AS needs_review
+        FROM scan_daily_stats s {day_clause}
+        GROUP BY month, s.municipality, s.label
         """,
-        [LOW_CONFIDENCE] + params,
+        params + [LOW_CONFIDENCE] + day_params,
     )
     groups = cursor.fetchall()
+    for g in groups:
+        g["municipality"] = g["municipality"] or None  # stored as '' when a scan had none
     # the most and least confident scans in range, both in one round trip
     scoped = where + (" AND " if where else "WHERE ")
     cursor.execute(
@@ -412,7 +428,7 @@ def stats():
 
     total = sum(int(g["n"]) for g in groups)
     diseased = sum(int(g["n"]) for g in groups if g["label"] != "No_Disease")
-    needs_review = sum(int(g["n"]) for g in groups if g["needs_review"])
+    needs_review = int(groups[0]["needs_review"]) if groups else 0
     latest = max((g["month"] for g in groups), default=None)  # YYYY-MM of the newest scan in range
     this_month = sum(int(g["n"]) for g in groups if g["month"] == latest)
 

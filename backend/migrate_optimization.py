@@ -16,7 +16,9 @@
                         Each run adds partitions up to 12 months ahead.
 5. Aggregate            scan_daily_stats: scans per day, municipality and diagnosis, kept up
                         to date by triggers on mobile_scans, so totals don't need to count
-                        every scan. Filled from the existing scans the first time.
+                        every scan. Filled from the existing scans the first time. The
+                        staff Dashboard's totals, monthly chart and municipality list read
+                        it (GET /api/stats in mobile_scans.py).
 
 Run:  python migrate_optimization.py     (uses the admin login, DB_ADMIN_USER)
 Then: python create_app_user.py          (gives the app access to the new tables)

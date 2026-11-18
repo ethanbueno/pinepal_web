@@ -125,7 +125,7 @@ erDiagram
 
 `diseases` and `scan_daily_stats` stand alone. Scan labels are limited to the six model labels
 by CHECK constraints rather than a foreign key, and `scan_daily_stats` is a summary of
-`mobile_scans` kept up to date by triggers.
+`mobile_scans` kept up to date by triggers. The staff Dashboard reads its totals from it.
 
 ## Normalization notes
 
