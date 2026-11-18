@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import DatePicker from "../components/DatePicker"
+import MultiSelectField from "../components/MultiSelectField"
 import { Link } from "react-router-dom"
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet"
 import { getMapScans } from "../api/scans"
@@ -8,13 +9,11 @@ import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES, getDisease } from "../ut
 import { viewBounds, viewMaxBounds } from "../utils/mapArea"
 import IsabelaLayer from "../components/IsabelaLayer"
 import HeatLayer from "../components/HeatLayer"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import ErrorAlert from "../components/ErrorAlert"
 import PageHeader from "../components/PageHeader"
 import SelectField, { toOptions } from "../components/SelectField"
 import { formatDate, formatPercent, scanImage } from "../utils/format"
 import { Card, CardContent } from "@/components/ui/card"
-import { Toggle } from "@/components/ui/toggle"
 import { Label } from "@/components/ui/label"
 import PinePalLoader from "../components/PinePalLoader"
 
@@ -58,13 +57,6 @@ function DiseaseMap() {
     }
   }, [selected, municipality, range])
 
-  const toggleDisease = (label) => {
-    if (selected.includes(label)) {
-      setSelected(selected.filter((l) => l !== label))
-    } else {
-      setSelected([...selected, label])
-    }
-  }
 
   const finalLabel = (scan) => scan.verified_label || scan.predicted_label
   const countOf = (label) => scans.filter((s) => finalLabel(s) === label).length
@@ -91,63 +83,39 @@ function DiseaseMap() {
         }
       />
 
+      {/* every filter on one row (wraps on phones) */}
       <Card className="mb-4">
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
+        <CardContent className="flex flex-wrap items-end gap-3 sm:gap-4">
+          <div className="flex w-[calc(50%-0.375rem)] flex-col gap-1.5 sm:w-36">
             <Label className="text-muted-foreground">Show as</Label>
-            <ToggleGroup
-              variant="outline"
-              spacing={0}
-              value={[view]}
-              onValueChange={(value) => value[0] && setView(value[0])}
-              className="w-full sm:w-fit"
-            >
-              {VIEWS.map((v) => (
-                <ToggleGroupItem key={v.value} value={v.value} className="flex-1 px-4 sm:flex-none">
-                  {v.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            <SelectField value={view} onChange={setView} options={VIEWS} />
           </div>
-
-          <div className="flex flex-col gap-1.5">
+          <div className="flex w-[calc(50%-0.375rem)] flex-col gap-1.5 sm:w-52">
             <Label className="text-muted-foreground">Diseases</Label>
-            <div className="flex flex-wrap gap-2">
-              {DISEASES.map((d) => (
-                <Toggle
-                  key={d.label}
-                  variant="outline"
-                  size="sm"
-                  pressed={selected.includes(d.label)}
-                  onPressedChange={() => toggleDisease(d.label)}
-                  className="gap-2 data-pressed:border-primary data-pressed:bg-primary/10"
-                >
-                  <span className="size-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                  {d.name}
-                </Toggle>
-              ))}
-            </div>
+            <MultiSelectField
+              value={selected}
+              onChange={setSelected}
+              allLabel="All diseases"
+              options={DISEASES.map((d) => ({ value: d.label, label: d.name, color: d.color }))}
+            />
           </div>
-
-          <div className="flex flex-wrap gap-4">
-            <div className="flex w-full flex-col gap-1.5 sm:w-44">
-              <Label className="text-muted-foreground">Municipality</Label>
-              <SelectField
-                allLabel={LOCKED_MUNICIPALITY ? undefined : "All (Isabela)"}
-                value={municipality}
-                onChange={setMunicipality}
-                options={toOptions(LOCKED_MUNICIPALITY ? [LOCKED_MUNICIPALITY] : MUNICIPALITIES)}
-                disabled={Boolean(LOCKED_MUNICIPALITY)}
-              />
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
-              <Label className="text-muted-foreground">From</Label>
-              <DatePicker value={range.from} onChange={(value) => setRange({ ...range, from: value })} />
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
-              <Label className="text-muted-foreground">To</Label>
-              <DatePicker value={range.to} onChange={(value) => setRange({ ...range, to: value })} />
-            </div>
+          <div className="flex w-full flex-col gap-1.5 sm:w-40">
+            <Label className="text-muted-foreground">Municipality</Label>
+            <SelectField
+              allLabel={LOCKED_MUNICIPALITY ? undefined : "All (Isabela)"}
+              value={municipality}
+              onChange={setMunicipality}
+              options={toOptions(LOCKED_MUNICIPALITY ? [LOCKED_MUNICIPALITY] : MUNICIPALITIES)}
+              disabled={Boolean(LOCKED_MUNICIPALITY)}
+            />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
+            <Label className="text-muted-foreground">From</Label>
+            <DatePicker value={range.from} onChange={(value) => setRange({ ...range, from: value })} />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
+            <Label className="text-muted-foreground">To</Label>
+            <DatePicker value={range.to} onChange={(value) => setRange({ ...range, to: value })} />
           </div>
         </CardContent>
       </Card>
