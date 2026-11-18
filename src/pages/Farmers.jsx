@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { PlusIcon, UsersIcon } from "lucide-react"
+import { PlusIcon, SearchIcon, UsersIcon } from "lucide-react"
 import { getFarmers, createFarmer, updateFarmer, setFarmerStatus, syncFarmer } from "../api/farmers"
 import { cachedGet } from "../api/cache"
 import { useAuth } from "../context/AuthContext"
@@ -19,7 +19,7 @@ import { MUNICIPALITIES, LOCKED_MUNICIPALITY, MAP_CENTER } from "../utils/diseas
 import { OUTSIDE_TOWN, insideLockedTown } from "../utils/mapArea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -201,48 +201,37 @@ function Farmers({ embedded = false }) {
 
   return (
     <div>
-      {embedded ? (
-        <div className="mb-4 flex justify-end">
-          <Button onClick={openAdd}>
-            <PlusIcon />
-            Add farmer
-          </Button>
-        </div>
-      ) : (
+      {!embedded && (
         <PageHeader
           title="Farmers"
           description="Registered farmers and their farms. Click a row to see a farmer's scans."
-          action={
-            <Button onClick={openAdd}>
-              <PlusIcon />
-              Add farmer
-            </Button>
-          }
         />
       )}
 
-      <Card className="mb-4">
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="w-full grow sm:w-auto sm:min-w-48">
-            <Label className="mb-1.5 text-muted-foreground">Search</Label>
-            <Input
-              placeholder="Name or farm name"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="w-full sm:w-auto">
-            <Label className="mb-1.5 text-muted-foreground">Municipality</Label>
-            <SelectField
-              className="w-full sm:w-48"
-              allLabel="All"
-              value={municipality}
-              onChange={setMunicipality}
-              options={toOptions(MUNICIPALITIES)}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* one compact toolbar: search, municipality, and Add farmer on the right */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative w-full sm:w-72">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            aria-label="Search farmers"
+            placeholder="Search name or farm"
+            className="pl-8"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <SelectField
+          className="w-full sm:w-48"
+          allLabel="All municipalities"
+          value={municipality}
+          onChange={setMunicipality}
+          options={toOptions(MUNICIPALITIES)}
+        />
+        <Button className="sm:ml-auto" onClick={openAdd}>
+          <PlusIcon />
+          Add farmer
+        </Button>
+      </div>
 
       {error && <ErrorAlert>{error}</ErrorAlert>}
 

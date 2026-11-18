@@ -116,10 +116,15 @@ def build_filters(args):
         where.append("scanned_at <= %s")
         params.append(args["to"] + " 23:59:59")
 
+    # the farmer ID, the farm, or for scans staff saved, the staff member's name or username
+    # (the Farmer column shows "Name (staff)" for those)
     if args.get("search"):
-        where.append("(farmer_id LIKE %s OR farm_name LIKE %s)")
+        where.append(
+            "(farmer_id LIKE %s OR farm_name LIKE %s OR saved_by_name LIKE %s"
+            " OR saved_by IN (SELECT id FROM users WHERE name LIKE %s OR username LIKE %s))"
+        )
         like = f"%{args['search']}%"
-        params += [like, like]
+        params += [like] * 5
 
     clause = ("WHERE " + " AND ".join(where)) if where else ""
     return clause, params

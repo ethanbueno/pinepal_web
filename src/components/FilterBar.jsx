@@ -61,7 +61,7 @@ function FilterBar({ filters, onChange, extra = false, showMunicipality = !LOCKE
           <Field label="Search" className="grow min-w-32">
             <Input
               type="text"
-              placeholder="Farmer or farm name"
+              placeholder="Farmer, farm or staff name"
               value={filters.search}
               onChange={(e) => update("search", e.target.value)}
             />

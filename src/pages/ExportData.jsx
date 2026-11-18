@@ -13,9 +13,7 @@ import LoadingBlocks from "../components/LoadingBlocks"
 import SelectField, { toOptions } from "../components/SelectField"
 import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES } from "../utils/diseases"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 
@@ -134,14 +132,11 @@ function ExportData() {
         }
       />
 
+      {/* filters, format and Download on one row (wraps on phones); empty filters include everything */}
       <Card>
-        <CardHeader>
-          <CardTitle className="font-semibold">Filters</CardTitle>
-          <CardDescription>Leave a filter empty to include everything.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="flex flex-col gap-1.5">
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+            <div className="flex w-full flex-col gap-1.5 sm:w-44">
               <Label className="text-muted-foreground">Disease</Label>
               <SelectField
                 allLabel="All diseases"
@@ -150,7 +145,7 @@ function ExportData() {
                 options={diseaseOptions}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex w-full flex-col gap-1.5 sm:w-40">
               <Label className="text-muted-foreground">Municipality</Label>
               <SelectField
                 allLabel={LOCKED_MUNICIPALITY ? undefined : "All municipalities"}
@@ -160,53 +155,48 @@ function ExportData() {
                 disabled={Boolean(LOCKED_MUNICIPALITY)}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
               <Label className="text-muted-foreground">From</Label>
               <DatePicker value={filters.from} onChange={(value) => update("from", value)} />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:w-40 sm:flex-none">
               <Label className="text-muted-foreground">To</Label>
               <DatePicker value={filters.to} onChange={(value) => update("to", value)} />
             </div>
-          </div>
+            <div className="flex w-24 flex-col gap-1.5">
+              <Label className="text-muted-foreground">Format</Label>
+              <SelectField
+                value={format}
+                onChange={setFormat}
+                options={[
+                  { value: "csv", label: "CSV" },
+                  { value: "xlsx", label: "XLSX" },
+                ]}
+              />
+            </div>
+            <Label className="flex h-10 cursor-pointer items-center font-normal md:h-7">
+              <Checkbox
+                checked={filters.verifiedOnly}
+                onCheckedChange={(checked) => update("verifiedOnly", checked)}
+              />
+              Verified only
+            </Label>
 
-          <Label className="cursor-pointer font-normal">
-            <Checkbox
-              checked={filters.verifiedOnly}
-              onCheckedChange={(checked) => update("verifiedOnly", checked)}
-            />
-            Verified scans only
-          </Label>
-
-          <Separator />
-
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-muted-foreground">Format</Label>
-            <ToggleGroup
-              variant="outline"
-              spacing={0}
-              value={[format]}
-              onValueChange={(value) => value[0] && setFormat(value[0])}
-            >
-              <ToggleGroupItem value="csv" className="px-4">CSV</ToggleGroupItem>
-              <ToggleGroupItem value="xlsx" className="px-4">XLSX</ToggleGroupItem>
-            </ToggleGroup>
+            <div className="flex w-full items-center justify-between gap-3 sm:ml-auto sm:w-auto">
+              <span className="text-sm text-muted-foreground tabular-nums">
+                {rowCount === null ? "Counting..." : `${rowCount} ${rowCount === 1 ? "row" : "rows"}`}
+              </span>
+              <Button disabled={downloading || rowCount === 0} onClick={handleDownload}>
+                <DownloadIcon />
+                {downloading ? "Preparing..." : "Download"}
+              </Button>
+            </div>
           </div>
 
           {error && <ErrorAlert className="">{error}</ErrorAlert>}
         </CardContent>
-        <CardFooter className="flex-wrap justify-between gap-4 border-t">
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {rowCount === null ? "Counting rows..." : `${rowCount} ${rowCount === 1 ? "row" : "rows"} will be exported`}
-          </span>
-          <Button disabled={downloading || rowCount === 0} onClick={handleDownload}>
-            <DownloadIcon />
-            {downloading ? "Preparing..." : "Download"}
-          </Button>
-        </CardFooter>
       </Card>
 
-      {/* what the file will contain */}
       {/* what the file will contain (the row count is already next to Download) */}
       <div className="mt-4">
         {scansError && <ErrorAlert>{scansError}</ErrorAlert>}
