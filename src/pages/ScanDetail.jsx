@@ -170,7 +170,7 @@ function ScanDetail() {
       />
 
       {/* Big screens: two columns. On the left, a large photo and map;
-          on the right, the scan's details, the diagnosis with verifying, then the care
+          on the right, the diagnosis with verifying, the scan's details, then the care
           guide. Phones and tablets stack them. */}
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
@@ -217,27 +217,6 @@ function ScanDetail() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
-          <Card className="gap-0 overflow-hidden py-1">
-            {/* the scan's facts as label / value rows, two columns where there is room */}
-            <dl className="grid px-4 text-sm sm:grid-cols-2 sm:gap-x-8">
-              <Info label="Farmer">{scan.farmer_name}</Info>
-              <Info label="Farm">{scan.farm_name || "–"}</Info>
-              <Info label="Municipality">{scan.municipality}</Info>
-              <Info label="Source">{scan.image_source}</Info>
-              <Info label="Scanned">{formatDateTime(scan.scanned_at)}</Info>
-              <Info label="Synced">{formatDateTime(scan.synced_at)}</Info>
-              <Info label="Location">
-                {scan.latitude.toFixed(5)}, {scan.longitude.toFixed(5)}
-              </Info>
-            </dl>
-            {scan.notes && (
-              <div className="border-t px-4 py-3 text-sm">
-                <div className="mb-1 text-muted-foreground">Notes</div>
-                <p className="whitespace-pre-line">{scan.notes}</p>
-              </div>
-            )}
-          </Card>
-
           {/* the diagnosis, compact: the condition and confidence on one line with a thin bar,
               then the second guess and verifying on one row where there is room */}
           <Card className="gap-0 py-3">
@@ -313,6 +292,27 @@ function ScanDetail() {
                 )}
               </div>
             </CardContent>
+          </Card>
+
+          <Card className="gap-0 overflow-hidden py-1">
+            {/* the scan's facts as label / value rows, two columns where there is room */}
+            <dl className="grid px-4 text-sm sm:grid-cols-2 sm:gap-x-8">
+              <Info label="Farmer">{scan.farmer_name}</Info>
+              <Info label="Farm">{scan.farm_name || "–"}</Info>
+              <Info label="Municipality">{scan.municipality}</Info>
+              <Info label="Source">{scan.image_source}</Info>
+              <Info label="Scanned">{formatDateTime(scan.scanned_at)}</Info>
+              <Info label="Synced">{formatDateTime(scan.synced_at)}</Info>
+              <Info label="Location">
+                {scan.latitude.toFixed(5)}, {scan.longitude.toFixed(5)}
+              </Info>
+            </dl>
+            {scan.notes && (
+              <div className="border-t px-4 py-3 text-sm">
+                <div className="mb-1 text-muted-foreground">Notes</div>
+                <p className="whitespace-pre-line">{scan.notes}</p>
+              </div>
+            )}
           </Card>
 
           {/* the care guide for the final diagnosis */}
