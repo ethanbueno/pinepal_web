@@ -37,11 +37,12 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import logo from "../assets/pinepal-logo.png"
 import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
-import { openSettings } from "../hooks/useSettingsDialog"
+import { SETTINGS_SHORTCUT, openSettings } from "../hooks/useSettingsDialog"
 import { downloadLinkProps } from "../utils/download"
 import { getRoleLabel } from "../utils/roles"
 
@@ -169,23 +170,27 @@ function AppSidebar({ user, onLogout }) {
                 </div>
                 <ChevronsUpDownIcon className="ml-auto size-4" />
               </DropdownMenuTrigger>
-              {/* opens upward, right above the user card and as wide as it; only the collapsed
-                  icon sidebar, too narrow for that, opens it to the side */}
+              {/* a floating panel 8px above the user card and as wide as it, the username on
+                  top; only the collapsed icon sidebar, too narrow for that, opens it to the side */}
               <DropdownMenuContent
                 side={!isMobile && state === "collapsed" ? "right" : "top"}
                 align={!isMobile && state === "collapsed" ? "end" : "start"}
-                className="min-w-56"
+                sideOffset={8}
+                className="min-w-56 rounded-xl p-1.5 shadow-lg ring-border"
               >
                 <DropdownMenuGroup>
-                  <DropdownMenuLabel className="truncate font-normal">@{user.username}</DropdownMenuLabel>
+                  <DropdownMenuLabel className="truncate px-2.5 pt-1.5 pb-1 text-sm font-normal">
+                    @{user.username}
+                  </DropdownMenuLabel>
                   {/* Profile and the theme are in the Settings window, like Settings on mobile */}
-                  <DropdownMenuItem onClick={() => openSettings("profile")}>
+                  <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={() => openSettings("profile")}>
                     <SettingsIcon />
                     Settings
+                    <DropdownMenuShortcut>{SETTINGS_SHORTCUT}</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout}>
+                <DropdownMenuSeparator className="my-1.5" />
+                <DropdownMenuItem className="h-9.5 gap-2.5 rounded-lg px-2.5 [&_svg]:size-4.5" onClick={onLogout}>
                   <LogOutIcon />
                   Log out
                 </DropdownMenuItem>
