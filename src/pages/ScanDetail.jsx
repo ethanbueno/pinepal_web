@@ -23,11 +23,12 @@ import { Label } from "@/components/ui/label"
 
 const diseaseOptions = DISEASES.map((d) => ({ value: d.label, label: d.name }))
 
+// one label / value row of the scan's facts
 function Info({ label, children }) {
   return (
-    <div>
-      <div className="mb-0.5 text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm font-medium">{children}</div>
+    <div className="flex items-baseline justify-between gap-4 py-2.5">
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium">{children}</dd>
     </div>
   )
 }
@@ -182,171 +183,169 @@ function ScanDetail() {
         }
       />
 
-      {/* top row: a small square photo, the diagnosis (with verifying it) and where it was taken.
-          Phones stack them; tablets put the photo beside the diagnosis with the map under both;
-          wide screens fit all three in one row, and the map stretches to the row's height. */}
-      <div className="grid gap-4 sm:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_minmax(0,380px)]">
-        <Card className="relative aspect-square gap-0 self-start py-0">
-          {showPhoto ? (
-            <a
-              href={scan.image_url}
-              target="_blank"
-              rel="noreferrer"
-              className="group absolute inset-0"
-              title="Open the full-size photo"
-            >
-              <img
-                src={scan.image_url}
-                alt="Pineapple scan"
-                onError={() => setFailedPhoto(scan.image_url)}
-                className="size-full object-cover"
-              />
-              <span className="absolute right-2 bottom-2 flex size-7 items-center justify-center rounded-md bg-black/55 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                <Maximize2Icon className="size-3.5" />
-              </span>
-            </a>
-          ) : (
-            <PhotoFallback color={finalColor} missing={!scan.image_url} />
-          )}
-        </Card>
-
-        <Card className="gap-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="font-semibold">Diagnosis</CardTitle>
-            <CardAction>
-              {scan.verified_label ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-chart-2">
-                  <BadgeCheckIcon className="size-3.5" />
-                  Verified
-                </span>
+      {/* Big screens: two columns. On the left, the photo, where it was taken and the scan's facts
+          (they stay in view while scrolling); on the right, the diagnosis with verifying, then the
+          care guide. Phones and tablets stack them in that order. */}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+        <div className="grid gap-4 sm:grid-cols-2 xl:sticky xl:top-4 xl:grid-cols-1">
+          <Card className="relative aspect-[4/3] gap-0 overflow-hidden py-0">
+              {showPhoto ? (
+                <a
+                  href={scan.image_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group absolute inset-0"
+                  title="Open the full-size photo"
+                >
+                  <img
+                    src={scan.image_url}
+                    alt="Pineapple scan"
+                    onError={() => setFailedPhoto(scan.image_url)}
+                    className="size-full object-cover"
+                  />
+                  <span className="absolute right-2 bottom-2 flex size-7 items-center justify-center rounded-md bg-black/55 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <Maximize2Icon className="size-3.5" />
+                  </span>
+                </a>
               ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                  <ClockIcon className="size-3.5" />
-                  Not verified yet
-                </span>
+                <PhotoFallback color={finalColor} missing={!scan.image_url} />
               )}
-            </CardAction>
-          </CardHeader>
-          <CardContent className="flex flex-1 flex-col">
-            <div className="flex items-end justify-between gap-4">
-              <div className="min-w-0">
-                <div className="text-xs text-muted-foreground">
-                  {scan.verified_label ? "Verified as" : "Predicted condition"}
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight">
-                  <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: finalColor }} />
-                  <span className="truncate">{finalDisease?.name || finalLabel}</span>
-                </div>
-              </div>
-              {!scan.verified_label && (
-                <div className="shrink-0 text-right">
-                  <div className="text-2xl font-semibold tabular-nums tracking-tight">
-                    {formatPercent(scan.confidence, 1)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">confidence</div>
-                </div>
-              )}
-            </div>
+          </Card>
 
-            {!scan.verified_label && (
-              <div className="mt-3">
-                <ConfidenceBar value={scan.confidence} />
+          <Card className="gap-0 overflow-hidden py-0">
+            <MiniMap
+              height={200}
+              center={[scan.latitude, scan.longitude]}
+              zoom={13}
+              points={[
+                {
+                  id: scan.scan_uuid,
+                  lat: scan.latitude,
+                  lng: scan.longitude,
+                  color: finalColor,
+                  text: finalDisease?.name || finalLabel,
+                },
+              ]}
+            />
+            {/* the scan's facts as label / value rows */}
+            <dl className="divide-y px-4 text-sm">
+              <Info label="Farmer">{scan.farmer_name}</Info>
+              <Info label="Farm">{scan.farm_name || "–"}</Info>
+              <Info label="Municipality">{scan.municipality}</Info>
+              <Info label="Source">{scan.image_source}</Info>
+              <Info label="Scanned">{formatDateTime(scan.scanned_at)}</Info>
+              <Info label="Synced">{formatDateTime(scan.synced_at)}</Info>
+              <Info label="Location">
+                {scan.latitude.toFixed(5)}, {scan.longitude.toFixed(5)}
+              </Info>
+            </dl>
+            {scan.notes && (
+              <div className="border-t px-4 py-3 text-sm">
+                <div className="mb-1 text-muted-foreground">Notes</div>
+                <p className="whitespace-pre-line">{scan.notes}</p>
               </div>
             )}
+          </Card>
+        </div>
 
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
-              {scan.verified_label && (
-                <span>
-                  AI prediction:{" "}
-                  <span className="font-medium text-foreground">{predictedDisease?.name || scan.predicted_label}</span>{" "}
-                  ({formatPercent(scan.confidence, 1)})
-                </span>
-              )}
-              <span>
-                Second guess:{" "}
-                <span className="font-medium text-foreground">{secondDisease?.name || scan.second_label}</span> (
-                {formatPercent(scan.second_confidence, 1)})
-              </span>
-            </div>
+        <div className="flex min-w-0 flex-col gap-4">
+            <Card className="gap-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="font-semibold">Diagnosis</CardTitle>
+                <CardAction>
+                  {scan.verified_label ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-chart-2">
+                      <BadgeCheckIcon className="size-3.5" />
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                      <ClockIcon className="size-3.5" />
+                      Not verified yet
+                    </span>
+                  )}
+                </CardAction>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col">
+                <div className="flex items-end justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-xs text-muted-foreground">
+                      {scan.verified_label ? "Verified as" : "Predicted condition"}
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight">
+                      <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: finalColor }} />
+                      <span className="truncate">{finalDisease?.name || finalLabel}</span>
+                    </div>
+                  </div>
+                  {!scan.verified_label && (
+                    <div className="shrink-0 text-right">
+                      <div className="text-2xl font-semibold tabular-nums tracking-tight">
+                        {formatPercent(scan.confidence, 1)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">confidence</div>
+                    </div>
+                  )}
+                </div>
 
-            {/* verifying sits at the bottom of the same card, so the whole decision is in one place */}
-            <div className="mt-auto pt-4">
-              <div className="border-t pt-3">
-                {scan.verified_label ? (
-                  <p className="text-sm text-muted-foreground">
-                    Verified by <span className="font-medium text-foreground">{scan.verified_by}</span>
-                    {scan.verified_at && <> on {formatDateTime(scan.verified_at)}</>}
-                    {scan.verified_label !== scan.predicted_label && (
-                      <span className="font-semibold text-destructive"> · Corrected</span>
-                    )}
-                  </p>
-                ) : isFarmer ? (
-                  <p className="text-sm text-muted-foreground">An officer hasn't checked this scan yet.</p>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <Label className="text-muted-foreground">Correct disease</Label>
-                    <SelectField
-                      className="w-full sm:w-48"
-                      value={chosenLabel}
-                      onChange={setChosenLabel}
-                      options={diseaseOptions}
-                    />
-                    <Button disabled={saving} onClick={handleVerify}>
-                      {saving ? "Saving..." : "Verify"}
-                    </Button>
-                    {chosenLabel !== scan.predicted_label && (
-                      <span className="text-sm font-semibold text-destructive">Corrected</span>
-                    )}
+                {!scan.verified_label && (
+                  <div className="mt-3">
+                    <ConfidenceBar value={scan.confidence} />
                   </div>
                 )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <div className="h-56 sm:col-span-2 xl:col-span-1 xl:h-auto xl:min-h-[240px]">
-          <MiniMap
-            height="100%"
-            center={[scan.latitude, scan.longitude]}
-            zoom={13}
-            points={[
-              {
-                id: scan.scan_uuid,
-                lat: scan.latitude,
-                lng: scan.longitude,
-                color: finalColor,
-                text: finalDisease?.name || finalLabel,
-              },
-            ]}
-          />
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
+                  {scan.verified_label && (
+                    <span>
+                      AI prediction:{" "}
+                      <span className="font-medium text-foreground">{predictedDisease?.name || scan.predicted_label}</span>{" "}
+                      ({formatPercent(scan.confidence, 1)})
+                    </span>
+                  )}
+                  <span>
+                    Second guess:{" "}
+                    <span className="font-medium text-foreground">{secondDisease?.name || scan.second_label}</span> (
+                    {formatPercent(scan.second_confidence, 1)})
+                  </span>
+                </div>
+
+                {/* verifying sits at the bottom of the same card, so the whole decision is in one place */}
+                <div className="mt-auto pt-4">
+                  <div className="border-t pt-3">
+                    {scan.verified_label ? (
+                      <p className="text-sm text-muted-foreground">
+                        Verified by <span className="font-medium text-foreground">{scan.verified_by}</span>
+                        {scan.verified_at && <> on {formatDateTime(scan.verified_at)}</>}
+                        {scan.verified_label !== scan.predicted_label && (
+                          <span className="font-semibold text-destructive"> · Corrected</span>
+                        )}
+                      </p>
+                    ) : isFarmer ? (
+                      <p className="text-sm text-muted-foreground">An officer hasn't checked this scan yet.</p>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <Label className="text-muted-foreground">Correct disease</Label>
+                        <SelectField
+                          className="w-full sm:w-48"
+                          value={chosenLabel}
+                          onChange={setChosenLabel}
+                          options={diseaseOptions}
+                        />
+                        <Button disabled={saving} onClick={handleVerify}>
+                          {saving ? "Saving..." : "Verify"}
+                        </Button>
+                        {chosenLabel !== scan.predicted_label && (
+                          <span className="text-sm font-semibold text-destructive">Corrected</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+          {/* the care guide for the final diagnosis */}
+          <ProtocolCard protocol={protocol} />
         </div>
-      </div>
-
-      {/* the scan's facts in one compact strip instead of a tall two-column list */}
-      <Card className="mt-4 gap-3">
-        <CardHeader>
-          <CardTitle className="font-semibold">Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Info label="Farmer">{scan.farmer_name}</Info>
-            <Info label="Farm">{scan.farm_name || "–"}</Info>
-            <Info label="Municipality">{scan.municipality}</Info>
-            <Info label="Source">{scan.image_source}</Info>
-            <Info label="Scanned">{formatDateTime(scan.scanned_at)}</Info>
-            <Info label="Synced">{formatDateTime(scan.synced_at)}</Info>
-          </div>
-          {scan.notes && (
-            <div className="mt-3 border-t pt-3">
-              <Info label="Notes">{scan.notes}</Info>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* the care guide is long, so it gets the whole width under both columns */}
-      <div className="mt-4">
-        <ProtocolCard protocol={protocol} wide />
       </div>
 
       <ConfirmModal
