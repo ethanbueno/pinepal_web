@@ -1,0 +1,135 @@
+import { MonitorSmartphoneIcon, MoonIcon, PaletteIcon, SmartphoneIcon, SunIcon, UserIcon, XIcon } from "lucide-react"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { useAuth } from "../../context/AuthContext"
+import { useTheme } from "../../hooks/useTheme"
+import { closeSettings, showSettingsSection, useSettingsDialog } from "../../hooks/useSettingsDialog"
+import AppDownloadForm from "../AppDownloadForm"
+import ProfileSection from "./ProfileSection"
+import SettingsRow from "./SettingsRow"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+
+// One choice of the theme switch
+function ThemeOption({ active, icon: Icon, label, onClick }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={cn(
+        "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+        active ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+      )}
+    >
+      <Icon className="size-4" />
+      {label}
+    </button>
+  )
+}
+
+function AppearanceSection() {
+  const { mode, setMode } = useTheme()
+  return (
+    <div className="divide-y">
+      <SettingsRow label="Theme" hint="Device follows your phone or computer.">
+        <div role="radiogroup" aria-label="Theme" className="flex w-full gap-1 rounded-lg bg-muted p-1 sm:w-auto">
+          <ThemeOption active={mode === "light"} icon={SunIcon} label="Light" onClick={() => setMode("light")} />
+          <ThemeOption active={mode === "dark"} icon={MoonIcon} label="Dark" onClick={() => setMode("dark")} />
+          <ThemeOption
+            active={mode === "system"}
+            icon={MonitorSmartphoneIcon}
+            label="Device"
+            onClick={() => setMode("system")}
+          />
+        </div>
+      </SettingsRow>
+    </div>
+  )
+}
+
+function MobileAppSection() {
+  return (
+    <div className="divide-y">
+      <SettingsRow label="Download link" hint="Download mobile app on the login page and in the sidebar, for everyone.">
+        <div className="w-full sm:max-w-sm">
+          <AppDownloadForm />
+        </div>
+      </SettingsRow>
+    </div>
+  )
+}
+
+const SECTIONS = [
+  { key: "profile", label: "Profile", icon: UserIcon, Content: ProfileSection },
+  { key: "appearance", label: "Appearance", icon: PaletteIcon, Content: AppearanceSection },
+  { key: "mobile-app", label: "Mobile app", icon: SmartphoneIcon, Content: MobileAppSection, adminOnly: true },
+]
+
+// Settings, opened from the sidebar's account menu: a large window over the page with the
+// sections on the left and the chosen one on the right. Full screen on phones, where the
+// sections become a row of tabs along the top.
+function SettingsDialog() {
+  const { user } = useAuth()
+  const { open, section } = useSettingsDialog()
+  if (!user) return null
+
+  const sections = SECTIONS.filter((s) => !s.adminOnly || user.role === "admin")
+  const active = sections.find((s) => s.key === section) ?? sections[0]
+  const Content = active.Content
+
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={(next) => !next && closeSettings()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/30 duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
+        <DialogPrimitive.Popup
+          className={cn(
+            "fixed inset-0 z-50 flex flex-col bg-popover text-popover-foreground outline-none duration-100",
+            "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-[min(40rem,calc(100dvh-4rem))] sm:w-[min(56rem,calc(100vw-4rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:shadow-xl sm:ring-1 sm:ring-foreground/10",
+            "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
+          )}
+        >
+          <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2 sm:px-6 sm:pt-5">
+            <DialogPrimitive.Title className="text-xl font-semibold tracking-tight">Settings</DialogPrimitive.Title>
+            <DialogPrimitive.Close render={<Button variant="ghost" size="icon-sm" />}>
+              <XIcon />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+            <nav
+              aria-label="Settings sections"
+              className="flex shrink-0 gap-1 overflow-x-auto border-b px-4 pb-2 sm:w-52 sm:flex-col sm:overflow-visible sm:border-b-0 sm:px-3 sm:pb-4"
+            >
+              {sections.map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => showSettingsSection(key)}
+                  aria-current={active.key === key ? "page" : undefined}
+                  className={cn(
+                    "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                    active.key === key
+                      ? "bg-primary/15 text-primary-text"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-6">
+              <h2 className="pt-3 pb-1 text-base font-semibold text-primary-text sm:pt-1">{active.label}</h2>
+              <Content />
+            </div>
+          </div>
+        </DialogPrimitive.Popup>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  )
+}
+
+export default SettingsDialog

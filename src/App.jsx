@@ -18,8 +18,7 @@ import ExportData from "./pages/ExportData"
 import Users from "./pages/Users"
 import AuditLogs from "./pages/AuditLogs"
 import NotFound from "./pages/NotFound"
-import Profile from "./pages/Profile"
-import Settings from "./pages/Settings"
+import OpenSettings from "./pages/OpenSettings"
 
 const STAFF = ["admin", "officer"]
 
@@ -45,8 +44,9 @@ function App() {
         {/* every role: Home shows the dashboard for staff and the welcome page for farmers */}
         <Route path="/" element={<Home />} />
         <Route path="/scans/:uuid" element={<ScanDetail />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
+        {/* Profile and Settings are a window now; old links open it over the home page */}
+        <Route path="/profile" element={<OpenSettings section="profile" />} />
+        <Route path="/settings" element={<OpenSettings section="appearance" />} />
 
         {/* farmers only */}
         {/* My Farm is part of Home now */}

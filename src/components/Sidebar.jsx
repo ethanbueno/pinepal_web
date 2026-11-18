@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { NavLink, matchPath, useLocation, useNavigate } from "react-router-dom"
+import { NavLink, matchPath, useLocation } from "react-router-dom"
 import {
   BookOpenIcon,
   CameraIcon,
@@ -33,12 +33,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import logo from "../assets/pinepal-logo.png"
 import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
+import { openSettings } from "../hooks/useSettingsDialog"
 import { downloadLinkProps } from "../utils/download"
 import { getRoleLabel } from "../utils/roles"
 
@@ -73,8 +76,7 @@ const initials = (name) =>
 
 function AppSidebar({ user, onLogout }) {
   const { pathname } = useLocation()
-  const navigate = useNavigate()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const { isMobile, setOpenMobile, state } = useSidebar()
   const appDownloadUrl = useAppDownloadUrl()
 
   // on phones the sidebar is a drawer over the page: close it once a link is followed,
@@ -167,17 +169,21 @@ function AppSidebar({ user, onLogout }) {
                 </div>
                 <ChevronsUpDownIcon className="ml-auto size-4" />
               </DropdownMenuTrigger>
-              {/* in the phone drawer there is no room to the right, so it opens upward, as wide as the button */}
+              {/* opens upward, right above the user card and as wide as it; only the collapsed
+                  icon sidebar, too narrow for that, opens it to the side */}
               <DropdownMenuContent
-                side={isMobile ? "top" : "right"}
-                align={isMobile ? "start" : "end"}
+                side={!isMobile && state === "collapsed" ? "right" : "top"}
+                align={!isMobile && state === "collapsed" ? "end" : "start"}
                 className="min-w-56"
               >
-                {/* Profile and Light/Dark mode live on the Settings page, like the mobile app */}
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  <SettingsIcon />
-                  Settings
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="truncate font-normal">@{user.username}</DropdownMenuLabel>
+                  {/* Profile and the theme are in the Settings window, like Settings on mobile */}
+                  <DropdownMenuItem onClick={() => openSettings("profile")}>
+                    <SettingsIcon />
+                    Settings
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout}>
                   <LogOutIcon />

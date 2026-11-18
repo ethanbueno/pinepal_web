@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon, MenuIcon } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "./toastcontext"
 import AppSidebar from "./Sidebar"
+import SettingsDialog from "./settings/SettingsDialog"
 import logo from "../assets/pinepal-logo.png"
 import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 
@@ -58,6 +59,7 @@ function Layout() {
   return (
     <SidebarProvider>
       <AppSidebar user={user} onLogout={handleLogout} />
+      <SettingsDialog />
       <SidebarInset>
         <SidebarTab />
         <MobileTopBar />
