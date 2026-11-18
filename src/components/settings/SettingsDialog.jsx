@@ -67,8 +67,8 @@ const SECTIONS = [
   { key: "mobile-app", label: "Mobile app", icon: SmartphoneIcon, Content: MobileAppSection, adminOnly: true },
 ]
 
-// Settings (and Account), opened from the sidebar's account menu: a large window over the page (2rem of
-// margin on every side on bigger screens) with the
+// Settings (and Account), opened from the sidebar's account menu: a large window over the page (at most
+// 1280 x 1000px, with room around it, like claude.ai's Settings) with the
 // sections on the left and the chosen one on the right. Full screen on phones, where the
 // sections become a row of tabs along the top.
 function SettingsDialog() {
@@ -90,7 +90,7 @@ function SettingsDialog() {
         <DialogPrimitive.Popup
           className={cn(
             "fixed inset-0 z-50 flex flex-col bg-popover text-popover-foreground outline-none duration-100",
-            "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-[calc(100dvh-4rem)] sm:w-[calc(100vw-4rem)] sm:max-w-[100rem] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:shadow-xl sm:ring-1 sm:ring-foreground/10",
+            "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-[calc(100dvh-8rem)] sm:max-h-[62.5rem] sm:w-[calc(100vw-4rem)] sm:max-w-[80rem] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:shadow-xl sm:ring-1 sm:ring-foreground/10",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
           )}
         >
