@@ -22,6 +22,8 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, childr
   const appDownloadUrl = useAppDownloadUrl()
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-2 lg:gap-6 lg:p-6">
+      {/* light/dark: a bare icon in the bottom-left corner */}
+      <ThemeToggle bare className="fixed bottom-3 left-3 z-20 text-muted-foreground hover:text-foreground" />
       <div className="flex min-h-screen flex-col px-4 pt-4 pb-8 sm:px-8 lg:min-h-0 lg:px-6 lg:py-0">
         {/* Header is pinned at h-10; the bigger logo overflows it (-my-2) and translate-y nudges it
             down visually, so nothing below moves */}
@@ -30,10 +32,7 @@ function AuthSplitLayout({ title, tagline, headerAction, compact = false, childr
             <img src={logo} alt="" className="-my-2 size-14" />
             <span className="text-2xl font-semibold tracking-tight">PinePal</span>
           </div>
-          <div className="flex items-center gap-2">
-            {headerAction}
-            <ThemeToggle />
-          </div>
+          {headerAction && <div className="flex items-center gap-2">{headerAction}</div>}
         </header>
 
         <main
