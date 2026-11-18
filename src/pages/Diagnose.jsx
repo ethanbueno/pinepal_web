@@ -168,7 +168,7 @@ function Diagnose() {
           second_confidence: second?.confidence,
           notes: notes || null,
         })
-        notify("Scan saved to My Scans.")
+        notify("Scan saved to History.")
         navigate("/scans/" + saved.scan_uuid)
       } catch (err) {
         console.error(err)
@@ -224,7 +224,7 @@ function Diagnose() {
 
   return (
     <div>
-      <PageHeader title="Scan Pineapple" description="Upload a photo of the fruit to check for disease." />
+      <PageHeader title="Scan" description="Upload a photo of the fruit to check for disease." />
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
@@ -439,7 +439,7 @@ function Diagnose() {
             disabled={!location || locationOutside || saving}
             onClick={handleSave}
           >
-            {saving ? "Saving..." : isFarmer ? "Save to My Scans" : "Save scan"}
+            {saving ? "Saving..." : isFarmer ? "Save to History" : "Save scan"}
           </Button>
         </CardContent>
       </Card>

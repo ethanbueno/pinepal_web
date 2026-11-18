@@ -20,6 +20,7 @@ import Users from "./pages/Users"
 import AuditLogs from "./pages/AuditLogs"
 import NotFound from "./pages/NotFound"
 import Profile from "./pages/Profile"
+import Settings from "./pages/Settings"
 
 const STAFF = ["admin", "officer"]
 
@@ -46,6 +47,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/scans/:uuid" element={<ScanDetail />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
 
         {/* farmers only */}
         <Route path="/my-farm" element={<ProtectedRoute roles={["farmer"]}><FarmerHome /></ProtectedRoute>} />

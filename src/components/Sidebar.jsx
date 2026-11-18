@@ -10,15 +10,13 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   MapIcon,
-  MoonIcon,
   ScanSearchIcon,
   ScrollTextIcon,
+  SettingsIcon,
   SmartphoneIcon,
   SproutIcon,
   StethoscopeIcon,
-  SunIcon,
   UserCogIcon,
-  UserIcon,
   UsersIcon,
 } from "lucide-react"
 import {
@@ -45,7 +43,6 @@ import {
 import logo from "../assets/pinepal-logo.png"
 import { useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
 import { getRoleLabel } from "../utils/roles"
-import { useTheme } from "../hooks/useTheme"
 
 const staffLinks = [
   { to: "/", label: "Dashboard", icon: LayoutDashboardIcon, end: true },
@@ -64,8 +61,8 @@ const farmerLinks = [
   { to: "/", label: "Home", icon: HouseIcon, end: true },
   { to: "/my-farm", label: "My Farm", icon: SproutIcon },
   { to: "/diagnose", label: "Scan", icon: StethoscopeIcon },
-  { to: "/my-scans", label: "My Scans", icon: ImagesIcon },
-  { to: "/guides", label: "Guides", icon: BookOpenIcon },
+  { to: "/my-scans", label: "History", icon: ImagesIcon },
+  { to: "/guides", label: "Guide", icon: BookOpenIcon },
 ]
 
 const initials = (name) =>
@@ -79,7 +76,6 @@ const initials = (name) =>
 function AppSidebar({ user, onLogout }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { dark, toggleTheme } = useTheme()
   const { isMobile, setOpenMobile } = useSidebar()
   const appDownloadUrl = useAppDownloadUrl()
 
@@ -179,13 +175,10 @@ function AppSidebar({ user, onLogout }) {
                 align={isMobile ? "start" : "end"}
                 className="min-w-56"
               >
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <UserIcon />
-                  My profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={toggleTheme}>
-                  {dark ? <SunIcon /> : <MoonIcon />}
-                  {dark ? "Light mode" : "Dark mode"}
+                {/* Profile and Light/Dark mode live on the Settings page, like the mobile app */}
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  <SettingsIcon />
+                  Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout}>

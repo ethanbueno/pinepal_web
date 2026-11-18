@@ -46,7 +46,7 @@ function Guides() {
   return (
     <div>
       <PageHeader
-        title="Guides"
+        title="Guide"
         description="Click a condition to see its symptoms, what to do now and how to prevent it."
       />
 

@@ -7,13 +7,10 @@ import {
   MapPinIcon,
   PencilIcon,
   ShieldIcon,
-  SmartphoneIcon,
   SproutIcon,
   UserIcon,
 } from "lucide-react"
 import { getProfile, updateProfile } from "../api/profile"
-import { saveAppDownloadUrl } from "../api/settings"
-import { setAppDownloadUrl, useAppDownloadUrl } from "../hooks/useAppDownloadUrl"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../components/toastcontext"
 import ErrorAlert from "../components/ErrorAlert"
@@ -124,76 +121,6 @@ function shownValue(key, profile) {
   if (key === "username") return "@" + profile.account.username
   if (key === "farm_size_ha") return profile.farm?.farm_size_ha != null ? `${profile.farm.farm_size_ha} ha` : ""
   return savedValue(key, profile)
-}
-
-// Admins only: where the Android app is downloaded from (the login page's Download button
-// and the sidebar card). Saved in the database for everyone (backend/app_settings.py).
-function AppDownloadCard() {
-  const notify = useToast()
-  const saved = useAppDownloadUrl()
-  // what the admin typed, or null to show the stored link (it may still be loading)
-  const [draft, setDraft] = useState(null)
-  const value = draft ?? saved
-  const [formError, setFormError] = useState("")
-  const [saving, setSaving] = useState(false)
-
-  const handleSave = async (e) => {
-    e.preventDefault()
-    const url = value.trim()
-    setFormError("")
-    if (!/^https?:\/\/\S+$/i.test(url)) {
-      setFormError("Enter a full link that starts with https://")
-      return
-    }
-    setSaving(true)
-    try {
-      const stored = await saveAppDownloadUrl(url)
-      setAppDownloadUrl(stored)
-      setDraft(null)
-      notify("Download link saved.")
-    } catch (err) {
-      console.error(err)
-      setFormError(err.response?.data?.error || "Could not save the download link.")
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <SectionTitle>Mobile app</SectionTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSave} className="flex flex-col gap-3">
-          <Field
-            id="app-download-url"
-            label="Download link"
-            hint="Used by Download mobile app on the login page and in the sidebar, for everyone."
-          >
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative min-w-0 flex-1">
-                <SmartphoneIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="app-download-url"
-                  type="url"
-                  inputMode="url"
-                  className="pl-9"
-                  value={value}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="https://"
-                />
-              </div>
-              <Button type="submit" disabled={saving || value.trim() === saved}>
-                {saving ? "Saving…" : "Save"}
-              </Button>
-            </div>
-          </Field>
-          {formError && <p className="text-sm text-destructive">{formError}</p>}
-        </form>
-      </CardContent>
-    </Card>
-  )
 }
 
 // The signed-in user's own details, from the database, laid out like a profile:
@@ -350,8 +277,6 @@ function Profile() {
             </Button>
           </div>
         </Card>
-
-        {account.role === "admin" && <AppDownloadCard />}
 
         {isFarmer && farm && (
           <>

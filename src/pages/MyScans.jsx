@@ -69,7 +69,7 @@ function MyScans() {
 
   return (
     <div>
-      <PageHeader title="My Scans" description="Your farm's scans, newest first. Click a row to open it." />
+      <PageHeader title="History" description="Your farm's scans, newest first. Click a row to open it." />
 
       <FilterBar filters={filters} onChange={handleFilterChange} showMunicipality={false} />
 

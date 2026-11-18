@@ -57,7 +57,7 @@ function FarmerHome() {
   if (!farmer) {
     return (
       <div>
-        <PageHeader title={`Welcome, ${user.full_name}`} />
+        <PageHeader title="My Farm" />
         <EmptyState
           icon={UnlinkIcon}
           title="Not linked to a farm yet"
@@ -82,7 +82,7 @@ function FarmerHome() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title={`Welcome, ${user.full_name}`}
+        title="My Farm"
         description={
           farmer.farm_name
             ? `${farmer.farm_name} · ${farmer.municipality}${farmer.farm_size_ha ? ` · ${farmer.farm_size_ha} ha` : ""}`
@@ -93,7 +93,7 @@ function FarmerHome() {
       {/* every card has a note, so the three line up */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
-          title="My Scans"
+          title="Scans"
           value={farmer.total_scans}
           note={recent.length > 0 ? `Last scan ${formatDate(recent[0].scanned_at)}.` : "No scans yet."}
         />
