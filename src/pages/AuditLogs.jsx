@@ -575,6 +575,7 @@ function AuditLogs() {
           </Field>
           <Button
             variant="outline"
+            className="sm:ml-auto"
             onClick={() => {
               setFilters(emptyFilters)
               setPage(1)
