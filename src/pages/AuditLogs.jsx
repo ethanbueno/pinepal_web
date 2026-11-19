@@ -187,17 +187,23 @@ function recordLink(change) {
   return null
 }
 
-function Who({ item }) {
+// the eye button hides the name and username; the role stays visible
+const MASK = "••••••••"
+
+function Who({ item, hide = false }) {
   if (item.actor_name)
     return (
       <>
-        <div className="font-medium">{item.actor_name}</div>
+        <div className={hide ? "font-medium tracking-widest text-muted-foreground select-none" : "font-medium"}>
+          {hide ? MASK : item.actor_name}
+        </div>
         <div className="text-xs text-muted-foreground">
-          {item.actor_username}
+          {hide ? "Hidden" : item.actor_username}
           {item.actor_role && ` · ${getRoleLabel(item.actor_role)}`}
         </div>
       </>
     )
+  if (hide) return <Hidden />
   if (item.actor_id) return <div className="text-muted-foreground">Deleted account #{item.actor_id}</div>
   if (item.actor_label) return <div>{item.actor_label}</div>
   // a sign-in with a username that matched no account
@@ -303,7 +309,7 @@ function Hidden() {
   return (
     <>
       <div className="font-medium tracking-widest text-muted-foreground select-none" aria-hidden="true">
-        ••••••••
+        {MASK}
       </div>
       <div className="text-xs text-muted-foreground">Hidden</div>
     </>
@@ -360,7 +366,9 @@ function Details({ item, hide }) {
     <div className="space-y-4 text-sm">
       <dl className="space-y-1.5">
         <DetailRow label="When">{formatDateTime(item.created_at)}</DetailRow>
-        <DetailRow label="Who">{hide ? <Hidden /> : <Who item={item} />}</DetailRow>
+        <DetailRow label="Who">
+          <Who item={item} hide={hide} />
+        </DetailRow>
         <DetailRow label="Event">
           <EventBadge item={item} />
         </DetailRow>
@@ -628,7 +636,9 @@ function AuditLogs() {
                       onClick={() => setSelected(item)}
                     >
                       <TableCell className="whitespace-nowrap">{formatDateTime(item.created_at)}</TableCell>
-                      <TableCell>{hidden.has(item.id) ? <Hidden /> : <Who item={item} />}</TableCell>
+                      <TableCell>
+                        <Who item={item} hide={hidden.has(item.id)} />
+                      </TableCell>
                       <TableCell>
                         <EventBadge item={item} />
                       </TableCell>
