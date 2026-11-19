@@ -6,7 +6,7 @@ import L from "leaflet"
 import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
 import { getMapScans } from "../api/scans"
 import { cachedGet } from "../api/cache"
-import { DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES, getDisease } from "../utils/diseases"
+import { DISEASES, FOUND_DISEASES, LOCKED_MUNICIPALITY, MUNICIPALITIES, getDisease } from "../utils/diseases"
 import { viewBounds, viewMaxBounds } from "../utils/mapArea"
 import IsabelaLayer from "../components/IsabelaLayer"
 import ErrorAlert from "../components/ErrorAlert"
@@ -65,9 +65,11 @@ function ScanPopup({ scan, disease }) {
   )
 }
 
-// The heat map: every scan is its own dot (in its disease color) with a soft glow under it. A
-// glow is colored by the share of diseased scans around it (fixed 10% bands, green to red), and
-// overlapping glows add up, so busy diseased areas glow strongest. Each dot opens that scan.
+// The heat map: every scan with a disease is its own dot (in its disease color) with a soft glow
+// under it. "No Disease" scans aren't drawn, but they still count in the glows: a glow is colored
+// by the share of diseased scans around it (fixed 10% bands, green to red), so a lone case among
+// healthy fruit glows green-yellow and a cluster of cases glows red. Overlapping glows add up, so
+// busy diseased areas glow strongest. Each dot opens that scan.
 function HeatDots({ scans, finalLabel }) {
   const map = useMap()
   const [zoom, setZoom] = useState(() => map.getZoom())
@@ -79,14 +81,17 @@ function HeatDots({ scans, finalLabel }) {
       p: map.project([scan.latitude, scan.longitude], zoom),
       diseased: finalLabel(scan) !== "No_Disease",
     }))
-    return projected.map(({ scan, p }) => {
-      const near = projected.filter((o) => Math.hypot(o.p.x - p.x, o.p.y - p.y) < NEARBY_PIXELS)
-      return {
-        scan,
-        glow: rateColor(near.filter((o) => o.diseased).length / near.length),
-        dot: getDisease(finalLabel(scan)).color,
-      }
-    })
+    // healthy scans count towards the share nearby, but only diseased ones get a dot and a glow
+    return projected
+      .filter((o) => o.diseased)
+      .map(({ scan, p }) => {
+        const near = projected.filter((o) => Math.hypot(o.p.x - p.x, o.p.y - p.y) < NEARBY_PIXELS)
+        return {
+          scan,
+          glow: rateColor(near.filter((o) => o.diseased).length / near.length),
+          dot: getDisease(finalLabel(scan)).color,
+        }
+      })
   }, [scans, zoom, map, finalLabel])
 
   return (
@@ -171,7 +176,7 @@ function DiseaseMap() {
         description={
           (view === "dots"
             ? "Where each scan was taken, colored by diagnosis. Click a dot for details."
-            : "Every scan is a dot; the glow around it goes from green to red the more scans nearby have a disease. Click a dot to open the scan.") +
+            : "Every scan with a disease is a dot; the glow around it goes from green to red the more scans nearby have a disease. Healthy scans aren't shown here. Click a dot to open the scan.") +
           (LOCKED_MUNICIPALITY ? ` Temporarily locked to ${LOCKED_MUNICIPALITY}.` : "")
         }
       />
@@ -181,7 +186,15 @@ function DiseaseMap() {
         <CardContent className="flex flex-wrap items-end gap-3 sm:gap-4">
           <div className="flex w-[calc(50%-0.375rem)] flex-col gap-1.5 sm:w-36">
             <Label className="text-muted-foreground">Show as</Label>
-            <SelectField value={view} onChange={setView} options={VIEWS} />
+            <SelectField
+              value={view}
+              onChange={(next) => {
+                setView(next)
+                // the heat map has no "No Disease" filter, so a leftover one would empty the map
+                if (next === "heat") setSelected((current) => current.filter((label) => label !== "No_Disease"))
+              }}
+              options={VIEWS}
+            />
           </div>
           <div className="flex w-[calc(50%-0.375rem)] flex-col gap-1.5 sm:w-52">
             <Label className="text-muted-foreground">Diseases</Label>
@@ -189,7 +202,11 @@ function DiseaseMap() {
               value={selected}
               onChange={setSelected}
               allLabel="All Diseases"
-              options={DISEASES.map((d) => ({ value: d.label, label: d.name, color: d.color }))}
+              options={(view === "heat" ? FOUND_DISEASES : DISEASES).map((d) => ({
+                value: d.label,
+                label: d.name,
+                color: d.color,
+              }))}
             />
           </div>
           <div className="flex w-full flex-col gap-1.5 sm:w-40">
@@ -277,10 +294,10 @@ function DiseaseMap() {
                   <span>50%</span>
                   <span>100%</span>
                 </div>
-                <div className="text-xs text-muted-foreground">Dots: each scan, in its disease color</div>
+                <div className="text-xs text-muted-foreground">Dots: each scan with a disease, in its color</div>
               </div>
             )}
-            {DISEASES.map((d) => (
+            {(view === "heat" ? FOUND_DISEASES : DISEASES).map((d) => (
               <div key={d.label} className="flex items-center gap-2">
                 <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
                 <span className="grow">{d.name}</span>

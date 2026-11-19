@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import DatePicker from "../components/DatePicker"
 import { Link } from "react-router-dom"
-import { ChevronRightIcon, GlobeIcon, ScrollTextIcon, SmartphoneIcon } from "lucide-react"
+import { ChevronRightIcon, EyeIcon, EyeOffIcon, GlobeIcon, ScrollTextIcon, SmartphoneIcon } from "lucide-react"
 import { getAuditLogs } from "../api/auditLogs"
 import { getUsers } from "../api/users"
 import { getRoleLabel } from "../utils/roles"
@@ -187,17 +187,23 @@ function recordLink(change) {
   return null
 }
 
-function Who({ item }) {
+// the eye button hides the name and username; the role stays visible
+const MASK = "••••••••"
+
+function Who({ item, hide = false }) {
   if (item.actor_name)
     return (
       <>
-        <div className="font-medium">{item.actor_name}</div>
+        <div className={hide ? "font-medium tracking-widest text-muted-foreground select-none" : "font-medium"}>
+          {hide ? MASK : item.actor_name}
+        </div>
         <div className="text-xs text-muted-foreground">
-          {item.actor_username}
+          {hide ? "Hidden" : item.actor_username}
           {item.actor_role && ` · ${getRoleLabel(item.actor_role)}`}
         </div>
       </>
     )
+  if (hide) return <Hidden />
   if (item.actor_id) return <div className="text-muted-foreground">Deleted account #{item.actor_id}</div>
   if (item.actor_label) return <div>{item.actor_label}</div>
   // a sign-in with a username that matched no account
@@ -298,6 +304,18 @@ function Where({ item }) {
   )
 }
 
+// stands in for Who or Where while a row's sensitive details are hidden
+function Hidden() {
+  return (
+    <>
+      <div className="font-medium tracking-widest text-muted-foreground select-none" aria-hidden="true">
+        {MASK}
+      </div>
+      <div className="text-xs text-muted-foreground">Hidden</div>
+    </>
+  )
+}
+
 // one changed record: every field with its value before and after, side by side
 function ChangeTable({ change }) {
   const before = change.old_values || {}
@@ -339,7 +357,7 @@ function DetailRow({ label, children }) {
 }
 
 // the popup for one row: everything about the event, and what it changed
-function Details({ item }) {
+function Details({ item, hide }) {
   const changes = item.category === "data" ? [item] : item.changes
   const filters = requestFilters(item)
   const device = deviceName(item.user_agent)
@@ -349,7 +367,7 @@ function Details({ item }) {
       <dl className="space-y-1.5">
         <DetailRow label="When">{formatDateTime(item.created_at)}</DetailRow>
         <DetailRow label="Who">
-          <Who item={item} />
+          <Who item={item} hide={hide} />
         </DetailRow>
         <DetailRow label="Event">
           <EventBadge item={item} />
@@ -374,8 +392,8 @@ function Details({ item }) {
           </DetailRow>
         )}
         {item.platform && <DetailRow label="Source">{item.platform === "mobile" ? "Mobile App" : "Web"}</DetailRow>}
-        {device && <DetailRow label="Device">{device}</DetailRow>}
-        {item.ip_address && <DetailRow label="IP address">{item.ip_address}</DetailRow>}
+        {device && <DetailRow label="Device">{hide ? <Hidden /> : device}</DetailRow>}
+        {item.ip_address && <DetailRow label="IP address">{hide ? <Hidden /> : item.ip_address}</DetailRow>}
         {item.path && (
           <DetailRow label="Request">
             <span className="font-mono text-xs">
@@ -422,7 +440,7 @@ function Details({ item }) {
 function Field({ label, children, className }) {
   return (
     <div className={"w-full sm:w-auto " + (className || "")}>
-      <Label className="mb-1.5 text-muted-foreground">{label}</Label>
+      <Label className="mb-1 text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
   )
@@ -440,6 +458,23 @@ function AuditLogs() {
   const [error, setError] = useState("")
   const [users, setUsers] = useState([])
   const [selected, setSelected] = useState(null) // the row shown in the popup
+  const [hidden, setHidden] = useState(() => new Set()) // ids of rows whose Who and Where are hidden
+
+  const toggleHidden = (id) =>
+    setHidden((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const pageIds = data?.items.map((item) => item.id) || []
+  const allHidden = pageIds.length > 0 && pageIds.every((id) => hidden.has(id))
+  const toggleAllHidden = () =>
+    setHidden((current) => {
+      const next = new Set(current)
+      pageIds.forEach((id) => (allHidden ? next.delete(id) : next.add(id)))
+      return next
+    })
 
   useEffect(() => {
     getUsers()
@@ -485,9 +520,9 @@ function AuditLogs() {
         description="Everything that happens in PinePal: every action, sign-in and sign-out, and every change to accounts, farmers and scans. Entries can't be edited or deleted."
       />
 
-      <Card className="mb-4">
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <Field label="Search" className="min-w-48 grow">
+      <Card size="sm" className="mb-4">
+        <CardContent className="flex flex-wrap items-end gap-2">
+          <Field label="Search" className="sm:w-56">
             <Input
               placeholder="Who, what, or a record ID"
               value={filters.search}
@@ -496,7 +531,7 @@ function AuditLogs() {
           </Field>
           <Field label="User">
             <SelectField
-              className="w-full sm:w-48"
+              className="w-full sm:w-40"
               allLabel="Everyone"
               value={filters.user}
               onChange={(v) => changeFilter("user", v)}
@@ -505,7 +540,7 @@ function AuditLogs() {
           </Field>
           <Field label="Action">
             <SelectField
-              className="w-full sm:w-40"
+              className="w-full sm:w-36"
               allLabel="All Actions"
               value={filters.action}
               onChange={(v) => changeFilter("action", v)}
@@ -514,7 +549,7 @@ function AuditLogs() {
           </Field>
           <Field label="From">
             <DatePicker
-              className="w-full sm:w-38"
+              className="w-full sm:w-36"
               value={filters.from}
               max={filters.to || undefined}
               onChange={(value) => changeFilter("from", value)}
@@ -522,7 +557,7 @@ function AuditLogs() {
           </Field>
           <Field label="To">
             <DatePicker
-              className="w-full sm:w-38"
+              className="w-full sm:w-36"
               value={filters.to}
               min={filters.from || undefined}
               onChange={(value) => changeFilter("to", value)}
@@ -548,6 +583,7 @@ function AuditLogs() {
           </Field>
           <Button
             variant="outline"
+            className="sm:ml-auto"
             onClick={() => {
               setFilters(emptyFilters)
               setPage(1)
@@ -577,6 +613,17 @@ function AuditLogs() {
                     <TableHead>What</TableHead>
                     <TableHead>Where</TableHead>
                     <TableHead className="w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={allHidden ? "Show who and where on every row" : "Hide who and where on every row"}
+                        title={allHidden ? "Show all" : "Hide all"}
+                        onClick={toggleAllHidden}
+                      >
+                        {allHidden ? <EyeOffIcon /> : <EyeIcon />}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="w-8">
                       <span className="sr-only">Details</span>
                     </TableHead>
                   </TableRow>
@@ -590,7 +637,7 @@ function AuditLogs() {
                     >
                       <TableCell className="whitespace-nowrap">{formatDateTime(item.created_at)}</TableCell>
                       <TableCell>
-                        <Who item={item} />
+                        <Who item={item} hide={hidden.has(item.id)} />
                       </TableCell>
                       <TableCell>
                         <EventBadge item={item} />
@@ -598,8 +645,21 @@ function AuditLogs() {
                       <TableCell className="whitespace-normal">
                         <What item={item} />
                       </TableCell>
+                      <TableCell>{hidden.has(item.id) ? <Hidden /> : <Where item={item} />}</TableCell>
                       <TableCell>
-                        <Where item={item} />
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={hidden.has(item.id) ? "Show who and where" : "Hide who and where"}
+                          aria-pressed={hidden.has(item.id)}
+                          title={hidden.has(item.id) ? "Show" : "Hide"}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleHidden(item.id)
+                          }}
+                        >
+                          {hidden.has(item.id) ? <EyeOffIcon /> : <EyeIcon />}
+                        </Button>
                       </TableCell>
                       <TableCell>
                         <Button
@@ -625,7 +685,7 @@ function AuditLogs() {
       )}
 
       <Modal open={!!selected} title="Audit Log Details" onClose={() => setSelected(null)}>
-        {selected && <Details item={selected} />}
+        {selected && <Details item={selected} hide={hidden.has(selected.id)} />}
       </Modal>
     </div>
   )
