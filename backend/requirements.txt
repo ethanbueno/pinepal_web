@@ -1,6 +1,7 @@
 Flask
 flask-cors
 Flask-JWT-Extended
+Flask-Limiter
 PyMySQL
 python-dotenv
 Werkzeug

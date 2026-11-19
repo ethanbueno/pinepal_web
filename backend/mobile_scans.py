@@ -221,6 +221,17 @@ XLSX_WIDTHS = {"scan_uuid": 38, "scanned_at": 20, "farm_name": 22, "municipality
                "predicted_label": 18, "verified_label": 18}
 
 
+FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+
+
+def safe_cell(value):
+    """Text a farmer typed (notes, farm name) that starts like a formula gets a ' in front, so
+    Excel shows it as text instead of running it. Numbers and dates are left alone."""
+    if isinstance(value, str) and value.startswith(FORMULA_START):
+        return "'" + value
+    return value
+
+
 def export_xlsx(rows):
     """The same columns as the CSV, as an Excel workbook: real dates and numbers, a bold
     header that stays in view, and a filter on every column."""
@@ -241,7 +252,7 @@ def export_xlsx(rows):
             value = shown_farmer(row) if column == "farmer_name" else row.get(column)
             if column in ("latitude", "longitude", "confidence") and value is not None:
                 value = float(value)  # MySQL decimals, as numbers Excel can sort and sum
-            values.append(value)
+            values.append(safe_cell(value))
         sheet.append(values)
 
     for index, column in enumerate(EXPORT_COLUMNS, start=1):
@@ -277,7 +288,7 @@ def export_scans():
     writer.writerow(EXPORT_COLUMNS)
     for r in rows:
         scan = serialize(r)
-        writer.writerow([scan.get(c) if scan.get(c) is not None else "" for c in EXPORT_COLUMNS])
+        writer.writerow([safe_cell(scan.get(c)) if scan.get(c) is not None else "" for c in EXPORT_COLUMNS])
 
     return Response(out.getvalue(), mimetype="text/csv", headers=headers)
 

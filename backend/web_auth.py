@@ -7,6 +7,7 @@ from database import get_connection
 from farmers import LOCKED_MUNICIPALITY, add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login, record_logout
 from photo_storage import photo_url
+from rate_limits import LOGIN_PER_IP, SIGNUP_PER_IP, account_login_limit, limiter
 from security import LOGIN_SELECT, password_problem, set_password, verify_password
 
 # Login for the web dashboard (matches the API contract in CLAUDEweb.md).
@@ -42,6 +43,8 @@ def user_json(row):
 
 
 @web_auth.route("/api/auth/login", methods=["POST"])
+@limiter.limit(LOGIN_PER_IP)
+@account_login_limit
 def login():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
@@ -75,6 +78,7 @@ def login():
 
 
 @web_auth.route("/api/auth/register", methods=["POST"])
+@limiter.limit(SIGNUP_PER_IP)
 def register():
     data = request.get_json(silent=True) or {}
     full_name = (data.get("full_name") or "").strip()

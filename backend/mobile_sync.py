@@ -32,6 +32,7 @@ from farmers import add_farmer, claim_phone_farmer, sync_user_municipality
 from login_history import DEACTIVATED as DEACTIVATED_REASON, UNKNOWN_USER, WRONG_PASSWORD, record_login
 from mobile_scans import LABELS
 from photo_storage import PhotoStorageError, is_remote, photo_url, save_scan_photo
+from rate_limits import DEVICE_PER_IP, LOGIN_PER_IP, account_login_limit, limiter
 from security import LOGIN_SELECT, verify_password
 from web_auth import DEACTIVATED, is_deactivated, user_json
 
@@ -48,6 +49,8 @@ def bad_request(message):
 
 
 @mobile_sync.route("/api/mobile/login", methods=["POST"])
+@limiter.limit(LOGIN_PER_IP)
+@account_login_limit
 def mobile_login():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
@@ -92,6 +95,7 @@ def mobile_login():
 
 
 @mobile_sync.route("/api/mobile/device", methods=["POST"])
+@limiter.limit(DEVICE_PER_IP)
 def register_phone():
     """A phone used without an account gets its own farmer ID, so its scans can sync before
     anyone signs in. The token only uploads scans for that farmer ID, and it stops working

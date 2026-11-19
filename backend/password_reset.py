@@ -1,18 +1,6 @@
-"""Forgot password, for the web and the mobile app. Two ways, chosen in .env:
+"""Forgot password, for the web and the mobile app.
 
-DIRECT (the default for now)
-POST /api/auth/forgot-password   { "email" }
-    If an account uses that email, answers { "mode": "direct", "reset_token", "username" }
-    and the page goes straight to "New password". No account: 404 "No account uses this
-    email." The reset_token is signed with JWT_SECRET_KEY, works for TOKEN_MINUTES, and stops
-    working once the password changes, so it is used only once.
-POST /api/auth/reset-password    { "reset_token", "new_password" }
-    Sets the new password (the same rules as sign up, security.py).
-
-    WARNING: there is no proof the person owns the email, so anyone who knows an account's
-    email can set its password, admins included. Turn the code on before real use.
-
-EMAILED CODE (PASSWORD_RESET_EMAIL_CODE=1 in .env)
+EMAILED CODE (always, on the live server)
 POST /api/auth/forgot-password   { "email" }
     If an account uses that email, emails it a code. Always answers the same
     ("If an account uses this email, we sent a code"), so the form can't be used to find
@@ -27,6 +15,14 @@ The codes (table password_resets, migrate_password_resets.py):
   - a new code, or a successful reset, cancels every older one
   - at most MAX_PER_HOUR codes per account an hour, at least COOLDOWN_SECONDS apart, so the
     form can't flood someone's inbox (over the limit it still answers the same, without sending)
+
+DIRECT (local testing only)
+POST /api/auth/forgot-password answers { "mode": "direct", "reset_token", "username" } and the
+page goes straight to "New password", without any proof that the person owns the email. It
+only works in a debug run (python app.py) with PASSWORD_RESET_EMAIL_CODE=0 in backend/.env.
+The live server (gunicorn) always uses the emailed code; without MAIL_* set there, the form
+answers 503 "ask an admin to reset your password".
+
 Deactivated farmers get no code (they couldn't sign in anyway). Accounts without an email
 can't use this: an admin resets them from the Users page.
 
@@ -47,6 +43,7 @@ from flask import Blueprint, current_app, g, jsonify, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 import mailer
+from rate_limits import RESET_PER_IP, limiter
 from database import audit_context, get_connection
 from security import hash_password, password_problem, set_password, stored_password_hash, verify_password
 from web_auth import DEACTIVATED, EMAIL_PATTERN, is_deactivated
@@ -63,8 +60,12 @@ TOKEN_MINUTES = 10
 
 
 def email_code_on():
-    """True when PASSWORD_RESET_EMAIL_CODE=1: the safe way, with an emailed code."""
-    return os.getenv("PASSWORD_RESET_EMAIL_CODE", "").strip().lower() in ("1", "true", "yes")
+    """True unless this is a local debug run with PASSWORD_RESET_EMAIL_CODE=0.
+
+    Direct mode lets anyone who knows an account's email set its password, so it is never
+    used on the live server, whatever .env says."""
+    turned_off = os.getenv("PASSWORD_RESET_EMAIL_CODE", "").strip().lower() in ("0", "false", "no")
+    return not (turned_off and current_app.debug)
 
 
 # ---- direct mode: a signed pass from the email step to the new-password step ----
@@ -171,6 +172,7 @@ def code_email(user, code):
 
 
 @password_reset.route("/api/auth/forgot-password", methods=["POST"])
+@limiter.limit(RESET_PER_IP)
 def forgot_password():
     email = ((request.get_json(silent=True) or {}).get("email") or "").strip()
     if len(email) > 150 or not EMAIL_PATTERN.match(email):
@@ -223,6 +225,7 @@ def forgot_password():
 
 
 @password_reset.route("/api/auth/reset-password", methods=["POST"])
+@limiter.limit(RESET_PER_IP)
 def reset_password():
     data = request.get_json(silent=True) or {}
     if not email_code_on():

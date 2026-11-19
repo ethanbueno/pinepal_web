@@ -11,7 +11,6 @@ import subprocess
 import sys
 import threading
 import time
-from auth import auth
 from users import users
 from scans import scans
 from web_auth import web_auth
@@ -25,6 +24,7 @@ from password_reset import password_reset
 from app_settings import app_settings
 from admin_backup import admin_backup
 from activity_log import init_activity_log
+from rate_limits import init_rate_limits
 
 load_dotenv()
 
@@ -36,9 +36,10 @@ app.config["JWT_SECRET_KEY"] = os.getenv(
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB uploads
 
 jwt = JWTManager(app)
+# limits on sign in, sign up and password resets (rate_limits.py)
+init_rate_limits(app)
 CORS(app, expose_headers=["Content-Disposition", "X-Row-Count"])  # read by the web app (file names, row counts)
 
-app.register_blueprint(auth)
 app.register_blueprint(users)
 app.register_blueprint(scans)
 app.register_blueprint(web_auth)

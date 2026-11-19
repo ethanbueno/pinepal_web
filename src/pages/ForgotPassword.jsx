@@ -14,9 +14,9 @@ import { Button } from "@/components/ui/button"
 const RESEND_SECONDS = 60 // the server sends at most one code a minute (password_reset.py)
 
 // Forgot password in two steps: the email of the account, then a new password.
-// Direct mode (the server's default for now): a registered email goes straight to the new
-// password. Code mode (PASSWORD_RESET_EMAIL_CODE=1 on the server): the second step also asks
-// for the 6-digit code emailed to that address.
+// Code mode (always on the live server): the second step also asks for the 6-digit code
+// emailed to that address. Direct mode (only a local debug run with PASSWORD_RESET_EMAIL_CODE=0):
+// a registered email goes straight to the new password.
 function ForgotPassword() {
   const { user } = useAuth()
   const navigate = useNavigate()

@@ -3,6 +3,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from classifier import analyze, thresholds
 from permissions import get_role
+from rate_limits import DIAGNOSE_PER_IP, limiter
 
 diagnose = Blueprint("diagnose", __name__)
 
@@ -10,6 +11,7 @@ ALLOWED_TYPES = ("image/jpeg", "image/png")
 
 
 @diagnose.route("/api/diagnose", methods=["POST"])
+@limiter.limit(DIAGNOSE_PER_IP)
 @jwt_required()
 def diagnose_image():
     # staff check photos for any farmer, farmers check their own
